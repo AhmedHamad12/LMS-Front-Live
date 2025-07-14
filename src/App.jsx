@@ -9,10 +9,14 @@ import Admin from "./pages/admin/Admin";
 import Users from "./pages/admin/Users";
 import Courses from "./pages/admin/Courses";
 import Reports from "./pages/admin/Reports";
+import BackgroundAnimation from "./Components/BackgroundAnimation";
 
 function App() {
   return (
     <>
+
+      <BackgroundAnimation/>
+      
       <BrowserRouter>
         <Routes>
           <Route

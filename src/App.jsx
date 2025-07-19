@@ -16,7 +16,7 @@ function App() {
     <>
 
       <BackgroundAnimation/>
-      
+
       <BrowserRouter>
         <Routes>
           <Route
@@ -26,7 +26,7 @@ function App() {
           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
           <Route
             path="/teacher/teacherstudents"
-            element={<TeacherStudents />}
+            element={<TeacherStudents />} 
           />
           <Route
             path="/teacher/earn"

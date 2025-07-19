@@ -1,0 +1,135 @@
+import React from "react";
+import { Link } from "react-router";
+
+export default function Signup() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-black text-white">
+      <div className="md:mx-auto w-full max-w-6xl p-4">
+        <div className="grid md:grid-cols-2 md:gap-8">
+          <div className="rounded-2xl border border-white/5 bg-[#0a0a19]/50 p-8 shadow-2xl shadow-cyan-500/10 backdrop-blur-lg">
+            <div className="mb-8 text-center">
+              <h1 className="text-3xl font-black text-white text-shadow-[0_0_10px_rgb(0_191_255_/_0.6)]">
+                إنشاء محطة جديدة
+              </h1>
+              <p className="mt-2 text-gray-400">
+                انضم إلى المجرّة وابدأ رحلتك نحو التفوق
+              </p>
+            </div>
+
+            <form className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-bold text-gray-300">
+                    اسم الطالب الكامل
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 p-2 placeholder-gray-500 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-300">
+                    رقم هاتف الطالب
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 p-2 placeholder-gray-500 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-bold text-gray-300">
+                    اسم ولي الأمر
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 p-2 placeholder-gray-500 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-300">
+                    رقم هاتف ولي الأمر
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 p-2 placeholder-gray-500 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-300">
+                  البريد الإلكتروني
+                </label>
+                <input
+                  type="email"
+                  required
+                  className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 p-2 placeholder-gray-500 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-300">
+                  السنة الدراسية
+                </label>
+                <select className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 p-2 placeholder-gray-500 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none">
+                  <option>الصف الأول الثانوي</option>
+                  <option>الصف الثاني الثانوي</option>
+                  <option>الصف الثالث الثانوي</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-bold text-gray-300">
+                    كلمة المرور
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 p-2 placeholder-gray-500 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-300">
+                    تأكيد كلمة المرور
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 p-2 placeholder-gray-500 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div>
+                <button
+                  type="submit"
+                  className="flex w-full cursor-pointer justify-center rounded-lg border border-transparent bg-[#00BFFF] px-4 py-3 text-sm font-bold text-black shadow-sm shadow-[rgba(0,191,255,0.4)] transition-all duration-300 ease-in-out hover:translate-y-[2px] hover:shadow-[0_0_25px_rgb(0_191_255_/_0.7)]"
+                >
+                  إنشاء الحساب
+                </button>
+              </div>
+            </form>
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-500">
+                لديك حساب بالفعل؟
+                <Link
+                  to="/login"
+                  className="font-medium text-cyan-400 hover:text-cyan-300"
+                >
+                  سجل الدخول من هنا
+                </Link>
+              </p>
+            </div>
+          </div>
+
+          {/* <div className="visuals-container relative hidden flex-col items-center justify-center p-8 md:flex">
+            <canvas id="solar-system-canvas"></canvas>
+          </div> */}
+        </div>
+      </div>
+    </div>
+  );
+}

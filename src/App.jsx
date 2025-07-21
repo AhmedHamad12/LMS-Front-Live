@@ -16,6 +16,7 @@ import MyTasks from "./pages/students/MyTasks";
 import MyExams from "./pages/students/MyExams";
 import Rewards from "./pages/students/Rewards";
 import Students from "./pages/students/Students";
+import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
@@ -52,6 +53,7 @@ function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+      <Toaster />
     </>
   );
 }

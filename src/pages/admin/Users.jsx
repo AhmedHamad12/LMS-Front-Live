@@ -57,6 +57,8 @@ const Users = () => {
     fetchUsers();
   }, []);
 
+  //TODO: apply delete , block , edit logic if needed
+
   return (
     <main
       id="main-content"

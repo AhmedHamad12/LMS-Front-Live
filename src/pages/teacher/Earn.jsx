@@ -242,7 +242,7 @@ const Earn = () => {
               className="text-3xl font-black text-center mb-12 text-white"
               style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
             >
-              <Link href="#" className="block">
+              <Link to="/home" className="block">
                 <span className="hidden lg:inline">المجرّة.</span>
                 <span className="lg:hidden">🚀</span>
               </Link>
@@ -253,7 +253,10 @@ const Earn = () => {
               {navigationItems.map((item, index) => (
                 <Link
                   key={index}
-                  href="#"
+                  to={item.title === "لوحة التحكم" ? "/teacher/dashboard" : 
+                      item.title === "كورساتي" ? "/teacher/courses" :
+                      item.title === "الطلاب" ? "/teacher/students" :
+                      item.title === "الأرباح" ? "/teacher/earn" : "#"}
                   className={`flex items-center justify-center lg:justify-start p-3 rounded-lg transition-colors ${
                     item.active
                       ? "bg-cyan-500/20 text-white font-bold"
@@ -288,13 +291,13 @@ const Earn = () => {
             {profileMenuOpen && (
               <div className="absolute bottom-full mb-2 w-full bg-gradient-to-br from-slate-800/40 to-slate-900/50 backdrop-blur-sm border border-white/5 rounded-lg overflow-hidden">
                 <Link
-                  href="#"
+                  to="/teacher/profile"
                   className="block px-4 py-3 text-right text-sm text-gray-200 hover:bg-white/10"
                 >
                   الملف الشخصي
                 </Link>
                 <Link
-                  href="#"
+                  to="/logout"
                   className="block px-4 py-3 text-right text-sm text-red-400 hover:bg-red-500/20"
                 >
                   تسجيل الخروج

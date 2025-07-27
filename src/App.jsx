@@ -16,6 +16,17 @@ import MyTasks from "./pages/students/MyTasks";
 import MyExams from "./pages/students/MyExams";
 import Rewards from "./pages/students/Rewards";
 import Students from "./pages/students/Students";
+import Home from "./pages/Home";
+import Login from "./pages/auth/Login";
+import AddStudent from "./pages/auth/AddStudent";
+import AddTeacher from "./pages/auth/AddTeacher";
+import StudentRegister from "./pages/auth/StudentRegister";
+import TeacherSignup from "./pages/auth/TeacherSignup";
+import LoginAdmin from "./pages/auth/LoginAdmin";
+import Dashboard from "./pages/students/Dashboard";
+import MyCourses from "./pages/students/MyCourses";
+import Profile from "./pages/students/Profile";
+import Prize from "./pages/students/Prize";
 
 function App() {
   return (
@@ -24,6 +35,7 @@ function App() {
 
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<Home />} />
           <Route
             path="/teacher/coursemanagement"
             element={<CourseManagement />}
@@ -41,7 +53,18 @@ function App() {
             <Route path="mytasks" element={<MyTasks />} />
             <Route path="myexams" element={<MyExams />} />
             <Route path="rewards" element={<Rewards />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="mycourses" element={<MyCourses />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="prize" element={<Prize />} />
           </Route>
+
+          <Route path="/login" element={<Login />} />
+          <Route path="/add-student" element={<AddStudent />} />
+          <Route path="/add-teacher" element={<AddTeacher />} />
+          <Route path="/student-signup" element={<StudentRegister />} />
+          <Route path="/teacher-signup" element={<TeacherSignup />} />
+          <Route path="/login-admin" element={<LoginAdmin />} />
 
           <Route path="/admin" element={<Admin />}>
             <Route path="dashboard" element={<AdminDashboard />} />

@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import AsideBar from "../../components/AsideBar";
 
 export default function Profile() {
   const canvasRef = useRef(null);
@@ -139,32 +138,49 @@ export default function Profile() {
   };
 
   return (
-    <div
-      className="min-h-screen overflow-hidden bg-black font-['Cairo'] text-gray-100"
-      dir="rtl"
-    >
+    <>
       {/* Background Canvas */}
       <canvas
         ref={canvasRef}
         className="fixed top-0 left-0 -z-10 h-full w-full"
       />
 
-      <div className="flex h-screen">
-        {/* Sidebar */}
-        <AsideBar />
+      <main
+        ref={mainContentRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto p-8"
+        style={{
+          scrollbarWidth: "thin",
+          scrollbarColor: "#00BFFF rgba(0,0,0,0.2)",
+        }}
+      >
+        <style jsx>{`
+          main::-webkit-scrollbar {
+            width: 6px;
+          }
+          main::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+          }
+          main::-webkit-scrollbar-thumb {
+            background: #00bfff;
+            border-radius: 10px;
+          }
+          main::-webkit-scrollbar-thumb:hover {
+            background: #009acd;
+          }
+        `}</style>
 
-        {/* Main Content */}
-        <main
-          ref={mainContentRef}
-          onScroll={handleScroll}
-          className="flex-1 overflow-y-auto p-8"
-          style={{
-            scrollbarWidth: "thin",
-            scrollbarColor: "#00BFFF rgba(0,0,0,0.2)",
-          }}
+        <h1
+          className="mb-2 text-4xl font-black text-white title-glow"
         >
-          {/* Profile Header */}
-          <div className="mb-12 flex flex-col items-center gap-8 md:flex-row">
+          الملف الشخصي
+        </h1>
+        <p className="mb-8 text-lg text-gray-400">
+          قم بتعديل بياناتك الشخصية وإدارة إعدادات حسابك.
+        </p>
+
+        {/* Profile Header */}
+        <div className="mb-12 flex flex-col items-center gap-8 md:flex-row">
             <div className="relative">
               <img
                 src="https://placehold.co/120x120/ffffff/000000?text=خ"
@@ -200,19 +216,19 @@ export default function Profile() {
 
           {/* Stats */}
           <div className="mb-12 grid grid-cols-2 gap-6 md:grid-cols-4">
-            <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/40 to-slate-800/50 p-6 text-center backdrop-blur-xl">
+            <div className="rounded-2xl glass-effect p-6 text-center">
               <p className="text-sm text-gray-400">مجموع النقاط</p>
               <p className="text-4xl font-black text-cyan-300">150</p>
             </div>
-            <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/40 to-slate-800/50 p-6 text-center backdrop-blur-xl">
+            <div className="rounded-2xl glass-effect p-6 text-center">
               <p className="text-sm text-gray-400">ترتيبك العام</p>
               <p className="text-4xl font-black text-red-400">7</p>
             </div>
-            <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/40 to-slate-800/50 p-6 text-center backdrop-blur-xl">
+            <div className="rounded-2xl glass-effect p-6 text-center">
               <p className="text-sm text-gray-400">كورسات مكتملة</p>
               <p className="text-4xl font-black text-white">1</p>
             </div>
-            <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/40 to-slate-800/50 p-6 text-center backdrop-blur-xl">
+            <div className="rounded-2xl glass-effect p-6 text-center">
               <p className="text-sm text-gray-400">الأوسمة المحصلة</p>
               <p className="text-4xl font-black text-white">2</p>
             </div>
@@ -222,7 +238,7 @@ export default function Profile() {
             {/* Edit Profile */}
             <div className="lg:col-span-1">
               <h2 className="mb-6 text-2xl font-bold">تعديل البيانات</h2>
-              <div className="space-y-4 rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/40 to-slate-800/50 p-6 backdrop-blur-xl">
+              <div className="space-y-4 rounded-2xl glass-effect p-6">
                 <div>
                   <label className="mb-1 block text-sm text-gray-400">
                     الاسم الكامل
@@ -293,7 +309,7 @@ export default function Profile() {
             {/* Recent Activity */}
             <div className="lg:col-span-2">
               <h2 className="mb-6 text-2xl font-bold">سجل المهام الأخير</h2>
-              <div className="space-y-4 rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/40 to-slate-800/50 p-6 backdrop-blur-xl">
+              <div className="space-y-4 rounded-2xl glass-effect p-6">
                 {/* Activity 1 */}
                 <div className="flex items-center gap-4">
                   <div className="flex-shrink-0 rounded-full bg-green-500/20 p-3">
@@ -382,7 +398,6 @@ export default function Profile() {
             </div>
           </div>
         </main>
-      </div>
-    </div>
+    </>
   );
 };

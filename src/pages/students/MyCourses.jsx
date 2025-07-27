@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as THREE from "three";
-import AsideBar from "../../components/AsideBar";
 
 export default function MyCourses() {
   const [filter, setFilter] = useState("all");
@@ -159,53 +158,44 @@ export default function MyCourses() {
   });
 
   return (
-    <div
-      className="min-h-screen overflow-hidden bg-black text-white"
-      style={{ fontFamily: "Cairo, sans-serif" }}
-    >
+    <>
       <canvas
         ref={canvasRef}
         className="fixed top-0 left-0 -z-10 h-full w-full"
       />
 
-      <div className="flex h-screen" dir="rtl">
-        {/* Sidebar */}
-        <AsideBar />
+      <main
+        ref={mainContentRef}
+        className="flex-1 overflow-y-auto p-8"
+        style={{
+          scrollbarWidth: "thin",
+          scrollbarColor: "#00BFFF rgba(0,0,0,0.2)",
+        }}
+      >
+        <style jsx>{`
+          main::-webkit-scrollbar {
+            width: 6px;
+          }
+          main::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+          }
+          main::-webkit-scrollbar-thumb {
+            background: #00bfff;
+            border-radius: 10px;
+          }
+          main::-webkit-scrollbar-thumb:hover {
+            background: #009acd;
+          }
+        `}</style>
 
-        {/* Main Content */}
-        <main
-          ref={mainContentRef}
-          className="flex-1 overflow-y-auto p-8"
-          style={{
-            scrollbarWidth: "thin",
-            scrollbarColor: "#00BFFF rgba(0,0,0,0.2)",
-          }}
+        <h1
+          className="mb-2 text-4xl font-black text-white title-glow"
         >
-          <style jsx>{`
-            main::-webkit-scrollbar {
-              width: 6px;
-            }
-            main::-webkit-scrollbar-track {
-              background: rgba(0, 0, 0, 0.2);
-            }
-            main::-webkit-scrollbar-thumb {
-              background: #00bfff;
-              border-radius: 10px;
-            }
-            main::-webkit-scrollbar-thumb:hover {
-              background: #009acd;
-            }
-          `}</style>
-
-          <h1
-            className="mb-2 text-4xl font-black text-white"
-            style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
-          >
-            أسطول كورساتك
-          </h1>
-          <p className="mb-8 text-lg text-gray-400">
-            جميع الرحلات المعرفية التي انطلقت بها في مجرّتنا.
-          </p>
+          أسطول كورساتك
+        </h1>
+        <p className="mb-8 text-lg text-gray-400">
+          جميع الرحلات المعرفية التي انطلقت بها في مجرّتنا.
+        </p>
 
           {/* Filter Buttons */}
           <div className="mb-8 flex items-center gap-4">
@@ -246,7 +236,7 @@ export default function MyCourses() {
             {filteredCourses.map((course) => (
               <div
                 key={course.id}
-                className="group flex flex-col overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-blue-900/20 to-purple-900/30 backdrop-blur-md transition-all duration-300 hover:border-cyan-400/30"
+                className="group flex flex-col overflow-hidden rounded-2xl glass-effect transition-all duration-300 hover:border-cyan-400/30"
               >
                 <div className="relative">
                   <img
@@ -342,7 +332,6 @@ export default function MyCourses() {
             </button>
           </div>
         </main>
-      </div>
-    </div>
-  );
+      </>
+    );
 };

@@ -9,12 +9,17 @@ import {
   ChevronDown,
   Plus,
 } from "lucide-react";
-import { Link } from "react-router";
-import CardSlider from "../../components/CardSlider";
+// import { Link } from "react-router";
+import CardSlider from "../components/CardSlider";
+import { Cookies } from "react-cookie";
+import { Link } from "react-router-dom";
 
-export default function Main() {
+export default function Home() {
   const [activeFaq, setActiveFaq] = useState(null);
   const canvasRef = useRef(null);
+
+  const cookies = new Cookies();
+  const token = cookies.get("token");
 
   // FAQ data
   const faqs = [
@@ -100,17 +105,19 @@ export default function Main() {
       {/* Header */}
       <header className="sticky top-0 z-50 flex items-center justify-between border border-white/5 bg-gradient-to-tr from-[rgba(20,20,40,0.4)] to-[rgba(10,10,20,0.5)] p-4 backdrop-blur-[12px]">
         <div className="text-3xl font-black [text-shadow:0_0_10px_rgba(0,191,255,0.6),_0_0_20px_rgba(0,191,255,0.4)]">
-          <Link to="/home">المجرّة.</Link>
+          <Link to="/">المجرّة.</Link>
         </div>
         <div className="flex items-center space-x-4 space-x-reverse">
+          {!token && (
+            <Link
+              to="/login"
+              className="rounded-md px-5 py-2 text-sm font-bold text-white transition-all duration-300 hover:text-cyan-300"
+            >
+              تسجيل الدخول
+            </Link>
+          )}
           <a
-            href="#"
-            className="rounded-md px-5 py-2 text-sm font-bold text-white transition-all duration-300 hover:text-cyan-300"
-          >
-            تسجيل الدخول
-          </a>
-          <a
-            href="#"
+            href="/students/allcourses"
             className="hover:shadow-[0 0 25px rgba(0, 191, 255, 0.7)] hidden animate-[pulse-primary] rounded-lg bg-[#00BFFF] px-[30px] py-3 text-sm font-bold text-black shadow-[0_0_15px_rgba(0,191,255,0.4)] transition-all duration-300 ease-in-out hover:-translate-y-[3px] hover:animate-none sm:block"
           >
             ابدأ الآن
@@ -132,20 +139,20 @@ export default function Main() {
           اصطناعي، وأساليب تعليمية من المستقبل.
         </p>
         <div className="flex flex-col items-center gap-4 sm:flex-row">
-          <a
-            href="#courses"
+          <Link
+            to="/student-signup"
             className="flex items-center rounded-lg bg-cyan-500 px-8 py-4 text-lg font-bold text-black transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-500/30"
           >
             <Monitor className="ml-2 h-6 w-6" />
             تصفح الكورسات كطالب
-          </a>
-          <a
-            href="#teachers"
+          </Link>
+          <Link
+            to="/teacher-signup"
             className="flex items-center rounded-lg border-2 border-cyan-500 bg-transparent px-8 py-4 text-lg font-bold text-cyan-500 transition-all duration-300 hover:bg-cyan-500 hover:text-black"
           >
             <Star className="ml-2 h-6 w-6" />
             انضم إلينا كمدرس
-          </a>
+          </Link>
         </div>
       </main>
 

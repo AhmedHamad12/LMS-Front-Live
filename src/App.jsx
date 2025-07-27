@@ -16,6 +16,7 @@ import MyTasks from "./pages/students/MyTasks";
 import MyExams from "./pages/students/MyExams";
 import Rewards from "./pages/students/Rewards";
 import Students from "./pages/students/Students";
+
 import Home from "./pages/Home";
 import Login from "./pages/auth/Login";
 import AddStudent from "./pages/auth/AddStudent";
@@ -28,10 +29,17 @@ import MyCourses from "./pages/students/MyCourses";
 import Profile from "./pages/students/Profile";
 import Prize from "./pages/students/Prize";
 
+import { Toaster } from "react-hot-toast";
+import Email from "./pages/auth/Reset password/Email";
+import OTP from "./pages/auth/Reset password/OTP";
+import ResetPassword from "./pages/auth/Reset password/ResetPassword";
+
+
 function App() {
   return (
     <>
       <BackgroundAnimation />
+
 
       <BrowserRouter>
         <Routes>
@@ -43,9 +51,13 @@ function App() {
           <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
           <Route
             path="/teacher/teacherstudents"
-            element={<TeacherStudents />}
+            element={<TeacherStudents />} 
           />
           <Route path="/teacher/earn" element={<Earn />} />
+
+          <Route path="/reset/email" element={<Email />} />
+          <Route path="/reset/otp" element={<OTP />} />
+          <Route path="/reset/new" element={<ResetPassword />} />
 
           <Route path="/students" element={<Students />}>
             <Route path="allcourses" element={<AllCourses />} />
@@ -74,6 +86,7 @@ function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+      <Toaster />
     </>
   );
 }

@@ -5,8 +5,7 @@ import { toast } from "react-hot-toast";
 const Users = () => {
   //TODO: replace with token logic
 
-  const token =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9naXZlbm5hbWUiOiJBaG1lZEhhbWFkIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZW1haWxhZGRyZXNzIjoiYWhtZWRoYW1hZDk4NTVAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJleHAiOjE3NTU2OTc1ODQsImlzcyI6Imh0dHBzOi8vbG9jYWxob3N0OjcyNTEvIiwiYXVkIjoiTXlTZWN1cmVBdWRpZW5jZSJ9.gOEg747rgPOCyUlMgeHHNwrTjKsMMFOveFC1vw3VxQ4";
+  
 
   const [users, setUsers] = useState([]);
   const [filter, setFilter] = useState("all");
@@ -35,9 +34,7 @@ const Users = () => {
       try {
         const response = await toast.promise(
           axios.get("http://lms278.runasp.net/api/Account/GetAllUser", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            withCredentials:true,
           }),
           {
             loading: "جاري جلب المستخدمين...",

@@ -92,7 +92,7 @@ export default function Home() {
 
   return (
     <div
-      className="min-h-screen bg-black text-white"
+      className="min-h-screen  text-white"
       style={{ direction: "rtl" }}
     >
       {/* Animated Background Canvas */}

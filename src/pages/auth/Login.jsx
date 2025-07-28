@@ -1,7 +1,39 @@
-import React from "react";
-import { Link } from "react-router";
+import axios from "axios";
+import React, { useState } from "react";
+import { Cookies } from "react-cookie";
+import { Link, useNavigate } from "react-router";
 
 export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const navigate = useNavigate();
+
+  const cookies = new Cookies();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    await axios
+      .post(
+        "http://lms278.runasp.net/api/Account/Login",
+        { email, password },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      )
+      .then((response) => {
+        cookies.set("token", response.data.token);
+        navigate("/home");
+        console.log(response);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
+
   return (
     <>
       {/* <canvas id="bg-canvas"></canvas> */}
@@ -18,7 +50,7 @@ export default function Login() {
               </p>
             </div>
 
-            <form>
+            <form onSubmit={handleSubmit}>
               <div>
                 <label className="text-sm font-bold text-gray-300">
                   البريد الإلكتروني
@@ -26,6 +58,8 @@ export default function Login() {
                 <div className="mt-3">
                   <input
                     type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@domain.com"
                     required
                     className="w-full rounded-lg border border-white/10 bg-black/20 p-3 placeholder-gray-500 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none"
@@ -40,6 +74,8 @@ export default function Login() {
                 <div className="mt-3">
                   <input
                     type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
                     className="w-full rounded-lg border border-white/10 bg-black/20 p-3 placeholder-gray-500 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none"

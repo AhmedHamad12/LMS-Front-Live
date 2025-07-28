@@ -252,14 +252,14 @@ const TeacherStudents = () => {
               className="text-3xl font-black text-center mb-12 text-white"
               style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
             >
-              <Link href="#">
+              <Link to="/home">
                 <span className="hidden lg:inline">المجرّة.</span>
                 <span className="lg:hidden">🚀</span>
               </Link>
             </div>
             <nav className="space-y-4">
               <Link
-                href="#"
+                to="/teacher/dashboard"
                 className="flex items-center justify-center lg:justify-start p-3 rounded-lg text-gray-300 hover:bg-white/10 transition-colors"
                 title="لوحة التحكم"
               >
@@ -279,7 +279,7 @@ const TeacherStudents = () => {
                 <span className="hidden lg:inline mr-3">لوحة التحكم</span>
               </Link>
               <Link
-                href="#"
+                to="/teacher/courses"
                 className="flex items-center justify-center lg:justify-start p-3 rounded-lg text-gray-300 hover:bg-white/10 transition-colors"
                 title="كورساتي"
               >
@@ -299,7 +299,7 @@ const TeacherStudents = () => {
                 <span className="hidden lg:inline mr-3">كورساتي</span>
               </Link>
               <Link
-                href="#"
+                to="/teacher/students"
                 className="flex items-center justify-center lg:justify-start p-3 rounded-lg bg-cyan-500/20 text-white font-bold"
                 title="الطلاب"
               >
@@ -319,7 +319,7 @@ const TeacherStudents = () => {
                 <span className="hidden lg:inline mr-3">الطلاب</span>
               </Link>
               <Link
-                href="#"
+                to="/teacher/earn"
                 className="flex items-center justify-center lg:justify-start p-3 rounded-lg text-gray-300 hover:bg-white/10 transition-colors"
                 title="الأرباح"
               >
@@ -358,13 +358,13 @@ const TeacherStudents = () => {
             {userMenuOpen && (
               <div className="absolute bottom-full mb-2 w-full bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-md border border-white/5 rounded-lg overflow-hidden">
                 <Link
-                  href="#"
+                  to="/teacher/profile"
                   className="block px-4 py-3 text-right text-sm text-gray-200 hover:bg-white/10"
                 >
                   الملف الشخصي
                 </Link>
                 <Link
-                  href="#"
+                  to="/logout"
                   className="block px-4 py-3 text-right text-sm text-red-400 hover:bg-red-500/20"
                 >
                   تسجيل الخروج

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import AsideBar from "../../components/AsideBar";
+import { Link } from "react-router-dom";
 
 export default function Dashboard() {
   const [userPoints, setUserPoints] = useState(150);
@@ -31,7 +31,10 @@ export default function Dashboard() {
   // Background canvas effect
   useEffect(() => {
     const canvas = document.getElementById("bg-canvas");
+    if (!canvas) return; // Exit if canvas is not found
+    
     const ctx = canvas.getContext("2d");
+    if (!ctx) return; // Exit if context is not available
 
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
@@ -57,6 +60,9 @@ export default function Dashboard() {
     }
 
     const animate = () => {
+      // Check if context is still available
+      if (!ctx) return;
+      
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Create gradient background
@@ -117,46 +123,41 @@ export default function Dashboard() {
         className="fixed top-0 left-0 -z-10 h-full w-full"
       />
 
-      <div className="flex h-screen">
-        {/* Sidebar */}
-        <AsideBar />
-
-        {/* Main Content */}
-        <main
-          className="flex-1 overflow-y-auto p-8"
-          style={{
-            scrollbarWidth: "thin",
-            scrollbarColor: "#00BFFF rgba(0,0,0,0.2)",
-          }}
+      {/* Main Content */}
+      <main
+        className="flex-1 overflow-y-auto p-8"
+        style={{
+          scrollbarWidth: "thin",
+          scrollbarColor: "#00BFFF rgba(0,0,0,0.2)",
+        }}
+      >
+        <style jsx>{`
+          main::-webkit-scrollbar {
+            width: 6px;
+          }
+          main::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+          }
+          main::-webkit-scrollbar-thumb {
+            background: #00bfff;
+            border-radius: 10px;
+          }
+          main::-webkit-scrollbar-thumb:hover {
+            background: #009acd;
+          }
+        `}</style>
+        <h1
+          className="mb-2 text-4xl font-black text-white title-glow"
         >
-          <style jsx>{`
-            main::-webkit-scrollbar {
-              width: 6px;
-            }
-            main::-webkit-scrollbar-track {
-              background: rgba(0, 0, 0, 0.2);
-            }
-            main::-webkit-scrollbar-thumb {
-              background: #00bfff;
-              border-radius: 10px;
-            }
-            main::-webkit-scrollbar-thumb:hover {
-              background: #009acd;
-            }
-          `}</style>
-          <h1
-            className="mb-2 text-4xl font-black text-white"
-            style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
-          >
-            أهلاً بعودتك يا رائد الفضاء!
-          </h1>
+          أهلاً بعودتك يا رائد الفضاء!
+        </h1>
           <p className="mb-8 text-lg text-gray-400">
             مهمتك التالية في انتظارك. استعد للانطلاق.
           </p>
 
           {/* Low Points Warning */}
           {userPoints < 200 && (
-            <div className="mb-8 flex items-center justify-between gap-6 rounded-2xl border-2 border-red-500/50 bg-gradient-to-br from-red-900/40 to-gray-900/50 p-6 backdrop-blur-md">
+            <div className="mb-8 flex items-center justify-between gap-6 rounded-2xl border-2 border-yellow-500/50 glass-effect p-6">
               <div className="flex items-center">
                 <svg
                   className="ml-4 h-12 w-12 flex-shrink-0 text-red-400"
@@ -195,14 +196,13 @@ export default function Dashboard() {
             <div className="space-y-8 lg:col-span-2">
               <div>
                 <h2
-                  className="mb-6 text-3xl font-bold text-white"
-                  style={{ textShadow: "0 0 8px rgba(0, 191, 255, 0.5)" }}
+                  className="mb-6 text-3xl font-bold text-white title-glow"
                 >
                   مهماتك الحالية (الكورسات)
                 </h2>
                 <div className="space-y-4">
                   {/* Course Accordion 1 */}
-                  <div className="overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-blue-900/40 to-gray-900/50 backdrop-blur-md">
+                  <div className="overflow-hidden rounded-2xl glass-effect">
                     <button
                       onClick={() => setOpenCourse(openCourse === 1 ? null : 1)}
                       className="flex w-full items-center justify-between p-6 text-right transition-colors hover:bg-white/5"
@@ -263,12 +263,12 @@ export default function Dashboard() {
                               متاح (3/10 دروس)
                             </p>
                           </div>
-                          <a
-                            href="#"
+                          <Link
+                            to="#"
                             className="rounded-full bg-cyan-500 px-4 py-1 text-sm font-bold text-black transition-colors hover:bg-cyan-400"
                           >
                             أكمل
-                          </a>
+                          </Link>
                         </div>
                         <div className="flex items-center justify-between border-t border-white/5 pt-4 opacity-50">
                           <div>
@@ -319,12 +319,12 @@ export default function Dashboard() {
                               متاح (5/12 دروس)
                             </p>
                           </div>
-                          <a
-                            href="#"
+                          <Link
+                            to="#"
                             className="rounded-full bg-cyan-500 px-4 py-1 text-sm font-bold text-black transition-colors hover:bg-cyan-400"
                           >
                             أكمل
-                          </a>
+                          </Link>
                         </div>
                       </div>
                     )}
@@ -458,8 +458,8 @@ export default function Dashboard() {
                   مهام ذات أولوية
                 </h2>
                 <div className="space-y-3 rounded-2xl border border-white/5 bg-gradient-to-br from-blue-900/40 to-gray-900/50 p-4 backdrop-blur-md">
-                  <a
-                    href="#"
+                  <Link
+                    to="#"
                     className="block rounded-lg bg-yellow-500/10 p-3 transition-colors hover:bg-yellow-500/20"
                   >
                     <div className="mb-1 flex items-center justify-between">
@@ -473,7 +473,7 @@ export default function Dashboard() {
                     <p className="text-xs text-yellow-400/80">
                       أكمله الآن واحصل على وسام السرعة + 50 نقطة!
                     </p>
-                  </a>
+                  </Link>
                 </div>
               </div>
 
@@ -543,9 +543,9 @@ export default function Dashboard() {
                           viewBox="0 0 24 24"
                         >
                           <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
                             d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                           ></path>
                         </svg>
@@ -559,19 +559,18 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="mt-3 border-t border-white/10 pt-3">
-                    <a
-                      href="#"
+                    <Link
+                      to="#"
                       className="block text-center text-sm font-bold text-cyan-400 hover:text-cyan-300"
                     >
                       عرض كل البيانات
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </main>
-      </div>
     </div>
   );
 }

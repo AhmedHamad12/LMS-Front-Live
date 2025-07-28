@@ -33,6 +33,9 @@ import { Toaster } from "react-hot-toast";
 import Email from "./pages/auth/Reset password/Email";
 import OTP from "./pages/auth/Reset password/OTP";
 import ResetPassword from "./pages/auth/Reset password/ResetPassword";
+import Quizzes from "./pages/teacher/Quizzes";
+import Questions from "./pages/teacher/Questions";
+import CreateQuiz from "./pages/teacher/CreateQuiz";
 
 
 function App() {
@@ -54,6 +57,10 @@ function App() {
             element={<TeacherStudents />} 
           />
           <Route path="/teacher/earn" element={<Earn />} />
+          <Route path="/teacher/quizzes" element={<Quizzes/>}/>
+          <Route path="/teacher/quizzes/create" element={<CreateQuiz/>}/>
+          <Route path="/teacher/quizzes/:quizId/questions" element={<Questions/>}/>
+
 
           <Route path="/reset/email" element={<Email />} />
           <Route path="/reset/otp" element={<OTP />} />

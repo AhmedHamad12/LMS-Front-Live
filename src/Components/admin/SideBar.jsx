@@ -10,7 +10,7 @@ const Sidebar = () => {
   const navigate = useNavigate()
   const handleLogout = ()=>{
     cookies.remove('token')
-    cookies.remove('user')
+    
 
     navigate("/")
   }

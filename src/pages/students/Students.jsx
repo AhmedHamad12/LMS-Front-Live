@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import StudentsSideBar from "../../components/students/StudentsSideBar";
+import StudentsSideBar from "../../Components/students/StudentsSideBar";
 
 function Students() {
   return (

@@ -26,7 +26,13 @@ export default function Login() {
       )
       .then((response) => {
         cookies.set("token", response.data.token);
-        navigate("/home");
+        cookies.set("name",response.data.displayName)
+        cookies.set("email",JSON.stringify(response.data.email))
+        cookies.set("role",response.data.role)
+        cookies.set("teacherId",response.data.teacherId)
+
+        
+        navigate(`/${response.data.role}/dashboard`);
         console.log(response);
       })
       .catch((error) => {

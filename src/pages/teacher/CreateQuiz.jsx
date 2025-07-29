@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '../../api/axios';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import Select from 'react-select';
 
-// TODO:Replace with actual auth context
+// TODO:Replace with actual auth 
 const useAuth = () => ({ user: { id: 0 } });
 
 const TARGET_TYPE_OPTIONS = [
@@ -86,7 +86,7 @@ const CreateQuiz = () => {
     const fetchTargets = async () => {
       setTargetLoading(true);
       try {
-        const res = await axios.get(`http://lms278.runasp.net/api/Quiz/target?targetType=${form.targetType.value}`);
+        const res = await axios.get(`/api/Quiz/target?targetType=${form.targetType.value}`);
         const options = Array.isArray(res.data)
           ? res.data.map((item) => ({
               value: item.id,
@@ -136,7 +136,7 @@ const CreateQuiz = () => {
       console.log(payload);
       
       const response = await toast.promise(
-        axios.post('http://lms278.runasp.net/api/Quiz', payload),
+        axios.post('/api/Quiz', payload),
         {
           loading: 'جاري إنشاء الاختبار...',
           success: 'تم إنشاء الاختبار بنجاح!',

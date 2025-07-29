@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from "../../api/axios";
 import React, { useState } from "react";
 import { Cookies } from "react-cookie";
 import { Link, useNavigate } from "react-router";
@@ -16,7 +16,7 @@ export default function Login() {
 
     await axios
       .post(
-        "http://lms278.runasp.net/api/Account/Login",
+        "/api/Account/Login",
         { email, password },
         {
           headers: {

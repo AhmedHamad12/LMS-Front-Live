@@ -12,7 +12,7 @@ const Quizzes = () => {
   const token = cookies.get("token");
   const id = cookies.get("teacherId");
   const mockId = 1;
-  //TODO: id is returned as null
+  //TODO: id is returned as null , switch for real id from cookies
 
   const navigate = useNavigate();
 

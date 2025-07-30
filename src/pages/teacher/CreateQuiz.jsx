@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '../../api/axios';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import Select from 'react-select';
+import { Cookies } from 'react-cookie';
 
-// TODO:Replace with actual auth context
+// TODO:Replace with actual auth 
 const useAuth = () => ({ user: { id: 0 } });
 
 const TARGET_TYPE_OPTIONS = [
@@ -63,6 +64,10 @@ const customSelectStyles = {
 };
 
 const CreateQuiz = () => {
+  //TODO: id from cookies
+
+  const cookies = new Cookies
+  const token = cookies.get("token")
   const { user } = useAuth();
   const [form, setForm] = useState({
     title: '',
@@ -86,7 +91,7 @@ const CreateQuiz = () => {
     const fetchTargets = async () => {
       setTargetLoading(true);
       try {
-        const res = await axios.get(`http://lms278.runasp.net/api/Quiz/target?targetType=${form.targetType.value}`);
+        const res = await axios.get(`/api/Quiz/target?targetType=${form.targetType.value}`);
         const options = Array.isArray(res.data)
           ? res.data.map((item) => ({
               value: item.id,
@@ -136,7 +141,11 @@ const CreateQuiz = () => {
       console.log(payload);
       
       const response = await toast.promise(
-        axios.post('http://lms278.runasp.net/api/Quiz', payload),
+        axios.post('/api/Quiz', payload,{
+          withCredentials:true, headers :{
+            'Authorization': `Bearer ${token}`
+          }
+        }),
         {
           loading: 'جاري إنشاء الاختبار...',
           success: 'تم إنشاء الاختبار بنجاح!',

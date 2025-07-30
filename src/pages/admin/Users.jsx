@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from "../../api/axios";
 import React, { useState, useMemo, useEffect } from "react";
 import { Cookies } from "react-cookie";
 import { toast } from "react-hot-toast";
@@ -36,7 +36,7 @@ const Users = () => {
 
       try {
         const response = await toast.promise(
-          axios.get("http://lms278.runasp.net/api/Account/GetAllUser", {
+          axios.get("/api/Account/GetAllUser", {
             withCredentials:true, headers :{
               'Authorization': `Bearer ${token}`
             }

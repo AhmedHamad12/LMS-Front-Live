@@ -1,4 +1,5 @@
-import axios from "axios";
+import { Cookies } from "react-cookie";
+import axios from "../../api/axios";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useParams } from "react-router-dom";
@@ -59,17 +60,26 @@ const customSelectStyles = {
 };
 
 const Questions = () => {
+  //TODO: fix apis
   const { quizId } = useParams();
   const [questions, setquestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [nextQuestions, setNextQuestions] = useState([]);
   const [openAccordion, setOpenAccordion] = useState(null);
 
+
+
+  const cookies = new Cookies
+  const token = cookies.get("token");
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
         const response = await axios.get(
-          `http://lms278.runasp.net/api/Quiz/${quizId}/questions`
+          `/api/Quiz/${quizId}/questions`, {
+            withCredentials:true, headers :{
+              'Authorization': `Bearer ${token}`
+            }
+          }
         );
         setquestions(response.data);
         console.log(response.data);
@@ -190,10 +200,11 @@ const Questions = () => {
       
       const payload = nextQuestions.map(q => ({ ...q, type: typeof q.type === 'object' ? q.type.value : q.type }));
       console.log("Payload to submit:", payload);
+      //TODO: implement API call to submit questions
       setNextQuestions([]);
       // Optionally, refetch questions
       const response = await axios.get(
-        `http://lms278.runasp.net/api/Quiz/${quizId}/questions`
+        `/api/Quiz/${quizId}/questions`
       );
       setquestions(response.data);
     } catch (error) {

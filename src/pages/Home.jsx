@@ -10,7 +10,7 @@ import {
   Plus,
 } from "lucide-react";
 // import { Link } from "react-router";
-import CardSlider from "../components/CardSlider";
+import CardSlider from "../Components/CardSlider";
 import { Cookies } from "react-cookie";
 import { Link } from "react-router-dom";
 

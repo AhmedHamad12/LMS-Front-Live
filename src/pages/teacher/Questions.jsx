@@ -197,8 +197,8 @@ const Questions = () => {
     if (nextQuestions.length === 0) return;
     setLoading(true);
     try {
-      
-      const payload = nextQuestions.map(q => ({ ...q, type: typeof q.type === 'object' ? q.type.value : q.type }));
+      //TODO: payload to structure the request , dont adjutst the nextquestions array 
+      const payload = nextQuestions.map(q => ({ ...q, type:  q.type.value }));
       console.log("Payload to submit:", payload);
       //TODO: implement API call to submit questions
       setNextQuestions([]);

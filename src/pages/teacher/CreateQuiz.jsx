@@ -6,7 +6,7 @@ import Select from 'react-select';
 import { Cookies } from 'react-cookie';
 
 // TODO:Replace with actual auth 
-const useAuth = () => ({ user: { id: 0 } });
+
 
 const TARGET_TYPE_OPTIONS = [
   { label: 'كورس', value: 1 },
@@ -66,9 +66,12 @@ const customSelectStyles = {
 const CreateQuiz = () => {
   //TODO: id from cookies
 
+  
+
   const cookies = new Cookies
   const token = cookies.get("token")
-  const { user } = useAuth();
+  const id = cookies.get("teacherId")
+  
   const [form, setForm] = useState({
     title: '',
     targetType: TARGET_TYPE_OPTIONS[0],
@@ -90,6 +93,8 @@ const CreateQuiz = () => {
   useEffect(() => {
     const fetchTargets = async () => {
       setTargetLoading(true);
+      console.log("id" , id);
+      
       try {
         const res = await axios.get(`/api/Quiz/target?targetType=${form.targetType.value}`);
         const options = Array.isArray(res.data)
@@ -131,7 +136,7 @@ const CreateQuiz = () => {
     try {
       const payload = {
         title: form.title,
-        teacherId: user.id,
+        teacherId: id,
         targetType: form.targetType.value,
         targetId: form.targetId ? form.targetId.value : '',
         timeLimitMinutes: Number(form.timeLimitMinutes),

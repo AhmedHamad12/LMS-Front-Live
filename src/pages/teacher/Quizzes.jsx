@@ -11,7 +11,7 @@ const Quizzes = () => {
   const cookies = new Cookies();
   const token = cookies.get("token");
   const id = cookies.get("teacherId");
-  const mockId = 1;
+  
   //TODO: id is returned as null , switch for real id from cookies
 
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ const Quizzes = () => {
     const fetchQuizzes = async () => {
       try {
         const response = await axios.get(
-          `/api/Quiz/getQuizForTeacher${mockId}`,
+          `/api/Quiz/getQuizForTeacher${id}`,
           {
             withCredentials: true,
             headers: {
@@ -118,7 +118,7 @@ const Quizzes = () => {
                       </div>
                       <button
                         onClick={() =>
-                          navigate(`/teacher/quizzes/${mockId}/questions`)
+                          navigate(`/teacher/quizzes/${quiz.id}/questions`)
                         }
                         className="mt-4 flex items-center gap-2 rounded-lg bg-cyan-500 px-5 py-2 text-sm font-bold text-black transition-colors hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2"
                       >

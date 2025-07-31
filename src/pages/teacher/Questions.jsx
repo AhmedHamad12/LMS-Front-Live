@@ -64,7 +64,6 @@ const Questions = () => {
   const { quizId } = useParams();
   const [questions, setquestions] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [nextQuestions, setNextQuestions] = useState([]);
   const [openAccordion, setOpenAccordion] = useState(null);
 
 
@@ -90,129 +89,138 @@ const Questions = () => {
     fetchQuestions();
   }, []);
 
-  const handleQuestionChange = (idx, field, value) => {
-    setNextQuestions((prev) =>
-      prev.map((q, i) =>
-        i === idx
-          ? { ...q, [field]: value }
-          : q
-      )
-    );
+  const [newQuestion, setNewQuestion] = useState({
+    text: "",
+    imageFile: null,
+    imageUrl: "",
+    type: QUESTION_TYPE_OPTIONS[0],
+    options: [
+      { text: "", isCorrect: false },
+      { text: "", isCorrect: false },
+      { text: "", isCorrect: false },
+      { text: "", isCorrect: false },
+    ],
+  });
+
+  const handleInputChange = (field, value) => {
+    setNewQuestion((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleQuestionTypeChange = (idx, selected) => {
-    setNextQuestions((prev) =>
-      prev.map((q, i) => {
-        if (i !== idx) return q;
-        if (selected.value === 1) {
-          return {
-            ...q,
-            type: selected,
-            options: [
-              { text: "", isCorrect: false },
-              { text: "", isCorrect: false },
-              { text: "", isCorrect: false },
-              { text: "", isCorrect: false },
-            ],
-          };
-        } else if (selected.value === 2) {
-          return {
-            ...q,
-            type: selected,
-            options: [
-              { text: "صح", isCorrect: false },
-              { text: "خطأ", isCorrect: false },
-            ],
-          };
-        } else {
-          return { ...q, type: selected, options: [] };
-        }
-      })
-    );
+  const handleOptionChange = (idx, value) => {
+    setNewQuestion((prev) => ({
+      ...prev,
+      options: prev.options.map((opt, i) =>
+        i === idx ? { ...opt, text: value } : opt
+      ),
+    }));
   };
 
-  const handleQuestionOptionChange = (qIdx, optIdx, value) => {
-    setNextQuestions((prev) =>
-      prev.map((q, i) =>
-        i === qIdx
-          ? {
-              ...q,
-              options: q.options.map((opt, j) =>
-                j === optIdx ? { ...opt, text: value } : opt
-              ),
-            }
-          : q
-      )
-    );
+  const handleCorrectChange = (idx) => {
+    setNewQuestion((prev) => ({
+      ...prev,
+      options: prev.options.map((opt, i) => ({
+        ...opt,
+        isCorrect: i === idx,
+      })),
+    }));
   };
 
-  const handleQuestionCorrectChange = (qIdx, optIdx) => {
-    setNextQuestions((prev) =>
-      prev.map((q, i) =>
-        i === qIdx
-          ? {
-              ...q,
-              options: q.options.map((opt, j) => ({
-                ...opt,
-                isCorrect: j === optIdx,
-              })),
-            }
-          : q
-      )
-    );
+  const handleTypeChange = (selected) => {
+    if (selected.value === 1) {
+      setNewQuestion((prev) => ({
+        ...prev,
+        type: selected,
+        options: [
+          { text: "", isCorrect: false },
+          { text: "", isCorrect: false },
+          { text: "", isCorrect: false },
+          { text: "", isCorrect: false },
+        ],
+      }));
+    } else if (selected.value === 2) {
+      setNewQuestion((prev) => ({
+        ...prev,
+        type: selected,
+        options: [
+          { text: "صح", isCorrect: false },
+          { text: "خطأ", isCorrect: false },
+        ],
+      }));
+    } else {
+      setNewQuestion((prev) => ({
+        ...prev,
+        type: selected,
+        options: [],
+      }));
+    }
   };
 
-  const handleQuestionTFChange = (qIdx, optIdx) => {
-    setNextQuestions((prev) =>
-      prev.map((q, i) =>
-        i === qIdx
-          ? {
-              ...q,
-              options: q.options.map((opt, j) => ({
-                ...opt,
-                isCorrect: j === optIdx,
-              })),
-            }
-          : q
-      )
-    );
-  };
-
-  const handleQuestionImageChange = (qIdx, e) => {
+  const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setNextQuestions((prev) =>
-      prev.map((q, i) =>
-        i === qIdx ? { ...q, imageUrl: url } : q
-      )
-    );
+    setNewQuestion((prev) => ({
+      ...prev,
+      imageFile: file,
+      imageUrl: URL.createObjectURL(file),
+    }));
   };
 
-  const handleDeleteQuestion = (idx) => {
-    setNextQuestions((prev) => prev.filter((_, i) => i !== idx));
-  };
-
-  const handleSubmitAll = async () => {
-    if (nextQuestions.length === 0) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setLoading(true);
     try {
-      //TODO: payload to structure the request , dont adjutst the nextquestions array 
-      const payload = nextQuestions.map(q => ({ ...q, type:  q.type.value }));
-      console.log("Payload to submit:", payload);
-      //TODO: implement API call to submit questions
-      setNextQuestions([]);
-      // Optionally, refetch questions
+      const formData = new FormData();
+      formData.append("Text", newQuestion.text);
+      formData.append("type", newQuestion.type.value);
+      if (newQuestion.imageFile) {
+        formData.append("QuestionImage", newQuestion.imageFile);
+      }
+      if (newQuestion.type.value === 1 || newQuestion.type.value === 2) {
+        for(const opt of newQuestion.options){
+          formData.append("Option", opt.text);
+        }
+        formData.append(
+          "CorrectAnswerIndex",
+          newQuestion.options.findIndex((opt) => opt.isCorrect)
+        );
+      }
+      await axios.post(`/api/Quiz/${quizId}/questions`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+        withCredentials: true,
+      });
+      toast.success("تمت إضافة السؤال بنجاح");
+      setNewQuestion({
+        text: "",
+        imageFile: null,
+        imageUrl: "",
+        type: QUESTION_TYPE_OPTIONS[0],
+        options: [
+          { text: "", isCorrect: false },
+          { text: "", isCorrect: false },
+          { text: "", isCorrect: false },
+          { text: "", isCorrect: false },
+        ],
+      });
+      // Optionally refetch questions here
       const response = await axios.get(
-        `/api/Quiz/${quizId}/questions`
+        `/api/Quiz/${quizId}/questions`, {
+          withCredentials:true, headers :{
+            'Authorization': `Bearer ${token}`
+          }
+        }
       );
       setquestions(response.data);
-    } catch (error) {
-      toast.error(error.data.detail)
+    } catch {
+      toast.error("حدث خطأ أثناء الإضافة");
     } finally {
       setLoading(false);
     }
   };
+
+
 
   return (
     <div
@@ -243,7 +251,9 @@ const Questions = () => {
                   </button>
                   {isOpen && (
                     <div className="p-5 pt-0 mt-2 ">
-                      {q.imageUrl && <img src={q.imageUrl} alt="صورة السؤال" className="mb-2 max-h-32 rounded-lg  object-contain" />}
+                      {q.imageUrl && <img onClick={()=>{
+                        window.open(q.imageUrl, '_blank');
+                      }} src={q.imageUrl} alt="صورة السؤال" className="mb-2 max-h-32 rounded-lg  object-contain" />}
                       {q.type === 1 && q.options && (
                         <div className="flex flex-wrap gap-2 mb-2">
                           {q.options.map((opt, i) => (
@@ -268,164 +278,97 @@ const Questions = () => {
         )}
       </div>
 
-      {/* Render forms for each next question */}
-      {nextQuestions.map((q, idx) => (
-        <form
-          key={idx}
-          className="w-full max-w-lg glass-effect rounded-2xl p-8 border border-white/10 bg-gradient-to-br from-slate-800/40 to-slate-900/50 backdrop-blur-lg shadow-xl mb-8 relative"
-          onSubmit={e => e.preventDefault()}
-        >
-          <button
-            type="button"
-            onClick={() => handleDeleteQuestion(idx)}
-            className="absolute left-4 top-4 text-red-500 hover:text-red-700 text-xl"
-            title="حذف السؤال"
-          >
-            ×
-          </button>
-          <div className="mb-4">
-            <label className="block text-gray-300 mb-2">نوع السؤال *</label>
-            <Select
-              value={q.type}
-              onChange={selected => handleQuestionTypeChange(idx, selected)}
-              options={QUESTION_TYPE_OPTIONS}
-              styles={customSelectStyles}
-              placeholder="اختر نوع السؤال"
-              isRtl
-              isSearchable={false}
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-300 mb-2">نص السؤال *</label>
-            <input
-              type="text"
-              className="w-full rounded-lg p-3 bg-slate-900/60 text-white border border-cyan-400/20 focus:border-cyan-400 outline-none"
-              value={q.text}
-              onChange={e => handleQuestionChange(idx, 'text', e.target.value)}
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-300 mb-2">الصورة (اختياري)</label>
-            <input
-              type="file"
-              accept="image/*"
-              className="w-full rounded-lg p-3 bg-slate-900/60 text-white border border-cyan-400/20 focus:border-cyan-400 outline-none mb-2"
-              onChange={e => handleQuestionImageChange(idx, e)}
-            />
-            {q.imageUrl && (
-              <img src={q.imageUrl} alt="صورة السؤال" className="mb-2 max-h-32 rounded" />
-            )}
-          </div>
-          {q.type.value === 1 && (
-            <div className="mb-4">
-              <label className="block text-gray-300 mb-2">الخيارات *</label>
-              {q.options.map((opt, optIdx) => (
-                <div key={optIdx} className="flex items-center gap-2 mb-2">
-                  <input
-                    type="radio"
-                    name={`mcq-correct-${idx}`}
-                    checked={opt.isCorrect}
-                    onChange={() => handleQuestionCorrectChange(idx, optIdx)}
-                  />
-                  <input
-                    type="text"
-                    className="rounded-lg p-2 bg-slate-900/60 text-white border border-cyan-400/20 flex-1"
-                    placeholder={`الخيار ${optIdx + 1}`}
-                    value={opt.text}
-                    onChange={e => handleQuestionOptionChange(idx, optIdx, e.target.value)}
-                    required
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-          {q.type.value === 2 && (
-            <div className="mb-4">
-              <label className="block text-gray-300 mb-2">الإجابة الصحيحة *</label>
-              <div className="flex gap-4">
-                {q.options.map((opt, optIdx) => (
-                  <label key={optIdx} className="flex items-center gap-1">
-                    <input
-                      type="radio"
-                      name={`tf-correct-${idx}`}
-                      checked={opt.isCorrect}
-                      onChange={() => handleQuestionTFChange(idx, optIdx)}
-                    />
-                    {opt.text}
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-        </form>
-      ))}
-
-            {/* Add Question Button */}
-      <button
-        onClick={() => setNextQuestions(prev => [...prev, {
-          text: "",
-          imageUrl: "",
-          type: QUESTION_TYPE_OPTIONS[0],
-          options: [
-            { text: "", isCorrect: false },
-            { text: "", isCorrect: false },
-            { text: "", isCorrect: false },
-            { text: "", isCorrect: false },
-          ],
-        }])}
-        className="w-[20%] mb-5 text-center p-3 rounded-lg border-2 border-dashed border-gray-600 hover:border-cyan-400 hover:text-cyan-400 transition-all text-gray-400"
+      {/* Add Question Form */}
+      <form
+        className="w-full max-w-lg glass-effect rounded-2xl p-8 border border-white/10 bg-gradient-to-br from-slate-800/40 to-slate-900/50 backdrop-blur-lg shadow-xl mb-8 relative"
+        onSubmit={handleSubmit}
       >
-        + إضافة سؤال جديد
-      </button>
-
-      {/* Summary of questions to be submitted */}
-      {nextQuestions.length > 0 && (
-        <div className="w-full max-w-2xl mb-8">
-          <h3 className="text-lg font-bold mb-4 text-cyan-400">ملخص الأسئلة التي ستتم إضافتها:</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {nextQuestions.map((q, idx) => (
-              <div key={idx} className="bg-gradient-to-br from-slate-800/60 to-slate-900/80 border border-cyan-400/20 rounded-xl p-4 shadow relative">
-                <button
-                  type="button"
-                  onClick={() => handleDeleteQuestion(idx)}
-                  className="absolute left-3 top-3 text-red-500 hover:text-red-700 text-lg"
-                  title="حذف السؤال"
-                >
-                  ×
-                </button>
-                <div className="font-semibold text-white mb-2">{q.text}</div>
-                {q.imageUrl && <img src={q.imageUrl} alt="صورة السؤال" className="mb-2 max-h-24 rounded" />}
-                <div className="mb-1 text-cyan-300">{q.type.value === 1 ? 'اختيار من متعدد' : q.type.value === 2 ? 'صح أو خطأ' : 'إجابة نصية'}</div>
-                {q.type.value === 1 && q.options && (
-                  <div className="flex flex-wrap gap-2">
-                    {q.options.map((opt, i) => (
-                      <span key={i} className={`px-2 py-1 rounded ${opt.isCorrect ? 'bg-green-500 text-white' : 'bg-gray-300'}`}>{opt.text}</span>
-                    ))}
-                  </div>
-                )}
-                {q.type.value === 2 && q.options && (
-                  <div className="flex gap-2 mt-2">
-                    {q.options.map((opt, i) => (
-                      <span key={i} className={`px-2 py-1 rounded ${opt.isCorrect ? 'bg-green-500 text-white' : 'bg-red-400'}`}>{opt.text}</span>
-                    ))}
-                  </div>
-                )}
-                {q.type.value === 3 && (
-                  <div className="mt-2 text-gray-300">إجابة نصية</div>
-                )}
+        <div className="mb-4">
+          <label className="block text-gray-300 mb-2">نوع السؤال *</label>
+          <Select
+            value={newQuestion.type}
+            onChange={handleTypeChange}
+            options={QUESTION_TYPE_OPTIONS}
+            styles={customSelectStyles}
+            placeholder="اختر نوع السؤال"
+            isRtl
+            isSearchable={false}
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block text-gray-300 mb-2">نص السؤال *</label>
+          <input
+            type="text"
+            className="w-full rounded-lg p-3 bg-slate-900/60 text-white border border-cyan-400/20 focus:border-cyan-400 outline-none"
+            value={newQuestion.text}
+            onChange={e => handleInputChange('text', e.target.value)}
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block text-gray-300 mb-2">الصورة (اختياري)</label>
+          <input
+            type="file"
+            accept="image/*"
+            className="w-full rounded-lg p-3 bg-slate-900/60 text-white border border-cyan-400/20 focus:border-cyan-400 outline-none mb-2"
+            onChange={handleImageChange}
+          />
+          {newQuestion.imageUrl && (
+            <img src={newQuestion.imageUrl} alt="صورة السؤال" className="mb-2 max-h-32 rounded" />
+          )}
+        </div>
+        {newQuestion.type.value === 1 && (
+          <div className="mb-4">
+            <label className="block text-gray-300 mb-2">الخيارات *</label>
+            {newQuestion.options.map((opt, optIdx) => (
+              <div key={optIdx} className="flex items-center gap-2 mb-2">
+                <input
+                  type="radio"
+                  name="mcq-correct"
+                  checked={opt.isCorrect}
+                  onChange={() => handleCorrectChange(optIdx)}
+                />
+                <input
+                  type="text"
+                  className="rounded-lg p-2 bg-slate-900/60 text-white border border-cyan-400/20 flex-1"
+                  placeholder={`الخيار ${optIdx + 1}`}
+                  value={opt.text}
+                  onChange={e => handleOptionChange(optIdx, e.target.value)}
+                  required
+                />
               </div>
             ))}
           </div>
-          <button
-            onClick={handleSubmitAll}
-            className="w-full mt-6 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold text-lg transition-colors disabled:opacity-60"
-            disabled={loading}
-          >
-            {loading ? "جاري الإرسال..." : "إرسال جميع الأسئلة"}
-          </button>
-        </div>
-      )}
+        )}
+        {newQuestion.type.value === 2 && (
+          <div className="mb-4">
+            <label className="block text-gray-300 mb-2">الإجابة الصحيحة *</label>
+            <div className="flex gap-4">
+              {newQuestion.options.map((opt, optIdx) => (
+                <label key={optIdx} className="flex items-center gap-1">
+                  <input
+                    type="radio"
+                    name="tf-correct"
+                    checked={opt.isCorrect}
+                    onChange={() => handleCorrectChange(optIdx)}
+                  />
+                  {opt.text}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+        <button
+          type="submit"
+          className="w-full mt-6 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold text-lg transition-colors disabled:opacity-60"
+          disabled={loading}
+        >
+          {loading ? "جاري الإرسال..." : "إضافة السؤال"}
+        </button>
+      </form>
+
+      {/* Summary of questions to be submitted */}
+      {/* Removed the summary section and any code that renders questions.length > 0 as a summary of questions to be added */}
     </div>
   );
 };

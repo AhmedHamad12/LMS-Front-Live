@@ -36,6 +36,7 @@ import ResetPassword from "./pages/auth/Reset password/ResetPassword";
 import Quizzes from "./pages/teacher/Quizzes";
 import Questions from "./pages/teacher/Questions";
 import CreateQuiz from "./pages/teacher/CreateQuiz";
+import Submissions from "./pages/teacher/Submissions";
 
 
 function App() {
@@ -60,6 +61,8 @@ function App() {
           <Route path="/teacher/quizzes" element={<Quizzes/>}/>
           <Route path="/teacher/quizzes/create" element={<CreateQuiz/>}/>
           <Route path="/teacher/quizzes/:quizId/questions" element={<Questions/>}/>
+          <Route path="/teacher/quizzes/:quizId/submissions" element={<Submissions/>}/>
+
 
 
           <Route path="/reset/email" element={<Email />} />

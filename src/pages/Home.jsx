@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import axios from "../api/axios";
 import {
   BookOpen,
   Star,
@@ -17,6 +18,7 @@ import { Link } from "react-router-dom";
 export default function Home() {
   const [activeFaq, setActiveFaq] = useState(null);
   const canvasRef = useRef(null);
+  const [teachers, setTeachers] = useState([]);
 
   const cookies = new Cookies();
   const token = cookies.get("token");
@@ -41,54 +43,19 @@ export default function Home() {
     },
   ];
 
-  // Animated background
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const stars = [];
-    for (let i = 0; i < 100; i++) {
-      stars.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        radius: Math.random() * 2,
-        speed: Math.random() * 0.5 + 0.1,
-      });
+ useEffect(()=>{
+  const fetchTeachers = async ()=>{
+    try {
+      const response = await axios.get('/api/Teacher/getAllTeacher')
+      setTeachers(response.data);
+      console.log(response.data);
+      
+    } catch (error) {
+      
     }
-
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      stars.forEach((star) => {
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(0, 191, 255, 0.7)";
-        ctx.fill();
-
-        star.y += star.speed;
-        if (star.y > canvas.height) {
-          star.y = 0;
-          star.x = Math.random() * canvas.width;
-        }
-      });
-
-      requestAnimationFrame(animate);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }
+  fetchTeachers();
+ },[])
 
   return (
     <div

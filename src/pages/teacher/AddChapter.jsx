@@ -43,7 +43,7 @@ const AddChapter = () => {
 
     return axios
       .get(
-        "http://lms278.runasp.net/api/Account/GetCurrentUser",
+        "https://api.elmohdra.com/api/Account/GetCurrentUser",
         {
           headers: {
             'accept': 'text/plain',

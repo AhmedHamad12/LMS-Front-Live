@@ -40,7 +40,7 @@ const AddCourse = () => {
     const token = cookies.get("token");
 
     return axios
-      .get("http://lms278.runasp.net/api/Account/GetCurrentUser", {
+      .get("https://api.elmohdra.com/api/Account/GetCurrentUser", {
         headers: {
           accept: "text/plain",
           Authorization: `Bearer ${token}`,

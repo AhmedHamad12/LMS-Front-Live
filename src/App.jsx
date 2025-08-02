@@ -1,6 +1,6 @@
 import "./index.css";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import CourseManagement from "./pages/teacher/CourseManagement";
+// import CourseManagement from "./pages/teacher/AddLesson";
 import TeacherDashboard from "./pages/teacher/Dashboard";
 import TeacherStudents from "./pages/teacher/Students";
 import Earn from "./pages/teacher/Earn";
@@ -36,31 +36,52 @@ import ResetPassword from "./pages/auth/Reset password/ResetPassword";
 import Quizzes from "./pages/teacher/Quizzes";
 import Questions from "./pages/teacher/Questions";
 import CreateQuiz from "./pages/teacher/CreateQuiz";
-
+import AddLesson from "./pages/teacher/AddLesson";
+import AddCourse from "./pages/teacher/AddCourse";
+import AddChapter from "./pages/teacher/AddChapter";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import CourseManagement from "./pages/teacher/CourseManagement";
+import CourseData from "./pages/students/CourseData";
+import Teacher from "./pages/teacher/Teacher";
 
 function App() {
+  const queryClient = new QueryClient();
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       <BackgroundAnimation />
-
 
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route
-            path="/teacher/coursemanagement"
-            element={<CourseManagement />}
-          />
-          <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-          <Route
-            path="/teacher/teacherstudents"
-            element={<TeacherStudents />} 
-          />
-          <Route path="/teacher/earn" element={<Earn />} />
-          <Route path="/teacher/quizzes" element={<Quizzes/>}/>
-          <Route path="/teacher/quizzes/create" element={<CreateQuiz/>}/>
-          <Route path="/teacher/quizzes/:quizId/questions" element={<Questions/>}/>
 
+          <Route path="/teacher" element={<Teacher />}>
+            <Route
+              path="addlesson/:courseId/:chapterId"
+              element={<AddLesson />}
+            />
+            <Route
+              path={`addchapter/:courseId`}
+              element={<AddChapter />}
+            />
+            <Route path="addcourse" element={<AddCourse />} />
+            <Route path="dashboard" element={<TeacherDashboard />} />
+            <Route
+              path="teacherstudents"
+              element={<TeacherStudents />}
+            />
+            <Route
+              path="course/mange/:courseId"
+              element={<CourseManagement />}
+            />
+            <Route path="earn" element={<Earn />} />
+            <Route path="quizzes" element={<Quizzes />} />
+            <Route path="quizzes/create" element={<CreateQuiz />} />
+            <Route
+              path="quizzes/:quizId/questions"
+              element={<Questions />}
+            />
+          </Route>
 
           <Route path="/reset/email" element={<Email />} />
           <Route path="/reset/otp" element={<OTP />} />
@@ -69,6 +90,7 @@ function App() {
           <Route path="/students" element={<Students />}>
             <Route path="allcourses" element={<AllCourses />} />
             <Route path="course" element={<Course />} />
+            <Route path="course/data/:courseId" element={<CourseData />} />
             <Route path="mytasks" element={<MyTasks />} />
             <Route path="myexams" element={<MyExams />} />
             <Route path="rewards" element={<Rewards />} />
@@ -94,7 +116,8 @@ function App() {
         </Routes>
       </BrowserRouter>
       <Toaster />
-    </>
+      <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
+    </QueryClientProvider>
   );
 }
 

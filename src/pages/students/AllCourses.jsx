@@ -1,4 +1,8 @@
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import React, { useState, useEffect, useRef } from "react";
+import { Cookies } from "react-cookie";
+import { Link } from "react-router-dom";
 import * as THREE from "three";
 
 const AllCourses = () => {
@@ -11,51 +15,35 @@ const AllCourses = () => {
   const rendererRef = useRef(null);
   const starsRef = useRef({ far: null, mid: null, close: null });
 
-  const courses = [
-    {
-      title: "الفيزياء الكونية للمرحلة الثانوية",
-      teacher: "أ. خالد صقر",
-      subject: "physics",
-      image: "https://placehold.co/600x400/003366/00BFFF?text=الفيزياء+الكونية",
-    },
-    {
-      title: "رياضيات الفضاء المتقدمة",
-      teacher: "أ. منى علي",
-      subject: "math",
-      image: "https://placehold.co/600x400/2F004F/00BFFF?text=رياضيات+الفضاء",
-    },
-    {
-      title: "الكيمياء الفلكية",
-      teacher: "أ. أحمد السيد",
-      subject: "chemistry",
-      image: "https://placehold.co/600x400/004c4c/00BFFF?text=الكيمياء+الفلكية",
-    },
-    {
-      title: "الفيزياء الحديثة وأسرار الكم",
-      teacher: "أ. خالد صقر",
-      subject: "physics",
-      image: "https://placehold.co/600x400/005f73/00BFFF?text=الفيزياء+الحديثة",
-    },
-    {
-      title: "الأحياء الفضائية",
-      teacher: "أ. حسن محمود",
-      subject: "biology",
-      image: "https://placehold.co/600x400/2a9d8f/ffffff?text=الأحياء+الفضائية",
-    },
-    {
-      title: "أساسيات البرمجة للمستكشفين",
-      teacher: "أ. سارة إبراهيم",
-      subject: "other",
-      image: "https://placehold.co/600x400/457b9d/ffffff?text=البرمجة",
-    },
-  ];
+  const cookies = new Cookies();
+  const token = cookies.get("token");
 
-  const filteredCourses = courses.filter(
+  const fetchCourses = () => {
+    return axios
+      .get("http://lms278.runasp.net/api/Course/GetAllCourses", {
+        headers: {
+          accept: "text/plain",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .catch((error) => {
+        console.error("User data fetch error:", error);
+      });
+  };
+
+  const { data: allCourses } = useQuery({
+    queryKey: ["courses"],
+    queryFn: fetchCourses,
+  });
+
+  console.log(allCourses?.data);
+
+  const filteredCourses = allCourses?.data.filter(
     (course) =>
-      (filter === "all" || course.subject === filter) &&
+      // (filter === "all" || course.subject === filter) &&
       (search === "" ||
         course.title.includes(search) ||
-        course.teacher.includes(search))
+        course.teacher.firstName.includes(search))
   );
 
   // Three.js setup
@@ -176,6 +164,8 @@ const AllCourses = () => {
     { key: "other", label: "أخرى" },
   ];
 
+  console.log(filteredCourses);
+
   return (
     <div
       className=" text-gray-100 font-[Cairo] h-screen overflow-hidden w-full"
@@ -249,13 +239,13 @@ const AllCourses = () => {
 
           {/* Courses Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            {filteredCourses.map((course, index) => (
+            {filteredCourses?.map((course, index) => (
               <div
                 key={index}
                 className="bg-gradient-to-b from-slate-900/40 to-slate-800/50 backdrop-blur-2xl border border-white/5 rounded-2xl overflow-hidden group flex flex-col transform hover:-translate-y-2 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,191,255,0.2)]"
               >
                 <img
-                  src={course.image}
+                  src={course.courseImage}
                   alt="صورة كورس"
                   className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
@@ -263,20 +253,20 @@ const AllCourses = () => {
                   <h3 className="text-xl font-bold text-white mb-2 group-hover:text-cyan-400 transition-colors">
                     {course.title}
                   </h3>
-                  <p className="text-sm text-gray-400 mb-4">{`مع ${course.teacher}`}</p>
+                  <p className="text-sm text-gray-400 mb-4">{`مع ${`${course.teacher.firstName} ${course.teacher.lastName}`}`}</p>
                   <div className="flex-grow"></div>
-                  <a
-                    href="#"
+                  <Link
+                    to={`/students/course/data/${course.id}`}
                     className="w-full mt-auto text-center block p-3 rounded-lg bg-purple-600 text-white font-bold hover:bg-purple-500 transition-colors transform hover:scale-105"
                   >
                     عرض التفاصيل
-                  </a>
+                  </Link>
                 </div>
               </div>
             ))}
 
             {/* No results message */}
-            {filteredCourses.length === 0 && (
+            {filteredCourses?.length === 0 && (
               <div className="md:col-span-2 xl:col-span-3 text-center py-16">
                 <svg
                   className="w-16 h-16 mx-auto text-gray-600 mb-4"

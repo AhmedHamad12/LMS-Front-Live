@@ -21,17 +21,17 @@ export default function AddStudent() {
 
     await axios
       .post(
-        "http://lms278.runasp.net/api/Student/addStudent",
+        "https://api.elmohdra.com/api/Student/addStudent",
         { firstName, lastName, phone, parentName, parentPhone, studentYears },
         {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        },
+        }
       )
       .then((response) => {
-        navigate('/login')
+        navigate("/login");
         console.log(response);
       })
       .catch((error) => {

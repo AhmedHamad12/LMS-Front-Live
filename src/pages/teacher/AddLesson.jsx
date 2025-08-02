@@ -396,7 +396,7 @@ const AddLesson = () => {
     try {
       setLoading(true);
       const data = await axios.post(
-        "http://lms278.runasp.net/api/Lesson",
+        "https://api.elmohdra.com/api/Lesson",
         formData,
         {
           headers: {

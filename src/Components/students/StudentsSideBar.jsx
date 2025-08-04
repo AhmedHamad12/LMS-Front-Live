@@ -1,12 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
-//testing
-
 
 function StudentsSideBar() {
   const location = useLocation();
 
   return (
-    <aside className="w-20 lg:w-64 glass-effect p-2 lg:p-6 flex flex-col justify-between transition-all duration-300 flex-shrink-0">
+    <aside className="w-20 lg:w-64 glass-effect p-2 lg:p-6 flex flex-col justify-between transition-all duration-300 flex-shrink-0 h-screen fixed top-0 right-0 z-50">
       <div>
         <div className="text-3xl font-black text-center mb-12 text-white">
           <Link
@@ -69,9 +67,7 @@ function StudentsSideBar() {
               >
                 <svg
                   className={`w-6 h-6 transition-colors ${
-                    isActive
-                      ? "text-cyan-400"
-                      : "group-hover:text-cyan-400"
+                    isActive ? "text-cyan-400" : "group-hover:text-cyan-400"
                   }`}
                   fill="none"
                   stroke="currentColor"
@@ -84,11 +80,13 @@ function StudentsSideBar() {
                     d={item.icon}
                   />
                 </svg>
-                <span className={`hidden lg:ml-3 lg:block transition-colors ${
-                  isActive
-                    ? "text-cyan-400 font-semibold"
-                    : "group-hover:text-cyan-400"
-                }`}>
+                <span
+                  className={`hidden lg:ml-3 lg:block transition-colors ${
+                    isActive
+                      ? "text-cyan-400 font-semibold"
+                      : "group-hover:text-cyan-400"
+                  }`}
+                >
                   {item.title}
                 </span>
               </Link>

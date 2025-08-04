@@ -24,9 +24,10 @@ function StudentRegister() {
 
     await axios
       .post(
-        "http://lms278.runasp.net/api/Account/Register/Student",
+        "https://api.elmohdra.com/api/Account/Register/Student",
         { displayName: name, email, password, joinedAt },
-        { headers: { "Content-Type": "application/json" } },
+        { withCredentials: true },
+        { headers: { "Content-Type": "application/json" } }
       )
       .then((response) => {
         cookies.set("token", response.data.token);

@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import * as THREE from "three";
 
 const Earn = () => {
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const canvasRef = useRef(null);
   const mainContentRef = useRef(null);
   const sceneRef = useRef(null);
@@ -116,85 +115,6 @@ const Earn = () => {
     }
   }, []);
 
-  const navigationItems = [
-    {
-      title: "لوحة التحكم",
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-          />
-        </svg>
-      ),
-      active: false,
-    },
-    {
-      title: "كورساتي",
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-          />
-        </svg>
-      ),
-      active: false,
-    },
-    {
-      title: "الطلاب",
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-          />
-        </svg>
-      ),
-      active: false,
-    },
-    {
-      title: "الأرباح",
-      icon: (
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-          />
-        </svg>
-      ),
-      active: true,
-    },
-  ];
-
   const transactions = [
     {
       description: "اشتراك شهري من الطالب",
@@ -224,9 +144,8 @@ const Earn = () => {
 
   return (
     <div
-      className="bg-black text-gray-100 h-screen overflow-hidden"
+      className="text-gray-100 font-[Cairo] h-screen overflow-hidden w-full"
       dir="rtl"
-      style={{ fontFamily: "Cairo, sans-serif" }}
     >
       <canvas
         ref={canvasRef}
@@ -234,78 +153,6 @@ const Earn = () => {
       />
 
       <div className="flex h-screen">
-        {/* Sidebar */}
-        <aside className="w-20 lg:w-64 bg-gradient-to-br from-slate-800/40 to-slate-900/50 backdrop-blur-sm border border-white/5 p-2 lg:p-6 flex flex-col justify-between transition-all duration-300 flex-shrink-0">
-          <div>
-            {/* Logo */}
-            <div
-              className="text-3xl font-black text-center mb-12 text-white"
-              style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
-            >
-              <Link to="/home" className="block">
-                <span className="hidden lg:inline">المجرّة.</span>
-                <span className="lg:hidden">🚀</span>
-              </Link>
-            </div>
-
-            {/* Navigation */}
-            <nav className="space-y-4">
-              {navigationItems.map((item, index) => (
-                <Link
-                  key={index}
-                  to={item.title === "لوحة التحكم" ? "/teacher/dashboard" : 
-                      item.title === "كورساتي" ? "/teacher/courses" :
-                      item.title === "الطلاب" ? "/teacher/students" :
-                      item.title === "الأرباح" ? "/teacher/earn" : "#"}
-                  className={`flex items-center justify-center lg:justify-start p-3 rounded-lg transition-colors ${
-                    item.active
-                      ? "bg-cyan-500/20 text-white font-bold"
-                      : "text-gray-300 hover:bg-white/10"
-                  }`}
-                  title={item.title}
-                >
-                  {item.icon}
-                  <span className="hidden lg:inline mr-3">{item.title}</span>
-                </Link>
-              ))}
-            </nav>
-          </div>
-
-          {/* Profile Menu */}
-          <div className="relative">
-            <div
-              onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-              className="bg-gradient-to-br from-slate-800/40 to-slate-900/50 backdrop-blur-sm border border-white/5 p-2 lg:p-3 rounded-lg flex items-center justify-center lg:justify-start cursor-pointer"
-            >
-              <img
-                src="https://placehold.co/40x40/000000/ffffff?text=أ.خ"
-                alt="صورة المستخدم"
-                className="w-10 h-10 rounded-full border-2 border-cyan-400"
-              />
-              <div className="hidden lg:block mr-3">
-                <p className="font-bold text-white">أ. خالد صقر</p>
-                <p className="text-xs text-gray-400">مدرس فيزياء</p>
-              </div>
-            </div>
-
-            {profileMenuOpen && (
-              <div className="absolute bottom-full mb-2 w-full bg-gradient-to-br from-slate-800/40 to-slate-900/50 backdrop-blur-sm border border-white/5 rounded-lg overflow-hidden">
-                <Link
-                  to="/teacher/profile"
-                  className="block px-4 py-3 text-right text-sm text-gray-200 hover:bg-white/10"
-                >
-                  الملف الشخصي
-                </Link>
-                <Link
-                  to="/logout"
-                  className="block px-4 py-3 text-right text-sm text-red-400 hover:bg-red-500/20"
-                >
-                  تسجيل الخروج
-                </Link>
-              </div>
-            )}
-          </div>
-        </aside>
 
         {/* Main Content */}
         <main
@@ -345,21 +192,21 @@ const Earn = () => {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-12">
-            <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/50 backdrop-blur-sm border border-white/5 rounded-2xl p-6">
+            <div className="glass-effect rounded-2xl p-6">
               <p className="text-sm text-gray-400">الرصيد القابل للسحب</p>
               <p className="text-3xl font-black text-green-400">
                 18,750 <span className="text-base">جنيه</span>
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/50 backdrop-blur-sm border border-white/5 rounded-2xl p-6">
+            <div className="glass-effect rounded-2xl p-6">
               <p className="text-sm text-gray-400">أرباح هذا الشهر</p>
               <p className="text-3xl font-black text-white">
                 12,500 <span className="text-base">جنيه</span>
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/50 backdrop-blur-sm border border-white/5 rounded-2xl p-6">
+            <div className="glass-effect rounded-2xl p-6">
               <p className="text-sm text-gray-400">الاشتراكات النشطة</p>
               <p className="text-3xl font-black text-white">
                 350 <span className="text-base">طالب</span>
@@ -378,7 +225,7 @@ const Earn = () => {
             {/* Transaction History */}
             <div className="lg:col-span-2">
               <h2 className="text-2xl font-bold mb-6">سجل المعاملات الأخير</h2>
-              <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/50 backdrop-blur-sm border border-white/5 rounded-2xl p-4">
+              <div className="glass-effect rounded-2xl p-4">
                 <div className="space-y-2">
                   {transactions.map((transaction, index) => (
                     <div
@@ -412,7 +259,7 @@ const Earn = () => {
             {/* Reports */}
             <div>
               <h2 className="text-2xl font-bold mb-6">تقارير الأرباح</h2>
-              <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/50 backdrop-blur-sm border border-white/5 rounded-2xl p-6 space-y-4">
+              <div className="glass-effect rounded-2xl p-6 space-y-4">
                 <div>
                   <label
                     htmlFor="report_month"

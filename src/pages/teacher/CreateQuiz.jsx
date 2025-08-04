@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import axios from '../../api/axios';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import Select from 'react-select';
-import { Cookies } from 'react-cookie';
 
-// TODO:Replace with actual auth 
-
+// TODO:Replace with actual auth context
+const useAuth = () => ({ user: { id: 0 } });
 
 const TARGET_TYPE_OPTIONS = [
   { label: 'كورس', value: 1 },
@@ -64,14 +63,7 @@ const customSelectStyles = {
 };
 
 const CreateQuiz = () => {
-  //TODO: id from cookies
-
-  
-
-  const cookies = new Cookies
-  const token = cookies.get("token")
-  const id = cookies.get("teacherId")
-  
+  const { user } = useAuth();
   const [form, setForm] = useState({
     title: '',
     targetType: TARGET_TYPE_OPTIONS[0],
@@ -93,10 +85,8 @@ const CreateQuiz = () => {
   useEffect(() => {
     const fetchTargets = async () => {
       setTargetLoading(true);
-      console.log("id" , id);
-      
       try {
-        const res = await axios.get(`/api/Quiz/target?targetType=${form.targetType.value}`);
+        const res = await axios.get(`http://lms278.runasp.net/api/Quiz/target?targetType=${form.targetType.value}`);
         const options = Array.isArray(res.data)
           ? res.data.map((item) => ({
               value: item.id,
@@ -136,7 +126,7 @@ const CreateQuiz = () => {
     try {
       const payload = {
         title: form.title,
-        teacherId: id,
+        teacherId: user.id,
         targetType: form.targetType.value,
         targetId: form.targetId ? form.targetId.value : '',
         timeLimitMinutes: Number(form.timeLimitMinutes),
@@ -146,11 +136,7 @@ const CreateQuiz = () => {
       console.log(payload);
       
       const response = await toast.promise(
-        axios.post('/api/Quiz', payload,{
-          withCredentials:true, headers :{
-            'Authorization': `Bearer ${token}`
-          }
-        }),
+        axios.post('http://lms278.runasp.net/api/Quiz', payload),
         {
           loading: 'جاري إنشاء الاختبار...',
           success: 'تم إنشاء الاختبار بنجاح!',

@@ -1,5 +1,4 @@
-import { Cookies } from "react-cookie";
-import axios from "../../api/axios";
+import axios from "axios";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useParams } from "react-router-dom";
@@ -60,11 +59,11 @@ const customSelectStyles = {
 };
 
 const Questions = () => {
-  //TODO: fix apis
   const { quizId } = useParams();
   const [questions, setquestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [openAccordion, setOpenAccordion] = useState(null);
+
 
   const cookies = new Cookies();
   const token = cookies.get("token");
@@ -77,6 +76,7 @@ const Questions = () => {
             Authorization: `Bearer ${token}`,
           },
         });
+
         setquestions(response.data);
         console.log(response.data);
       } catch (error) {
@@ -166,6 +166,7 @@ const Questions = () => {
     e.preventDefault();
     setLoading(true);
     try {
+
       const formData = new FormData();
       formData.append("Text", newQuestion.text);
       formData.append("type", newQuestion.type.value);
@@ -208,6 +209,7 @@ const Questions = () => {
           Authorization: `Bearer ${token}`,
         },
       });
+
       setquestions(response.data);
     } catch {
       toast.error("حدث خطأ أثناء الإضافة");

@@ -1,4 +1,4 @@
-import axios from "../../api/axios.js";
+import axios from "../../api/axios";
 import React, { useState } from "react";
 import { Cookies } from "react-cookie";
 import { Link, useNavigate } from "react-router";

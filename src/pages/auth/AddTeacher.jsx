@@ -30,14 +30,14 @@ export default function AddTeacher() {
 
     try {
       const response = await axios.post(
-        "http://lms278.runasp.net/api/Teacher/addTeacher",
+        "https://api.elmohdra.com/api/Teacher/addTeacher",
         formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
             Authorization: `Bearer ${token}`,
           },
-        },
+        }
       );
       console.log("Success:", response.data);
       navigate("/login");

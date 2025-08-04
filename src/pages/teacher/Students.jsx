@@ -7,7 +7,6 @@ const TeacherStudents = () => {
   const [search, setSearch] = useState("");
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const [studentForChallenge, setStudentForChallenge] = useState(null);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const canvasRef = useRef(null);
   const mainContentRef = useRef(null);
   const sceneRef = useRef(null);
@@ -171,19 +170,19 @@ const TeacherStudents = () => {
 
   return (
     <div
-      className="bg-black text-gray-100 overflow-hidden"
-      style={{ fontFamily: "Cairo, sans-serif" }}
+      className="text-gray-100 font-[Cairo] h-screen overflow-hidden w-full"
+      dir="rtl"
     >
       <canvas
         ref={canvasRef}
-        className="fixed top-0 left-0 w-full h-screen -z-10"
+        className="fixed top-0 left-0 w-full h-full -z-10"
       />
 
       {/* Challenge Modal */}
       {showChallengeModal && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 opacity-100 transition-opacity">
           <div
-            className="bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-md border border-yellow-500/20 rounded-2xl w-full max-w-lg shadow-2xl shadow-yellow-500/10 flex flex-col"
+            className="glass-effect border border-yellow-500/20 rounded-2xl w-full max-w-lg shadow-2xl shadow-yellow-500/10 flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <header className="p-4 border-b border-white/10 flex-shrink-0">
@@ -244,140 +243,16 @@ const TeacherStudents = () => {
         </div>
       )}
 
-      <div className="flex h-screen w-full" dir="rtl">
-        {/* Sidebar */}
-        <aside className="w-20 lg:w-64 bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-md border border-white/5 p-2 lg:p-6 flex flex-col justify-between transition-all duration-300 flex-shrink-0">
-          <div>
-            <div
-              className="text-3xl font-black text-center mb-12 text-white"
-              style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
-            >
-              <Link to="/home">
-                <span className="hidden lg:inline">المجرّة.</span>
-                <span className="lg:hidden">🚀</span>
-              </Link>
-            </div>
-            <nav className="space-y-4">
-              <Link
-                to="/teacher/dashboard"
-                className="flex items-center justify-center lg:justify-start p-3 rounded-lg text-gray-300 hover:bg-white/10 transition-colors"
-                title="لوحة التحكم"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                  />
-                </svg>
-                <span className="hidden lg:inline mr-3">لوحة التحكم</span>
-              </Link>
-              <Link
-                to="/teacher/courses"
-                className="flex items-center justify-center lg:justify-start p-3 rounded-lg text-gray-300 hover:bg-white/10 transition-colors"
-                title="كورساتي"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                  />
-                </svg>
-                <span className="hidden lg:inline mr-3">كورساتي</span>
-              </Link>
-              <Link
-                to="/teacher/students"
-                className="flex items-center justify-center lg:justify-start p-3 rounded-lg bg-cyan-500/20 text-white font-bold"
-                title="الطلاب"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-                <span className="hidden lg:inline mr-3">الطلاب</span>
-              </Link>
-              <Link
-                to="/teacher/earn"
-                className="flex items-center justify-center lg:justify-start p-3 rounded-lg text-gray-300 hover:bg-white/10 transition-colors"
-                title="الأرباح"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                  />
-                </svg>
-                <span className="hidden lg:inline mr-3">الأرباح</span>
-              </Link>
-            </nav>
-          </div>
-          <div className="relative">
-            <div
-              onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-md border border-white/5 p-2 lg:p-3 rounded-lg flex items-center justify-center lg:justify-start cursor-pointer"
-            >
-              <img
-                src="https://placehold.co/40x40/000000/ffffff?text=أ.خ"
-                alt="صورة المستخدم"
-                className="w-10 h-10 rounded-full border-2 border-cyan-400"
-              />
-              <div className="hidden lg:block mr-3">
-                <p className="font-bold text-white">أ. خالد صقر</p>
-                <p className="text-xs text-gray-400">مدرس فيزياء</p>
-              </div>
-            </div>
-            {userMenuOpen && (
-              <div className="absolute bottom-full mb-2 w-full bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-md border border-white/5 rounded-lg overflow-hidden">
-                <Link
-                  to="/teacher/profile"
-                  className="block px-4 py-3 text-right text-sm text-gray-200 hover:bg-white/10"
-                >
-                  الملف الشخصي
-                </Link>
-                <Link
-                  to="/logout"
-                  className="block px-4 py-3 text-right text-sm text-red-400 hover:bg-red-500/20"
-                >
-                  تسجيل الخروج
-                </Link>
-              </div>
-            )}
-          </div>
-        </aside>
+      <div className="flex h-screen">
 
         {/* Main Content */}
         <main
           ref={mainContentRef}
-          className="flex-1 p-8 overflow-y-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-black/20 hover:scrollbar-thumb-cyan-400"
+          className="flex-1 p-8 overflow-y-auto"
+          style={{
+            scrollbarWidth: "thin",
+            scrollbarColor: "#00BFFF rgba(0,0,0,0.2)",
+          }}
         >
           <h1
             className="text-4xl font-black text-white mb-2"
@@ -390,7 +265,7 @@ const TeacherStudents = () => {
           </p>
 
           {/* Search and Filter */}
-          <div className="bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-md border border-white/5 rounded-2xl p-4 mb-8 flex flex-col md:flex-row gap-4 items-center">
+          <div className="glass-effect rounded-2xl p-4 mb-8 flex flex-col md:flex-row gap-4 items-center">
             <div className="relative flex-grow w-full">
               <input
                 type="text"
@@ -455,7 +330,7 @@ const TeacherStudents = () => {
             {filteredStudents.map((student) => (
               <div
                 key={student.id}
-                className={`bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-md border border-white/5 rounded-2xl p-6 text-center transform hover:-translate-y-2 transition-transform duration-300 ${
+                className={`glass-effect rounded-2xl p-6 text-center transform hover:-translate-y-2 transition-transform duration-300 ${
                   student.performance === "struggling"
                     ? "border-2 border-red-500/50"
                     : ""
@@ -482,7 +357,7 @@ const TeacherStudents = () => {
                 </div>
                 <div className="flex flex-col gap-2">
                   <Link
-                    href="#"
+                    to="#"
                     className="w-full text-center block p-3 rounded-lg bg-white/10 text-white font-bold hover:bg-white/20 transition-colors text-sm"
                   >
                     عرض الملف

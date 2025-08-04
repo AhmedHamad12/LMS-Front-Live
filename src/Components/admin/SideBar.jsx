@@ -1,19 +1,9 @@
 import React, { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { IoLogOutOutline } from "react-icons/io5";
-import { Cookies } from "react-cookie";
 
 const Sidebar = () => {
   const [open, setOpen] = useState(false);
-
-  const cookies = new Cookies
-  const navigate = useNavigate()
-  const handleLogout = ()=>{
-    cookies.remove('token')
-    
-
-    navigate("/")
-  }
 
   const navLinks = [
     {
@@ -82,7 +72,7 @@ const Sidebar = () => {
   ];
 
   return (
-    <div className="h-[100vh] w-20 lg:w-64 glass-effect p-2 lg:p-6 flex flex-col justify-between transition-all duration-300 flex-shrink-0">
+    <div className="h-screen w-20 lg:w-64 glass-effect p-2 lg:p-6 flex flex-col justify-between transition-all duration-300 flex-shrink-0 fixed top-0 left-0 z-50">
       <div>
         {/* Brand / Title */}
         <div className="text-3xl font-black text-center mb-12 text-white title-glow">
@@ -136,7 +126,7 @@ const Sidebar = () => {
             className="absolute bottom-full mb-2 w-full glass-effect rounded-lg overflow-hidden"
             onMouseLeave={() => setOpen(false)}
           >
-            <button onClick={handleLogout} className="block w-full text-right px-4 py-3 text-sm text-red-400 hover:bg-red-500/20">
+            <button className="block w-full text-right px-4 py-3 text-sm text-red-400 hover:bg-red-500/20">
               تسجيل الخروج
             </button>
           </div>

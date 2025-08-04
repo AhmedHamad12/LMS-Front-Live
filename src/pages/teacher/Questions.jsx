@@ -1,4 +1,4 @@
-import axios from "../../api/axios";
+import axios from "axios";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useParams } from "react-router-dom";
@@ -69,7 +69,7 @@ const Questions = () => {
     const fetchQuestions = async () => {
       try {
         const response = await axios.get(
-          `/api/Quiz/${quizId}/questions`
+          `http://lms278.runasp.net/api/Quiz/${quizId}/questions`
         );
         setquestions(response.data);
         console.log(response.data);

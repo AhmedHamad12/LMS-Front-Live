@@ -1,4 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
+import { Cookies } from "react-cookie";
 import * as THREE from "three";
 
 export default function Profile() {
@@ -137,6 +140,51 @@ export default function Profile() {
     console.log("Saving profile changes:", profileData);
   };
 
+  const cookies = new Cookies();
+  const token = cookies.get("token");
+  
+  const fetchUser = () => {
+    return axios
+      .get("http://lms278.runasp.net/api/Account/GetCurrentUser", {
+        headers: {
+          accept: "text/plain",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .catch((error) => {
+        console.error("User data fetch error:", error);
+      });
+  };
+
+  const { data: user } = useQuery({
+    queryKey: ["user"],
+    queryFn: fetchUser,
+  });
+
+  const fetchAllData = () => {
+    return axios
+      .get(
+        `http://lms278.runasp.net/api/Student/getStudentById/${user.data.studentId}`,
+        {
+          headers: {
+            accept: "text/plain",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+      .catch((error) => {
+        console.error("User data fetch error:", error);
+      });
+  };
+
+  const { data: allData } = useQuery({
+    queryKey: ["all-data"],
+    queryFn: fetchAllData,
+  });
+
+  console.log(user);
+  console.log(allData);
+
   return (
     <>
       {/* Background Canvas */}
@@ -205,7 +253,7 @@ export default function Profile() {
             </div>
             <div>
               <h1
-                className="text-4xl font-black text-white"
+                className="text-4xl font-black text-white mb-3"
                 style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
               >
                 {profileData.name}

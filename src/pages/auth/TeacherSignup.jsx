@@ -25,9 +25,9 @@ function TeacherSignup() {
 
     await axios
       .post(
-        "http://lms278.runasp.net/api/Account/Register/Teacher",
+        "https://api.elmohdra.com/api/Account/Register/Teacher",
         { displayName: name, email, password, joinedAt },
-        { headers: { "Content-Type": "application/json" } },
+        { headers: { "Content-Type": "application/json" } }
       )
       .then((response) => {
         cookies.set("token", response.data.token);

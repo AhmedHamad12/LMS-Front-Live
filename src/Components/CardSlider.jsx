@@ -97,7 +97,6 @@ const CardSlider = () => {
     </div>
   );
 };
-//test
-//test
+
 
 export default CardSlider;

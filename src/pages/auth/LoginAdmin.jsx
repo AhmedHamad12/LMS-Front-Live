@@ -16,13 +16,13 @@ export default function LoginAdmin() {
 
     await axios
       .post(
-        "http://lms278.runasp.net/api/Account/LoginAdmin",
+        "https://api.elmohdra.com/api/Account/LoginAdmin",
         { email, password },
         {
           headers: {
             "Content-Type": "application/json",
           },
-        },
+        }
       )
       .then((response) => {
         cookies.set("token", response.data.token);

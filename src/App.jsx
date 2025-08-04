@@ -1,6 +1,10 @@
 import "./index.css";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+
+// import CourseManagement from "./pages/teacher/CourseManagement";
+
 // import CourseManagement from "./pages/teacher/AddLesson";
+
 import TeacherDashboard from "./pages/teacher/Dashboard";
 import TeacherStudents from "./pages/teacher/Students";
 import Earn from "./pages/teacher/Earn";
@@ -36,6 +40,9 @@ import ResetPassword from "./pages/auth/Reset password/ResetPassword";
 import Quizzes from "./pages/teacher/Quizzes";
 import Questions from "./pages/teacher/Questions";
 import CreateQuiz from "./pages/teacher/CreateQuiz";
+
+import Submissions from "./pages/teacher/Submissions";
+
 import AddLesson from "./pages/teacher/AddLesson";
 import AddCourse from "./pages/teacher/AddCourse";
 import AddChapter from "./pages/teacher/AddChapter";
@@ -49,7 +56,9 @@ function App() {
   const queryClient = new QueryClient();
   return (
     <QueryClientProvider client={queryClient}>
+
       <BackgroundAnimation />
+
 
       <BrowserRouter>
         <Routes>
@@ -60,16 +69,12 @@ function App() {
               path="addlesson/:courseId/:chapterId"
               element={<AddLesson />}
             />
-            <Route
-              path={`addchapter/:courseId`}
-              element={<AddChapter />}
-            />
+
+            <Route path={`addchapter/:courseId`} element={<AddChapter />} />
             <Route path="addcourse" element={<AddCourse />} />
             <Route path="dashboard" element={<TeacherDashboard />} />
-            <Route
-              path="teacherstudents"
-              element={<TeacherStudents />}
-            />
+            <Route path="teacherstudents" element={<TeacherStudents />} />
+
             <Route
               path="course/mange/:courseId"
               element={<CourseManagement />}
@@ -77,10 +82,9 @@ function App() {
             <Route path="earn" element={<Earn />} />
             <Route path="quizzes" element={<Quizzes />} />
             <Route path="quizzes/create" element={<CreateQuiz />} />
-            <Route
-              path="quizzes/:quizId/questions"
-              element={<Questions />}
-            />
+
+            <Route path="quizzes/:quizId/questions" element={<Questions />} />
+
           </Route>
 
           <Route path="/reset/email" element={<Email />} />

@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from "../../api/axios.js";
 import React, { useState } from "react";
 import { Cookies } from "react-cookie";
 import { Link, useNavigate } from "react-router";
@@ -16,7 +16,7 @@ export default function Login() {
 
     await axios
       .post(
-        "https://api.elmohdra.com/api/Account/Login",
+        "/api/Account/Login",
         { email, password },
         {
           headers: {

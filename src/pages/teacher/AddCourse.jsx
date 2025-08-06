@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import * as THREE from "three";
 
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import axios from "../../api/axios";
 import { Cookies } from "react-cookie";
 import TeacherAside from "../../Components/teacher/TeacherAside";
 
@@ -40,7 +40,7 @@ const AddCourse = () => {
     const token = cookies.get("token");
 
     return axios
-      .get("https://api.elmohdra.com/api/Account/GetCurrentUser", {
+      .get("/api/Account/GetCurrentUser", {
         headers: {
           accept: "text/plain",
           Authorization: `Bearer ${token}`,

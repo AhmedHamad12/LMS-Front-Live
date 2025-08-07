@@ -74,8 +74,8 @@ function App() {
           </Route>
 
           <Route path="/reset/email" element={<Email />} />
-          <Route path="/reset/otp" element={<OTP />} />
-          <Route path="/reset/new" element={<ResetPassword />} />
+          <Route path="/reset/check-code" element={<OTP />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           <Route path="/students" element={<Students />}>
             <Route path="allcourses" element={<AllCourses />} />

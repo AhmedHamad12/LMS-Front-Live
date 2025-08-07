@@ -90,12 +90,12 @@ export default function Login() {
               </div>
 
               <div className="mt-5">
-                <a
-                  href="#"
+                <Link
+                  to="/reset/email"
                   className="text-sm font-medium text-cyan-400 hover:text-cyan-300"
                 >
                   نسيت كلمة المرور؟
-                </a>
+                </Link>
               </div>
 
               <div className="mt-5">

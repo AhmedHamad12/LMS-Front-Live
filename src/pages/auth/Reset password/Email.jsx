@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from '../../../api/axios';
 
 const Email = () => {
   const [email, setEmail] = useState('');
@@ -7,16 +8,47 @@ const Email = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     if (!email) {
       setError('يرجى توفير البريد الالكتروني');
       return;
+
     }
+
+    if(!emailRegex.test(email) ){
+      setError("البريد الإلكتروني غير صالح")
+      return
+    }
+
+    console.log(email);
     
-    //TODO: try catch block for api call , or outer async method and await here
-  };
+    
+
+    const payload = {
+      email 
+    }
+    const sendEmail = async ()=>{
+      setLoading(true)
+      try {
+        const response = await axios.post(`/api/email/send-reset?email=${email}`)
+        navigate("/reset/check-code")
+      } catch (error) {
+        setError(error?.response?.data)
+        console.log(error);
+        
+      }
+      finally{
+        setLoading(false)
+      }
+    }
+
+    sendEmail()
+    
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center  text-white">

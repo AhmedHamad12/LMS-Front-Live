@@ -32,8 +32,15 @@ api.interceptors.request.use(
       }
     } catch (error) {
       console.error("Error in request interceptor:", error);
-      // no-op: if cookies aren't accessible, proceed without token
     }
+    
+    console.log("Making request:", {
+      url: config.url,
+      method: config.method,
+      hasAuthHeader: !!config.headers?.Authorization,
+      hasCookies: !!config.withCredentials
+    });
+    
     return config;
   },
   (error) => {

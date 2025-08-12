@@ -7,9 +7,12 @@ const Sidebar = () => {
   const [open, setOpen] = useState(false);
 
   const cookies = new Cookies
+  const allCookies = cookies.getAll();
   const navigate = useNavigate()
   const handleLogout = ()=>{
-    cookies.remove('token')
+    Object.keys(allCookies).forEach(cookieName => {
+      cookies.remove(cookieName);
+    });
     
 
     navigate("/")

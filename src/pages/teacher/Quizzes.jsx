@@ -19,11 +19,9 @@ const Quizzes = () => {
   useEffect(() => {
     const fetchQuizzes = async () => {
       try {
-        const response = await axios.get(`/api/Quiz/getQuizForTeacher${id}`, {
+        const response = await axios.get(`/api/Quiz/getQuizForTeacher`, {
           withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+         
         });
         setQuizzes(response.data);
         console.log("quizzes", response.data);

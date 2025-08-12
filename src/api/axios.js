@@ -15,7 +15,7 @@ export const setUnauthorizedHandler = (handler) => {
 const api = axios.create({
   baseURL: BASE_URL,
   headers: { "Content-Type": "application/json" },
-  withCredentials: true, // Send cookies with cross-origin requests
+  
 });
 
 // Request interceptor: attach token if available

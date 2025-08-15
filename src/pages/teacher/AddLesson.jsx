@@ -1,53 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import * as THREE from "three";
-
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import * as tus from "tus-js-client";
+import axios from "../../api/axios";
 import { Cookies } from "react-cookie";
 
 const AddLesson = () => {
-  const { courseId, chapterId } = useParams();
+  const { courseId, unitId } = useParams();
   const navigate = useNavigate();
 
-  console.log(courseId, chapterId);
-
-  // Validate URL parameters
-  // useEffect(() => {
-  //   if (!courseId || !chapterId) {
-  //     console.error("Missing required URL parameters:", {
-  //       courseId,
-  //       chapterId,
-  //     });
-  //     navigate("/teacher/courses");
-  //     return;
-  //   }
-
-  // Validate that parameters are numeric
-  //   if (isNaN(Number(courseId)) || isNaN(Number(chapterId))) {
-  //     console.error("Invalid URL parameters - must be numeric:", {
-  //       courseId,
-  //       chapterId,
-  //     });
-  //     navigate("/teacher/courses");
-  //     return;
-  //   }
-
-  //   console.log("URL Parameters:", { courseId, chapterId });
-  // }, [courseId, chapterId, navigate]);
+  console.log(courseId, unitId);
 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [activeLesson, setActiveLesson] = useState({
-    id: 1,
-    title: "الدرس الأول: التيار الكهربي",
-  });
-  const [chapters, setChapters] = useState([
-    {
-      id: 1,
-      title: "الباب الأول: الكهربية التياريه",
-      lessons: [{ id: 1, title: "الدرس الأول: التيار الكهربي" }],
-    },
-  ]);
 
   const canvasRef = useRef(null);
   const mainContentRef = useRef(null);
@@ -56,360 +20,312 @@ const AddLesson = () => {
   const cameraRef = useRef(null);
   const starFieldsRef = useRef([]);
 
-  // const fetchUserData = () => {
-  //   const cookies = new Cookies();
-  //   const token = cookies.get("token");
+  // https://www.npmjs.com/package/tus-js-client
 
-  //   if (!token) {
-  //     throw new Error("No authentication token found");
-  //   }
-
-  //   return axios
-  //     .get("http://lms278.runasp.net/api/Account/GetCurrentUser", {
-  //       headers: {
-  //         accept: "text/plain",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     })
-  //     .catch((error) => {
-  //       console.error("User data fetch error:", error);
-
-  //       if (error.response?.status === 403) {
-  //         console.log(
-  //           "403 Forbidden - trying to get user data from alternative endpoint..."
-  //         );
-
-  //         return axios
-  //           .get("http://lms278.runasp.net/api/Account/GetUser", {
-  //             headers: {
-  //               accept: "text/plain",
-  //               Authorization: `Bearer ${token}`,
-  //             },
-  //           })
-  //           .catch((altError) => {
-  //             console.error("Alternative user endpoint also failed:", altError);
-
-  //             console.log("Returning mock user data");
-  //             return {
-  //               data: {
-  //                 displayName: "Teacher",
-  //                 email: "teacher@example.com",
-  //                 role: "Teacher",
-  //                 teacherId: null,
-  //                 studentId: null,
-  //                 isMock: true,
-  //               },
-  //             };
-  //           });
-  //       }
-
-  //       throw error;
-  //     });
-  // };
-
-  // const fetchChapterData = () => {
-  //   const cookies = new Cookies();
-  //   const token = cookies.get("token");
-
-  //   if (!token) {
-  //     throw new Error("No authentication token found");
-  //   }
-
-  //   if (!chapterId || isNaN(Number(chapterId))) {
-  //     throw new Error("Invalid chapter ID");
-  //   }
-
-  //   console.log("Fetching chapter data for chapterId:", chapterId);
-
-  //   return axios
-  //     .get(`http://lms278.runasp.net/api/CourseUnit/unit/${chapterId}`, {
-  //       headers: {
-  //         accept: "application/json",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     })
-  //     .then((response) => {
-  //       console.log("Chapter data fetched successfully:", response.data);
-  //       return response;
-  //     })
-  //     .catch((error) => {
-  //       console.error("Chapter data fetch error:", error);
-  //       if (error.response) {
-  //         console.error("Response status:", error.response.status);
-  //         console.error("Response data:", error.response.data);
-  //       }
-  //       throw error;
-  //     });
-  // };
-
-  // const fetchLessonData = () => {
-  //   const cookies = new Cookies();
-  //   const token = cookies.get("token");
-
-  //   if (!token) {
-  //     throw new Error("No authentication token found");
-  //   }
-
-  //   if (!chapterId || isNaN(Number(chapterId))) {
-  //     throw new Error("Invalid chapter ID");
-  //   }
-
-  //   console.log("Fetching lesson data for chapterId:", chapterId);
-
-  //   return axios
-  //     .get(`http://lms278.runasp.net/api/Lesson/unit/${chapterId}`, {
-  //       headers: {
-  //         accept: "application/json",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     })
-  //     .then((response) => {
-  //       console.log("Lesson data fetched successfully:", response.data);
-  //       return response;
-  //     })
-  //     .catch((error) => {
-  //       console.log("First lesson endpoint failed, trying alternative...");
-  //       console.error("Error details:", error.response?.data);
-
-  //       if (!courseId || isNaN(Number(courseId))) {
-  //         throw new Error("Invalid course ID for fallback");
-  //       }
-
-  //       return axios.get(
-  //         `http://lms278.runasp.net/api/Lesson/course/${courseId}`,
-  //         {
-  //           headers: {
-  //             accept: "application/json",
-  //             Authorization: `Bearer ${token}`,
-  //           },
-  //         }
-  //       );
-  //     })
-  //     .catch((error) => {
-  //       console.log("All lesson endpoints failed, returning empty array");
-  //       console.error("Final error:", error.response?.data);
-  //       return { data: [] };
-  //     });
-  // };
-
-  // // Fixed uploadLesson function with better parameter validation
-  // const uploadLesson = async () => {
-  //   const cookies = new Cookies();
-  //   const token = cookies.get("token");
-
-  //   if (!token) {
-  //     throw new Error("No authentication token found");
-  //   }
-
-  //   // Validate URL parameters
-  //   if (!chapterId || isNaN(Number(chapterId))) {
-  //     throw new Error("Invalid chapter ID. Please check the URL parameters.");
-  //   }
-
-  //   // Validate required fields
-  //   if (!title || !content) {
-  //     throw new Error("Please fill in all required fields: title and content.");
-  //   }
-
-  //   if (!lessonImage || !videoFile) {
-  //     throw new Error("Please upload both lesson image and video file.");
-  //   }
-
-  //   // Create FormData with correct field names based on the API
-  //   const formData = new FormData();
-
-  //   // Use the exact field names from the API documentation
-  //   formData.append("Title", title);
-  //   formData.append("Content", content);
-  //   formData.append("VideoFile", videoFile);
-  //   formData.append("LessonImage", lessonImage);
-  //   formData.append("CourseUnitId", parseInt(chapterId)); // Ensure it's an integer
-  //   formData.append("IsFreePreview", isFreePreview);
-
-  //   // Optional fields - only add if they exist
-  //   if (pdfFile) {
-  //     formData.append("PdfFile", pdfFile);
-  //   }
-
-  //   if (thumbnailFile) {
-  //     formData.append("ThumbnailFile", thumbnailFile);
-  //   }
-
-  //   console.log("Sending lesson data:", {
-  //     Title: title,
-  //     Content: content,
-  //     CourseUnitId: parseInt(chapterId),
-  //     IsFreePreview: isFreePreview,
-  //     hasImage: !!lessonImage,
-  //     hasVideo: !!videoFile,
-  //     hasPdf: !!pdfFile,
-  //     hasThumbnail: !!thumbnailFile,
-  //   });
-
-  //   // Log FormData entries for debugging
-  //   console.log("FormData entries:");
-  //   for (let pair of formData.entries()) {
-  //     console.log(
-  //       pair[0] +
-  //         ": " +
-  //         (pair[1] instanceof File ? `File: ${pair[1].name}` : pair[1])
-  //     );
-  //   }
-
-  //   return axios
-  //     .post("http://lms278.runasp.net/api/Lesson", formData, {
-  //       headers: {
-  //         "Content-Type": "multipart/form-data",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     })
-  //     .then((response) => {
-  //       console.log("Lesson API Response:", response);
-  //       console.log("Response data:", response.data);
-  //       return response;
-  //     })
-  //     .catch((error) => {
-  //       console.error("Lesson API Error:", error);
-  //       console.error("Error response:", error.response?.data);
-
-  //       // Log the specific validation errors if they exist
-  //       if (error.response?.data?.errors) {
-  //         console.error("Validation errors:", error.response.data.errors);
-  //         console.error(
-  //           "Full validation error object:",
-  //           JSON.stringify(error.response.data.errors, null, 2)
-  //         );
-  //       }
-
-  //       // Also log the request data that was sent
-  //       console.error("Request data that was sent:", {
-  //         formDataEntries: Array.from(formData.entries()),
-  //       });
-
-  //       throw error;
-  //     });
-  // };
-
-  // // useQuery hooks with better error handling and parameter validation
-  // const {
-  //   isLoading: isLoadingUser,
-  //   data: dataUser,
-  //   isError: isErrorUser,
-  //   error: errorUser,
-  //   isFetching: isFetchingUser,
-  //   refetch: refetchUser,
-  // } = useQuery({
-  //   queryKey: ["user-data"],
-  //   queryFn: fetchUserData,
-  //   retry: (failureCount, error) => {
-  //     if (error.response?.status === 403 && failureCount < 3) {
-  //       console.log(
-  //         `Retrying user data fetch (attempt ${
-  //           failureCount + 1
-  //         }/3) due to 403 error...`
-  //       );
-  //       return true;
-  //     }
-  //     return false;
-  //   },
-  //   retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-  // });
-
-  // const {
-  //   isLoading: isLoadingChapter,
-  //   data: dataChapter,
-  //   isError: isErrorChapter,
-  //   error: errorChapter,
-  //   isFetching: isFetchingChapter,
-  //   refetch: refetchChapter,
-  // } = useQuery({
-  //   queryKey: ["chapter-data", chapterId],
-  //   queryFn: fetchChapterData,
-  //   enabled: !!(chapterId && !isNaN(Number(chapterId))), // Only run if chapterId is valid
-  //   retry: (failureCount, error) => {
-  //     // Don't retry on 404 errors - likely means the chapter doesn't exist
-  //     if (error.response?.status === 404) {
-  //       return false;
-  //     }
-  //     return failureCount < 2;
-  //   },
-  //   retryDelay: 1000,
-  // });
-
-  // const {
-  //   isLoading: isLoadingLesson,
-  //   data: dataLesson,
-  //   isError: isErrorLesson,
-  //   error: errorLesson,
-  //   isFetching: isFetchingLesson,
-  //   refetch: refetchLesson,
-  // } = useQuery({
-  //   queryKey: ["lesson-data", chapterId, courseId],
-  //   queryFn: fetchLessonData,
-  //   enabled: !!(
-  //     chapterId &&
-  //     !isNaN(Number(chapterId)) &&
-  //     courseId &&
-  //     !isNaN(Number(courseId))
-  //   ), // Only run if parameters are valid
-  //   retry: 1,
-  //   retryDelay: 1000,
-  // });
-
-  // const {
-  //   isLoading: isLoadingLessonSubmit,
-  //   data: dataLessonSubmit,
-  //   isError: isErrorLessonSubmit,
-  //   error: errorLessonSubmit,
-  //   isFetching: isFetchingLessonSubmit,
-  //   refetch: refetchLessonSubmit,
-  // } = useQuery({
-  //   queryKey: ["add-lesson"],
-  //   queryFn: uploadLesson,
-  //   enabled: false, // Disable automatic execution, only run when manually triggered
-  // });
+  // https://github.com/kqito/use-tus
 
   const cookies = new Cookies();
-  const token = cookies.get("token");
+  const jwt = cookies.get("token");
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [lessonImage, setLessonImage] = useState(null);
-  const [videoFile, setVideoFile] = useState(null);
+  // const [videoFile, setVideoFile] = useState(null);
   const [pdfFile, setPdfFile] = useState(null);
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [isFreePreview, setIsFreePreview] = useState(false);
-  const [loading, setLoading] = useState(false);
+  // const [videoData, setVideoData] = useState(null);
+  // const [loading, setLoading] = useState(false);
 
-  const addLesson = async () => {
+  // const addLesson = async () => {
+  //   console.log(videoData?.videoId);
+
+  //   const formData = new FormData();
+
+  //   if (thumbnailFile) formData.append("ThumbnailFile", thumbnailFile);
+  //   formData.append("Title", title);
+  //   formData.append("Content", content);
+  //   formData.append("VideoId", videoData?.videoId);
+  //   formData.append("VideoFile", videoFile);
+  //   formData.append("LessonImage", lessonImage);
+  //   formData.append("PdfFile", pdfFile);
+  //   formData.append("CourseUnitId", chapterId);
+  //   formData.append("CourseId", courseId);
+  //   formData.append("IsFreePreview", isFreePreview);
+  //   try {
+  //     setLoading(true);
+  //     const data = await axios.post("/api/Lesson", formData, {
+  //       headers: {
+  //         "Content-Type": "multipart/form-data",
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
+  //     console.log("Lesson added successfully:", data);
+  //   } catch (error) {
+  //     console.error("Error uploading lesson:", error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // const preSign = async () => {
+  //   await axios.post("/api/Lesson/video/presign", title, {
+  //     headers: {
+  //       Authorization: `Bearer ${token}`,
+  //     }
+  //   }).then(res => { setVideoData(res.data); console.log(res.data)}).catch(e => console.log(e))
+  // }
+
+  const apiBase = "http://lms278.runasp.net";
+  const [progress, setProgress] = useState(0);
+  const [stats, setStats] = useState("—");
+  const [stateText, setStateText] = useState("جاهز");
+  // const [logs, setLogs] = useState([]);
+  const [result, setResult] = useState("");
+  let currentUpload = useRef(null);
+  let startedAt = useRef(null);
+  const fileRef = useRef(null);
+
+  // const log = (m) => setLogs((prev) => [...prev, m]);
+
+  const fmtBytes = (n) => {
+    const u = ["B", "KB", "MB", "GB", "TB"];
+    let i = 0;
+    while (n >= 1024 && i < u.length - 1) {
+      n /= 1024;
+      i++;
+    }
+    return `${n.toFixed(2)} ${u[i]}`;
+  };
+
+  const eta = (uploaded, total, started) => {
+    const secs = (Date.now() - started) / 1000;
+    if (secs <= 0 || uploaded <= 0) return "—";
+    const rate = uploaded / secs;
+    const remain = (total - uploaded) / rate;
+    const m = Math.floor(remain / 60),
+      s = Math.floor(remain % 60);
+    return `${m}m ${s}s`;
+  };
+
+  const fileKey = (f) => `bny:file:${f.name}:${f.size}:${f.lastModified}`;
+  const getCache = (k) => {
+    const x = localStorage.getItem(k);
+    return x ? JSON.parse(x) : null;
+  };
+  const putCache = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+  const delCache = (k) => localStorage.removeItem(k);
+
+  const presign = async (title) => {
+    const r = await fetch(`${apiBase}/api/Lesson/video/presign`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${jwt}`,
+      },
+      body: JSON.stringify(title || "Untitled"),
+    });
+    if (!r.ok) throw new Error(`presign failed: ${await r.text()}`);
+    return r.json();
+  };
+
+  const resign = async (videoId) => {
+    const r = await fetch(`${apiBase}/api/Lesson/video/resign`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${jwt}`,
+      },
+      body: JSON.stringify({ videoId }),
+    });
+    if (!r.ok) throw new Error(`resign failed: ${await r.text()}`);
+    return r.json();
+  };
+
+  const createLesson = async ({ videoId }) => {
     const formData = new FormData();
 
     if (thumbnailFile) formData.append("ThumbnailFile", thumbnailFile);
     formData.append("Title", title);
     formData.append("Content", content);
-    formData.append("VideoFile", videoFile);
+    formData.append("VideoId", videoId);
     formData.append("LessonImage", lessonImage);
     formData.append("PdfFile", pdfFile);
-    formData.append("CourseUnitId", chapterId);
-    formData.append("CourseId", chapterId);
+    formData.append("CourseUnitId", unitId);
+    formData.append("CourseId", courseId);
     formData.append("IsFreePreview", isFreePreview);
-    try {
-      setLoading(true);
-      const data = await axios.post(
-        "https://api.elmohdra.com/api/Lesson",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
-          },
+
+    // const fd = new FormData();
+    // fd.append("Title", title);
+    // fd.append("Content", content);
+    // fd.append("LessonImage", lessonImage);
+    // fd.append("PdfFile", pdfFile);
+    // fd.append("CourseUnitId", +unitId);
+    // fd.append("CourseId", +courseId);
+    // fd.append("IsFreePreview", isFreePreview);
+    // fd.append("VideoId", videoId);
+    // if (thumbnailFile) fd.append("ThumbnailFile", thumbnailFile);
+    console.log(formData);
+    console.log(title);
+
+    // const r = await fetch(`${apiBase}/api/Lesson`, {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "multipart/form-data",
+    //     Authorization: `Bearer ${jwt}`,
+    //   },
+    //   body: formData,
+    // });
+    // console.log(r);
+    // const t = await r.text();
+    // if (!r.ok) throw new Error(`create lesson failed: ${t}`);
+    // return t;
+    const response = await axios
+      .post("/api/Lesson", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${jwt}`,
+        },
+      })
+      .then((res) => console.log(res.data))
+      .catch((e) => console.log(e));
+    return response?.data;
+  };
+
+  const startTus = (file, info, uploadUrl) => {
+    startedAt.current = Date.now();
+    const upload = new tus.Upload(file, {
+      endpoint: "https://video.bunnycdn.com/tusupload",
+      chunkSize: 5 * 1024 * 1024,
+      metadata: {
+        filename: file.name,
+        filetype: file.type || "application/octet-stream",
+      },
+      headers: {
+        AuthorizationSignature: info.authorizationSignature,
+        AuthorizationExpire: info.authorizationExpire,
+        VideoId: info.videoId,
+        LibraryId: info.libraryId,
+      },
+      onAfterResponse(req, res) {
+        const loc = res.getHeader("Location") || res.getHeader("location");
+        if (loc) {
+          const absolute = loc.startsWith("http")
+            ? loc
+            : `https://video.bunnycdn.com${loc}`;
+          const k = fileKey(file);
+          const cache = getCache(k) || {
+            videoId: info.videoId,
+            libraryId: info.libraryId,
+          };
+          if (!cache.uploadUrl) {
+            cache.uploadUrl = absolute;
+            putCache(k, cache);
+            console.log(`Saved session URL`);
+          }
         }
-      );
-      console.log("Lesson added successfully:", data);
-    } catch (error) {
-      console.error("Error uploading lesson:", error);
-    } finally {
-      setLoading(false);
+      },
+      async onError(err) {
+        if (
+          String(err).includes("403") ||
+          String(err).toLowerCase().includes("expire")
+        ) {
+          try {
+            const re = await resign(info.videoId);
+            this.options.headers.AuthorizationSignature =
+              re.authorizationSignature;
+            this.options.headers.AuthorizationExpire = re.authorizationExpire;
+            setStateText("جددنا التفويض — بنستأنف…");
+            this.start();
+            return;
+          } catch (e) {
+            console.log("re-sign failed: " + e.message);
+          }
+        }
+        setStateText("فشل الرفع");
+        console.log("Upload error: " + err);
+      },
+      async onSuccess() {
+        setStateText("تم الرفع ✔ — إنشاء الدرس…");
+        try {
+          const text = await createLesson({ videoId: info.videoId });
+          setResult(text);
+          setStateText("تم إنشاء الدرس ✅");
+          delCache(fileKey(file));
+          setTitle("");
+          setContent("");
+          setLessonImage(null);
+        } catch (e) {
+          setStateText("الرفع تم — فشل إنشاء الدرس");
+          console.log(e.message);
+        }
+      },
+      onProgress(u, t) {
+        const p = ((u / t) * 100).toFixed(2);
+        setProgress(p);
+        setStateText(`يرفع… ${p}%`);
+        const spd = u / ((Date.now() - startedAt.current) / 1000);
+        setStats(
+          `${fmtBytes(u)} / ${fmtBytes(t)}  —  ${fmtBytes(spd)}/s  —  ETA ${eta(
+            u,
+            t,
+            startedAt.current
+          )}`
+        );
+      },
+    });
+
+    currentUpload.current = upload;
+
+    if (uploadUrl) {
+      upload.resumeFromPreviousUpload({ url: uploadUrl });
+      setStateText("استئناف…");
+      upload.start();
+    } else {
+      upload.findPreviousUploads().then((list) => {
+        if (list.length) {
+          upload.resumeFromPreviousUpload(list[0]);
+          setStateText("استئناف تلقائي…");
+        } else setStateText("بدء الرفع…");
+        upload.start();
+      });
+    }
+  };
+
+  const handleUpload = async (e) => {
+    e.preventDefault();
+    const file = fileRef.current.files[0];
+    if (!file) {
+      alert("اختَر ملف فيديو");
+      return;
+    }
+    setResult("");
+    const k = fileKey(file);
+    let cache = getCache(k);
+
+    try {
+      if (cache?.videoId) {
+        setStateText("استئناف — تجديد التفويض…");
+        const info = await resign(cache.videoId);
+        startTus(file, info, cache.uploadUrl || null);
+      } else {
+        setStateText("تحضير جلسة جديدة (presign)…");
+        const info = await presign(title || file.name);
+        putCache(k, { videoId: info.videoId, libraryId: info.libraryId });
+        console.log(`videoId=${info.videoId}`);
+        startTus(file, info, null);
+      }
+    } catch (e) {
+      setStateText("فشل التحضير");
+      console.log(e.message);
+    }
+  };
+
+  const handleCancel = (e) => {
+    e.preventDefault();
+    if (currentUpload.current) {
+      currentUpload.current.abort();
+      setStateText("تم الإيقاف");
     }
   };
 
@@ -536,203 +452,6 @@ const AddLesson = () => {
     return () => document.removeEventListener("click", handleClickOutside);
   }, [userMenuOpen]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    addLesson();
-  };
-
-  // // Show loading state while fetching user data
-  // if (isLoadingUser || isFetchingUser) {
-  //   return (
-  //     <h2 className="text-white text-center mt-8">Loading user data...</h2>
-  //   );
-  // }
-
-  // // Show error state if user data fetch fails
-  // if (isErrorUser) {
-  //   const is403Error = errorUser?.response?.status === 403;
-  //   const errorMessage = is403Error
-  //     ? "لا يمكن الوصول لبيانات المستخدم. قد تكون هناك مشكلة في الصلاحيات أو الجلسة منتهية."
-  //     : `Error loading user data: ${errorUser.message}`;
-
-  //   return (
-  //     <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
-  //       <div className="bg-[rgba(10,10,25,0.5)] backdrop-blur-xl border border-gray-800/50 rounded-2xl p-8 shadow-xl max-w-md mx-4">
-  //         <div className="text-center">
-  //           <div className="text-6xl mb-4">⚠️</div>
-  //           <h2 className="text-2xl font-bold text-white mb-4">
-  //             {is403Error ? "مشكلة في الصلاحيات" : "خطأ في تحميل البيانات"}
-  //           </h2>
-  //           <p className="text-gray-400 mb-6">{errorMessage}</p>
-  //           <div className="space-y-3">
-  //             <Link
-  //               to="/login"
-  //               className="inline-block px-6 py-3 bg-cyan-500 text-white font-bold rounded-lg hover:bg-cyan-400 transition-colors"
-  //             >
-  //               إعادة تسجيل الدخول
-  //             </Link>
-  //             <button
-  //               onClick={() => refetchUser()}
-  //               className="block w-full px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-500 transition-colors"
-  //             >
-  //               إعادة المحاولة
-  //             </button>
-  //           </div>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
-  // // Show warning if using mock user data
-  // if (dataUser?.data?.isMock) {
-  //   return (
-  //     <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
-  //       <div className="bg-[rgba(10,10,25,0.5)] backdrop-blur-xl border border-gray-800/50 rounded-2xl p-8 shadow-xl max-w-md mx-4">
-  //         <div className="text-center">
-  //           <div className="text-6xl mb-4">⚠️</div>
-  //           <h2 className="text-2xl font-bold text-white mb-4">
-  //             مشكلة في الوصول لبيانات المستخدم
-  //           </h2>
-  //           <p className="text-gray-400 mb-6">
-  //             لا يمكن الوصول لبيانات المستخدم. قد تكون هناك مشكلة في الصلاحيات
-  //             أو الجلسة منتهية.
-  //           </p>
-  //           <div className="space-y-3">
-  //             <Link
-  //               to="/login"
-  //               className="inline-block px-6 py-3 bg-cyan-500 text-white font-bold rounded-lg hover:bg-cyan-400 transition-colors"
-  //             >
-  //               إعادة تسجيل الدخول
-  //             </Link>
-  //             <button
-  //               onClick={() => refetchUser()}
-  //               className="block w-full px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-500 transition-colors"
-  //             >
-  //               إعادة المحاولة
-  //             </button>
-  //           </div>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
-  // // Show warning if teacher profile is incomplete
-  // if (dataUser?.data?.role === "Teacher" && !dataUser?.data?.teacherId) {
-  //   return (
-  //     <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
-  //       <div className="bg-[rgba(10,10,25,0.5)] backdrop-blur-xl border border-gray-800/50 rounded-2xl p-8 shadow-xl max-w-md mx-4">
-  //         <div className="text-center">
-  //           <div className="text-6xl mb-4">⚠️</div>
-  //           <h2 className="text-2xl font-bold text-white mb-4">
-  //             ملف المدرس غير مكتمل
-  //           </h2>
-  //           <p className="text-gray-400 mb-6">
-  //             يبدو أن ملف المدرس الخاص بك غير مكتمل. يجب عليك إكمال ملف المدرس
-  //             قبل إنشاء الدروس.
-  //           </p>
-  //           <div className="space-y-3">
-  //             <Link
-  //               to="/add-teacher"
-  //               className="inline-block px-6 py-3 bg-cyan-500 text-white font-bold rounded-lg hover:bg-cyan-400 transition-colors"
-  //             >
-  //               إكمال ملف المدرس
-  //             </Link>
-  //             <button
-  //               onClick={() => refetchUser()}
-  //               className="block w-full px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-500 transition-colors"
-  //             >
-  //               إعادة تحميل البيانات
-  //             </button>
-  //           </div>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
-  // // Show error if URL parameters are invalid
-  // if (
-  //   !courseId ||
-  //   !chapterId ||
-  //   isNaN(Number(courseId)) ||
-  //   isNaN(Number(chapterId))
-  // ) {
-  //   return (
-  //     <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
-  //       <div className="bg-[rgba(10,10,25,0.5)] backdrop-blur-xl border border-gray-800/50 rounded-2xl p-8 shadow-xl max-w-md mx-4">
-  //         <div className="text-center">
-  //           <div className="text-6xl mb-4">❌</div>
-  //           <h2 className="text-2xl font-bold text-white mb-4">
-  //             معاملات URL غير صحيحة
-  //           </h2>
-  //           <p className="text-gray-400 mb-6">
-  //             معرف الكورس أو الفصل غير صحيح. يرجى التحقق من الرابط والمحاولة مرة
-  //             أخرى.
-  //           </p>
-  //           <div className="space-y-3">
-  //             <Link
-  //               to="/teacher/courses"
-  //               className="inline-block px-6 py-3 bg-cyan-500 text-white font-bold rounded-lg hover:bg-cyan-400 transition-colors"
-  //             >
-  //               العودة للكورسات
-  //             </Link>
-  //           </div>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
-  // const updateChapterTitle = (chapterId, newTitle) => {
-  //   setChapters(
-  //     chapters.map((chapter) =>
-  //       chapter.id === chapterId ? { ...chapter, title: newTitle } : chapter
-  //     )
-  //   );
-  // };
-
-  // const updateLessonTitle = (newTitle) => {
-  //   setActiveLesson({ ...activeLesson, title: newTitle });
-  // };
-
-  // const addNewChapter = () => {
-  //   const newChapter = {
-  //     id: chapters.length + 1,
-  //     title: "باب جديد",
-  //     lessons: [],
-  //   };
-  //   setChapters([...chapters, newChapter]);
-  // };
-
-  // const addNewLesson = (chapterId) => {
-  //   setChapters(
-  //     chapters.map((chapter) =>
-  //       chapter.id === chapterId
-  //         ? {
-  //             ...chapter,
-  //             lessons: [
-  //               ...chapter.lessons,
-  //               {
-  //                 id: Date.now(),
-  //                 title: "درس جديد",
-  //               },
-  //             ],
-  //           }
-  //         : chapter
-  //     )
-  //   );
-  // };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
-        <div className="text-2xl text-white">جارٍ إضافة الدرس...</div>
-      </div>
-    );
-  }
-
   return (
     <div
       className="text-gray-100 font-[Cairo] h-screen overflow-hidden w-full"
@@ -754,7 +473,7 @@ const AddLesson = () => {
             scrollbarColor: "#00BFFF rgba(0,0,0,0.2)",
           }}
         >
-          <form onSubmit={handleSubmit}>
+          <form>
             <header className="flex justify-between items-center mb-6">
               <div>
                 <h1
@@ -767,12 +486,12 @@ const AddLesson = () => {
                   أضف درساً جديداً للفصل الخاص بك.
                 </p>
               </div>
-              <button
+              {/* <button
                 type="submit"
                 className="px-6 py-3 rounded-lg bg-green-500 text-white font-bold hover:bg-green-400 transition-colors shadow-lg hover:shadow-green-500/25"
               >
                 إضافة الدرس
-              </button>
+              </button> */}
             </header>
 
             <div className="space-y-6">
@@ -869,21 +588,36 @@ const AddLesson = () => {
                     <div className="flex text-sm text-gray-400 justify-center">
                       <label className="relative cursor-pointer bg-gray-800/50 rounded-md px-3 py-1 font-medium text-cyan-400 hover:text-cyan-300 transition-colors">
                         <span>اختر فيديو الدرس</span>
-                        <input
-                          type="file"
-                          accept="video/*"
-                          onChange={(e) => setVideoFile(e.target.files[0])}
-                          required
-                          className="sr-only"
-                        />
+                        <input ref={fileRef} type="file" accept="video/*" />
                       </label>
                     </div>
                     <p className="text-xs text-gray-500">MP4, MOV up to 1GB</p>
-                    {videoFile && (
-                      <p className="text-sm text-green-400">
-                        تم اختيار: {videoFile.name}
-                      </p>
-                    )}
+                    {/* Buttons */}
+                    <div className="mt-4 flex gap-2 justify-center">
+                      <button
+                        className="bg-blue-500 text-white px-4 py-2 rounded"
+                        onClick={(e) => handleUpload(e)}
+                      >
+                        Upload / Resume
+                      </button>
+                      <button
+                        className="bg-red-500 text-white px-4 py-2 rounded"
+                        onClick={handleCancel}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+
+                    {/* Progress */}
+                    <div className="mt-4">
+                      <progress
+                        className="w-96 h-4 progress-bar"
+                        max="100"
+                        value={progress}
+                      ></progress>
+                      <div className="mt-1 text-sm">{stats}</div>
+                      <div className="mt-1">{stateText}</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -994,3 +728,329 @@ const AddLesson = () => {
 };
 
 export default AddLesson;
+
+// import React, { useState, useRef } from "react";
+// import { Cookies } from "react-cookie";
+// import * as tus from "tus-js-client";
+
+// export default function AddLesson() {
+//   const [apiBase, setApiBase] = useState("http://lms278.runasp.net");
+//   // const [jwt, setJwt] = useState("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...");
+//   const [title, setTitle] = useState("mohamedhany");
+//   const [courseId, setCourseId] = useState(16);
+//   const [unitId, setUnitId] = useState(9);
+
+//   const cookies = new Cookies();
+//   const jwt = cookies.get("token");
+
+//   const [progress, setProgress] = useState(0);
+//   const [stats, setStats] = useState("—");
+//   const [stateText, setStateText] = useState("جاهز");
+//   const [logs, setLogs] = useState([]);
+//   const [result, setResult] = useState("");
+//   let currentUpload = useRef(null);
+//   let startedAt = useRef(null);
+//   const fileRef = useRef(null);
+
+//   const log = (m) => setLogs((prev) => [...prev, m]);
+
+//   const fmtBytes = (n) => {
+//     const u = ["B", "KB", "MB", "GB", "TB"];
+//     let i = 0;
+//     while (n >= 1024 && i < u.length - 1) {
+//       n /= 1024;
+//       i++;
+//     }
+//     return `${n.toFixed(2)} ${u[i]}`;
+//   };
+
+//   const eta = (uploaded, total, started) => {
+//     const secs = (Date.now() - started) / 1000;
+//     if (secs <= 0 || uploaded <= 0) return "—";
+//     const rate = uploaded / secs;
+//     const remain = (total - uploaded) / rate;
+//     const m = Math.floor(remain / 60),
+//       s = Math.floor(remain % 60);
+//     return `${m}m ${s}s`;
+//   };
+
+//   const fileKey = (f) => `bny:file:${f.name}:${f.size}:${f.lastModified}`;
+//   const getCache = (k) => {
+//     const x = localStorage.getItem(k);
+//     return x ? JSON.parse(x) : null;
+//   };
+//   const putCache = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+//   const delCache = (k) => localStorage.removeItem(k);
+
+//   const presign = async (title) => {
+//     const r = await fetch(`${apiBase}/api/Lesson/video/presign`, {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//         Authorization: `Bearer ${jwt}`,
+//       },
+//       body: JSON.stringify(title || "Untitled"),
+//     });
+//     if (!r.ok) throw new Error(`presign failed: ${await r.text()}`);
+//     return r.json();
+//   };
+
+//   const resign = async (videoId) => {
+//     const r = await fetch(`${apiBase}/api/Lesson/video/resign`, {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//         Authorization: `Bearer ${jwt}`,
+//       },
+//       body: JSON.stringify({ videoId }),
+//     });
+//     if (!r.ok) throw new Error(`resign failed: ${await r.text()}`);
+//     return r.json();
+//   };
+
+//   const createLesson = async ({ title, courseId, unitId, videoId }) => {
+//     const fd = new FormData();
+//     fd.append("Title", title || "Untitled");
+//     fd.append("Content", "uploaded via tester");
+//     fd.append("CourseId", String(courseId));
+//     fd.append("CourseUnitId", String(unitId));
+//     fd.append("IsFreePreview", "true");
+//     fd.append("VideoId", videoId);
+//     const r = await fetch(`${apiBase}/api/Lesson`, {
+//       method: "POST",
+//       headers: { Authorization: `Bearer ${jwt}` },
+//       body: fd,
+//     });
+//     const t = await r.text();
+//     if (!r.ok) throw new Error(`create lesson failed: ${t}`);
+//     return t;
+//   };
+
+//   const startTus = (file, info, uploadUrl) => {
+//     startedAt.current = Date.now();
+//     const upload = new tus.Upload(file, {
+//       endpoint: "https://video.bunnycdn.com/tusupload",
+//       chunkSize: 5 * 1024 * 1024,
+//       metadata: {
+//         filename: file.name,
+//         filetype: file.type || "application/octet-stream",
+//       },
+//       headers: {
+//         AuthorizationSignature: info.authorizationSignature,
+//         AuthorizationExpire: info.authorizationExpire,
+//         VideoId: info.videoId,
+//         LibraryId: info.libraryId,
+//       },
+//       onAfterResponse(req, res) {
+//         const loc = res.getHeader("Location") || res.getHeader("location");
+//         if (loc) {
+//           const absolute = loc.startsWith("http")
+//             ? loc
+//             : `https://video.bunnycdn.com${loc}`;
+//           const k = fileKey(file);
+//           const cache = getCache(k) || {
+//             videoId: info.videoId,
+//             libraryId: info.libraryId,
+//           };
+//           if (!cache.uploadUrl) {
+//             cache.uploadUrl = absolute;
+//             putCache(k, cache);
+//             log(`Saved session URL`);
+//           }
+//         }
+//       },
+//       async onError(err) {
+//         if (
+//           String(err).includes("403") ||
+//           String(err).toLowerCase().includes("expire")
+//         ) {
+//           try {
+//             const re = await resign(info.videoId);
+//             this.options.headers.AuthorizationSignature =
+//               re.authorizationSignature;
+//             this.options.headers.AuthorizationExpire = re.authorizationExpire;
+//             setStateText("جددنا التفويض — بنستأنف…");
+//             this.start();
+//             return;
+//           } catch (e) {
+//             log("re-sign failed: " + e.message);
+//           }
+//         }
+//         setStateText("فشل الرفع");
+//         log("Upload error: " + err);
+//       },
+//       async onSuccess() {
+//         setStateText("تم الرفع ✔ — إنشاء الدرس…");
+//         try {
+//           const text = await createLesson({
+//             title,
+//             courseId,
+//             unitId,
+//             videoId: info.videoId,
+//           });
+//           setResult(text);
+//           setStateText("تم إنشاء الدرس ✅");
+//           delCache(fileKey(file));
+//         } catch (e) {
+//           setStateText("الرفع تم — فشل إنشاء الدرس");
+//           log(e.message);
+//         }
+//       },
+//       onProgress(u, t) {
+//         const p = ((u / t) * 100).toFixed(2);
+//         setProgress(p);
+//         setStateText(`يرفع… ${p}%`);
+//         const spd = u / ((Date.now() - startedAt.current) / 1000);
+//         setStats(
+//           `${fmtBytes(u)} / ${fmtBytes(t)}  —  ${fmtBytes(spd)}/s  —  ETA ${eta(
+//             u,
+//             t,
+//             startedAt.current
+//           )}`
+//         );
+//       },
+//     });
+
+//     currentUpload.current = upload;
+
+//     if (uploadUrl) {
+//       upload.resumeFromPreviousUpload({ url: uploadUrl });
+//       setStateText("استئناف…");
+//       upload.start();
+//     } else {
+//       upload.findPreviousUploads().then((list) => {
+//         if (list.length) {
+//           upload.resumeFromPreviousUpload(list[0]);
+//           setStateText("استئناف تلقائي…");
+//         } else setStateText("بدء الرفع…");
+//         upload.start();
+//       });
+//     }
+//   };
+
+//   const handleUpload = async () => {
+//     const file = fileRef.current.files[0];
+//     if (!file) {
+//       alert("اختَر ملف فيديو");
+//       return;
+//     }
+//     setResult("");
+//     const k = fileKey(file);
+//     let cache = getCache(k);
+
+//     try {
+//       if (cache?.videoId) {
+//         setStateText("استئناف — تجديد التفويض…");
+//         const info = await resign(cache.videoId);
+//         startTus(file, info, cache.uploadUrl || null);
+//       } else {
+//         setStateText("تحضير جلسة جديدة (presign)…");
+//         const info = await presign(title || file.name);
+//         putCache(k, { videoId: info.videoId, libraryId: info.libraryId });
+//         log(`videoId=${info.videoId}`);
+//         startTus(file, info, null);
+//       }
+//     } catch (e) {
+//       setStateText("فشل التحضير");
+//       log(e.message);
+//     }
+//   };
+
+//   const handleCancel = () => {
+//     if (currentUpload.current) {
+//       currentUpload.current.abort();
+//       setStateText("تم الإيقاف");
+//     }
+//   };
+
+//   return (
+//     <div className="p-6 font-sans">
+//       <h2 className="text-xl font-bold mb-4">
+//         رفع/استئناف فيديو لـ Bunny بزر واحد
+//       </h2>
+
+//       {/* API Base */}
+//       {/* <label className="block mb-1">API Base</label>
+//       <input
+//         className="border px-2 py-1 w-96"
+//         value={apiBase}
+//         onChange={(e) => setApiBase(e.target.value)}
+//       /> */}
+
+//       {/* JWT */}
+//       {/* <label className="block mt-4 mb-1">JWT (Teacher)</label>
+//       <input
+//         className="border px-2 py-1 w-96"
+//         value={jwt}
+//         onChange={(e) => setJwt(e.target.value)}
+//       /> */}
+
+//       {/* Lesson Title */}
+//       <label className="block mt-4 mb-1">Lesson Title</label>
+//       <input
+//         className="border px-2 py-1 w-96"
+//         value={title}
+//         onChange={(e) => setTitle(e.target.value)}
+//       />
+
+//       {/* Course/Unit */}
+//       <label className="block mt-4 mb-1">CourseId / CourseUnitId</label>
+//       <div className="flex items-center gap-2">
+//         <input
+//           type="number"
+//           className="border px-2 py-1 w-24"
+//           value={courseId}
+//           onChange={(e) => setCourseId(Number(e.target.value))}
+//         />
+//         /
+//         <input
+//           type="number"
+//           className="border px-2 py-1 w-24"
+//           value={unitId}
+//           onChange={(e) => setUnitId(Number(e.target.value))}
+//         />
+//       </div>
+
+//       {/* File */}
+//       <label className="block mt-4 mb-1">اختر الفيديو</label>
+//       <input ref={fileRef} type="file" accept="video/*" />
+
+//       {/* Buttons */}
+//       <div className="mt-4 flex gap-2">
+//         <button
+//           className="bg-blue-500 text-white px-4 py-2 rounded"
+//           onClick={handleUpload}
+//         >
+//           Upload / Resume
+//         </button>
+//         <button
+//           className="bg-red-500 text-white px-4 py-2 rounded"
+//           onClick={handleCancel}
+//         >
+//           Cancel
+//         </button>
+//       </div>
+
+//       {/* Progress */}
+//       <div className="mt-4">
+//         <progress className="w-96 h-4" max="100" value={progress}></progress>
+//         <div className="mt-1 text-sm">{stats}</div>
+//         <div className="mt-1">{stateText}</div>
+//       </div>
+
+//       {/* Result */}
+//       <h3 className="mt-6 font-bold">نتيجة إنشاء الدرس</h3>
+//       <div className="bg-gray-100 p-2 rounded whitespace-pre-wrap">
+//         {result}
+//       </div>
+
+//       {/* Log */}
+//       <h3 className="mt-6 font-bold">Log</h3>
+//       <div className="bg-gray-50 p-2 rounded max-w-3xl font-mono">
+//         {logs.map((l, i) => (
+//           <div key={i}>{l}</div>
+//         ))}
+//       </div>
+//     </div>
+//   );
+// }

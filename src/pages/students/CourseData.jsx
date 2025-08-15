@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import * as THREE from "three";
 
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import axios from "../../api/axios";
 import { Cookies } from "react-cookie";
 import { useParams } from "react-router-dom";
 
@@ -21,9 +21,8 @@ const CourseData = () => {
 
   const fetchCourse = () => {
     return axios
-      .get(`http://lms278.runasp.net/api/Course/IsAllowed/${courseId}`, {
+      .get(`/api/teacher/courses/${courseId}/full`, {
         headers: {
-          accept: "*/*",
           Authorization: `Bearer ${token}`,
         },
       })
@@ -58,25 +57,25 @@ const CourseData = () => {
   //   enabled: !!teacherID, // only after the teacherID has been retrieved fetch the details
   // });
 
-  const fetchUser = () => {
-    return axios
-      .get("http://lms278.runasp.net/api/Account/GetCurrentUser", {
-        headers: {
-          accept: "text/plain",
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .catch((error) => {
-        console.error("User data fetch error:", error);
-      });
-  };
+  // const fetchUser = () => {
+  //   return axios
+  //     .get("http://lms278.runasp.net/api/Account/GetCurrentUser", {
+  //       headers: {
+  //         accept: "text/plain",
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     })
+  //     .catch((error) => {
+  //       console.error("User data fetch error:", error);
+  //     });
+  // };
 
-  const { data: user } = useQuery({
-    queryKey: ["user"],
-    queryFn: fetchUser,
-  });
+  // const { data: user } = useQuery({
+  //   queryKey: ["user"],
+  //   queryFn: fetchUser,
+  // });
 
-  console.log(user);
+  // console.log(user);
   // console.log(user);
   console.log(courses);
 

@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from "../../api/axios";
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Cookies } from "react-cookie";
@@ -11,7 +11,7 @@ export default function AddStudent() {
   const [parentPhone, setParentPhone] = useState("");
   const [studentYears, setStudentYears] = useState(1);
 
-  const navigate=useNavigate()
+  const navigate = useNavigate();
 
   const cookies = new Cookies();
   const token = cookies.get("token");
@@ -21,11 +21,10 @@ export default function AddStudent() {
 
     await axios
       .post(
-        "https://api.elmohdra.com/api/Student/addStudent",
-        { firstName, lastName, phone, parentName, parentPhone, studentYears },
+        "/api/Student/addStudent",
+        { firstName, lastName, phone, parentName, parentPhone, studentYears: +studentYears },
         {
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         }

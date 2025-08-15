@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as THREE from "three";
+import axios from "../../api/axios";
+import { Cookies } from "react-cookie";
+import { useQuery } from "@tanstack/react-query";
 
 const Rewards = () => {
   const [filter, setFilter] = useState("all_time");
@@ -137,8 +140,57 @@ const Rewards = () => {
     ],
   };
 
+  const cookies = new Cookies();
+  const token = cookies.get("token");
+
+  const getTopStudent = async () => {
+    return await axios.get("/api/Student/getTopStudentsByScore", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  };
+
+  const { data: topStudents } = useQuery({
+    queryKey: ["top-students"],
+    queryFn: getTopStudent,
+  });
+
+  const fetchUser = () => {
+    return axios
+      .get("/api/Account/GetCurrentUser", {
+        headers: {
+          accept: "text/plain",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .catch((error) => {
+        console.error("User data fetch error:", error);
+      });
+  };
+
+  const { data: user } = useQuery({
+    queryKey: ["user"],
+    queryFn: fetchUser,
+  });
+
+  const getUserScore = async () => {
+    return await axios.get("/api/Student/GetStudentRankAndScore", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  };
+
+  const { data: userScore } = useQuery({
+    queryKey: ["user-score"],
+    queryFn: getUserScore,
+  });
+
+  console.log(topStudents);
+
   const currentLeaderboard = leaderboards[filter] || [];
-  const topThree = currentLeaderboard.slice(0, 3);
+  const topThree = topStudents?.data.slice(0, 3);
   const rest = currentLeaderboard.slice(3);
 
   useEffect(() => {
@@ -289,7 +341,7 @@ const Rewards = () => {
         } ${borderColor} ${shadowColor} text-center transform hover:scale-105 transition-transform duration-300 shadow-2xl`}
       >
         <img
-          src={student.avatar}
+          src="/avatar.jpg"
           alt={student.name}
           className={`${
             isFirst ? "w-24 h-24" : "w-20 h-20"
@@ -305,7 +357,7 @@ const Rewards = () => {
             isFirst ? "text-3xl" : "text-2xl"
           } font-black ${textColor}`}
         >
-          {student.points}{" "}
+          {student.score}{" "}
           <span className={isFirst ? "text-base" : "text-sm"}>نقطة</span>
         </p>
         <p className={`${isFirst ? "text-5xl" : "text-4xl"} mt-2`}>
@@ -399,7 +451,7 @@ const Rewards = () => {
           </div>
 
           {/* Top 3 Podium */}
-          {topThree.length >= 3 && (
+          {topThree?.length >= 3 && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-end mb-12">
               {/* 2nd Place */}
               <div className="order-2 lg:order-1">
@@ -419,7 +471,7 @@ const Rewards = () => {
           {/* Leaderboard List */}
           <div className="bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-md border border-white/5 rounded-2xl p-4 shadow-2xl">
             <div className="space-y-2">
-              {rest.map((student) => (
+              {topStudents?.data.map((student) => (
                 <div
                   key={student.rank}
                   className={`flex items-center p-3 rounded-lg hover:bg-white/5 transition-colors ${
@@ -430,7 +482,7 @@ const Rewards = () => {
                     {student.rank}
                   </div>
                   <img
-                    src={student.avatar}
+                    src="/avatar.jpg"
                     alt={student.name}
                     className="w-10 h-10 rounded-full mx-4"
                   />
@@ -438,7 +490,7 @@ const Rewards = () => {
                     {student.name}
                   </p>
                   <div className="w-24 text-center font-bold text-cyan-400">
-                    {student.points} نقطة
+                    {student.score} نقطة
                   </div>
                   {student.isFrozen && (
                     <div
@@ -469,16 +521,20 @@ const Rewards = () => {
           <div className="sticky bottom-0 mt-8">
             <div className="bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-md border-2 border-cyan-500/50 rounded-2xl p-4 flex items-center shadow-lg shadow-cyan-500/10">
               <div className="w-12 text-center text-lg font-bold text-white">
-                7
+                {userScore?.data.rank}
               </div>
               <img
-                src="https://placehold.co/40x40/000000/ffffff?text=خ"
+                src="/avatar.jpg"
                 alt="خالد علي"
                 className="w-10 h-10 rounded-full mx-4"
               />
-              <p className="font-bold text-white flex-grow">أنت (خالد علي)</p>
+              <p className="font-bold text-white flex-grow">
+                أنت ({user?.data.displayName})
+              </p>
               <div className="text-center">
-                <p className="font-bold text-red-400">150 نقطة</p>
+                <p className="font-bold text-red-400">
+                  {userScore?.data.score} نقطة
+                </p>
                 <p className="text-xs text-red-500">الرتبة مجمدة!</p>
               </div>
             </div>

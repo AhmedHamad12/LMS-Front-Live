@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import axios from "../../api/axios";
 import React, { useState, useEffect, useRef } from "react";
 import { Cookies } from "react-cookie";
 import { Link, useParams } from "react-router-dom";
@@ -188,52 +188,60 @@ export default function CourseManagement() {
   const cookies = new Cookies();
   const token = cookies.get("token");
 
-  const getCourseUnit = () => {
+  const fetchCourse = () => {
     return axios
-      .get(`http://lms278.runasp.net/api/CourseUnit/${courseId}`, {
+      .get(`/api/teacher/courses/${courseId}/full`, {
         headers: {
-          accept: "/",
           Authorization: `Bearer ${token}`,
         },
       })
       .catch((error) => {
-        console.error("User data fetch error:", error);
+        console.error(error);
       });
   };
 
-  const { data: courseUnit } = useQuery({
-    queryKey: ["courseUnit"],
-    queryFn: getCourseUnit,
+  const { data: courses } = useQuery({
+    queryKey: ["get-courses"],
+    queryFn: fetchCourse,
   });
 
-  console.log(courseUnit);
+  console.log(courses);
 
-  const unitId = courseUnit?.data?.id;
+  // const unitId = courseUnit?.data?.id;
 
-  const getLessons = (unitId) => {
-    return axios
-      .get(`http://lms278.runasp.net/api/Lesson/unit/${unitId}`, {
-        headers: {
-          accept: "/",
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .catch((error) => {
-        console.error("User data fetch error:", error);
-      });
+  // const getLessons = (unitId) => {
+  //   return axios
+  //     .get(`http://lms278.runasp.net/api/Lesson/unit/${unitId}`, {
+  //       headers: {
+  //         accept: "/",
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     })
+  //     .catch((error) => {
+  //       console.error("User data fetch error:", error);
+  //     });
+  // };
+
+  // const { data: lessons } = useQuery({
+  //   queryKey: ["lessons", unitId],
+  //   queryFn: () => getLessons(unitId),
+  //   enabled: !!unitId, // only after the teacherID has been retrieved fetch the details
+  // });
+
+  // console.log(courseUnit);
+  // console.log(lessons);
+
+  const formatted = (newDate) => {
+    const date = new Date(newDate);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long", // or "short" or "2-digit"
+      day: "2-digit",
+    });
   };
-
-  const { data: lessons } = useQuery({
-    queryKey: ["lessons", unitId],
-    queryFn: () => getLessons(unitId),
-    enabled: !!unitId, // only after the teacherID has been retrieved fetch the details
-  });
-
-  console.log(courseUnit);
-  console.log(lessons);
 
   return (
-    <div className="bg-black text-gray-100 pt-10">
+    <div className="bg-black text-gray-100 pt-10 px-6">
       {/* Background Canvas */}
       <canvas
         ref={canvasRef}
@@ -242,13 +250,59 @@ export default function CourseManagement() {
       />
 
       <div>
-        {
-          courseUnit?.data?.map((unit) => (
-            <div key={unit.id}>
-              <h1>{unit.title}</h1>
+        <div className="text-center mb-10">
+          <div>
+            <p className="text-4xl font-black mb-2">
+              {courses?.data.course.title}
+            </p>
+          </div>
+          <div className="flex text-sm justify-center gap-8 text-yellow-400 mb-2">
+            <p>{formatted(courses?.data.course.createdAt)}</p>
+            <p>{courses?.data.course.price} L.E</p>
+          </div>
+          <p>{courses?.data.course.description}</p>
+        </div>
+      </div>
+      <div>
+        {courses?.data.units.map((item) => (
+          <div
+            key={item.id}
+            className="mb-5 bg-[#05050d] py-4 px-6 border border-cyan-400/30 rounded-md"
+          >
+            <div className="">
+              <p className="text-2xl font-black text-cyan-400">{item.title}</p>
+              <p className="text-sm text-yellow-400 my-2">
+                {formatted(item.createdAt)}
+              </p>
+              <p>{item.description}</p>
             </div>
-          ))
-        }
+            <div>
+              {item.lessons.map((lesson) => (
+                <div
+                  key={lesson.id}
+                  className="mb-5 mt-5 py-4 px-6 rounded-md bg-[#0d0d21]"
+                >
+                  <div className="mb-2 flex gap-5 md:gap-20 items-center flex-wrap">
+                    <div>
+                      <p className="text-2xl font-black text-green-400">
+                        {lesson.title}
+                      </p>
+                      <p className="text-sm text-yellow-400 mt-2">
+                        {formatted(lesson.createdAt)}
+                      </p>
+                    </div>
+                    <p className="px-2 break break-all">{lesson.content}</p>
+                  </div>
+                  <div className="flex justify-end">
+                    <Link to={`/teacher/add/assignment/${courseId}/${item.id}/${lesson.id}`} className="cursor-pointer px-4 py-2 bg-cyan-400 text-black rounded-md mt-4 md:mt-0">
+                      اضافة مهاه
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

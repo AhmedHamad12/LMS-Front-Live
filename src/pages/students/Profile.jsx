@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import axios from "../../api/axios";
 import React, { useEffect, useRef, useState } from "react";
 import { Cookies } from "react-cookie";
 import * as THREE from "three";
@@ -134,18 +134,31 @@ export default function Profile() {
   const handleInputChange = (field, value) => {
     setProfileData((prev) => ({ ...prev, [field]: value }));
   };
+  
+    const cookies = new Cookies();
+    const token = cookies.get("token");
 
-  const handleSaveChanges = () => {
-    // Handle save logic here
-    console.log("Saving profile changes:", profileData);
-  };
+  const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
 
-  const cookies = new Cookies();
-  const token = cookies.get("token");
+  const handleSaveChanges = async () => {
+    await axios
+      .put(
+        "/api/Student/updateStudent",
+        { displayName: name, newPassword: password },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+      .then((res) => { console.log(res); setName(""); setPassword("")})
+      .catch((e) => console.log(e));
+    };
   
   const fetchUser = () => {
     return axios
-      .get("http://lms278.runasp.net/api/Account/GetCurrentUser", {
+      .get("/api/Account/GetCurrentUser", {
         headers: {
           accept: "text/plain",
           Authorization: `Bearer ${token}`,
@@ -163,15 +176,12 @@ export default function Profile() {
 
   const fetchAllData = () => {
     return axios
-      .get(
-        `http://lms278.runasp.net/api/Student/getStudentById/${user.data.studentId}`,
-        {
-          headers: {
-            accept: "text/plain",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
+      .get(`/api/Student/getStudentById`, {
+        headers: {
+          accept: "text/plain",
+          Authorization: `Bearer ${token}`,
+        },
+      })
       .catch((error) => {
         console.error("User data fetch error:", error);
       });
@@ -181,6 +191,21 @@ export default function Profile() {
     queryKey: ["all-data"],
     queryFn: fetchAllData,
   });
+
+  const getUserScore = async () => {
+    return await axios.get("/api/Student/GetStudentRankAndScore", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  };
+
+  const { data: userScore } = useQuery({
+    queryKey: ["user-score"],
+    queryFn: getUserScore,
+  });
+
+  console.log(userScore);
 
   console.log(user);
   console.log(allData);
@@ -218,9 +243,7 @@ export default function Profile() {
           }
         `}</style>
 
-        <h1
-          className="mb-2 text-4xl font-black text-white title-glow"
-        >
+        <h1 className="mb-2 text-4xl font-black text-white title-glow">
           الملف الشخصي
         </h1>
         <p className="mb-8 text-lg text-gray-400">
@@ -229,223 +252,215 @@ export default function Profile() {
 
         {/* Profile Header */}
         <div className="mb-12 flex flex-col items-center gap-8 md:flex-row">
-            <div className="relative">
-              <img
-                src="https://placehold.co/120x120/ffffff/000000?text=خ"
-                alt="صورة المستخدم"
-                className="h-32 w-32 rounded-full border-4 border-cyan-400/50"
-              />
-              <button className="absolute -right-1 -bottom-1 rounded-full bg-cyan-500 p-2 transition-colors hover:bg-cyan-400">
-                <svg
-                  className="h-5 w-5 text-black"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                  ></path>
-                </svg>
+          <div className="relative">
+            <img
+              src="/avatar.jpg"
+              alt="صورة المستخدم"
+              className="h-32 w-32 rounded-full border-4 border-cyan-400/50"
+            />
+            {/* <button className="absolute -right-1 -bottom-1 rounded-full bg-cyan-500 p-2 transition-colors hover:bg-cyan-400">
+              <svg
+                className="h-5 w-5 text-black"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                ></path>
+              </svg>
+            </button> */}
+          </div>
+          <div>
+            <h1
+              className="text-4xl font-black text-white mb-3"
+              style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
+            >
+              {user?.data.displayName}
+            </h1>
+            <p className="text-lg text-gray-400">{user?.data.email}</p>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="mb-12 grid grid-cols-2 gap-6 md:grid-cols-4">
+          <div className="rounded-2xl glass-effect p-6 text-center">
+            <p className="text-sm text-gray-400">مجموع النقاط</p>
+            <p className="text-4xl font-black text-cyan-300">
+              {userScore?.data.score}
+            </p>
+          </div>
+          <div className="rounded-2xl glass-effect p-6 text-center">
+            <p className="text-sm text-gray-400">ترتيبك العام</p>
+            <p className="text-4xl font-black text-red-400">
+              {userScore?.data.rank}
+            </p>
+          </div>
+          <div className="rounded-2xl glass-effect p-6 text-center">
+            <p className="text-sm text-gray-400">كورسات مكتملة</p>
+            <p className="text-4xl font-black text-white">1</p>
+          </div>
+          <div className="rounded-2xl glass-effect p-6 text-center">
+            <p className="text-sm text-gray-400">الأوسمة المحصلة</p>
+            <p className="text-4xl font-black text-white">2</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          {/* Edit Profile */}
+          <div className="lg:col-span-1">
+            <h2 className="mb-6 text-2xl font-bold">تعديل البيانات</h2>
+            <div className="space-y-4 rounded-2xl glass-effect p-6">
+              <div>
+                <label className="mb-1 block text-sm text-gray-400">
+                  الاسم الكامل
+                </label>
+                <input
+                  type="text"
+                  defaultValue={user?.data.displayName}
+                  // value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full rounded-lg border border-white/10 bg-black/20 p-2 text-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm text-gray-400">
+                  البريد الإلكتروني
+                </label>
+                <input
+                  type="email"
+                  value={user?.data.email}
+                  className="w-full cursor-not-allowed rounded-lg border border-white/10 bg-black/30 p-2 text-gray-500"
+                  disabled
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm text-gray-400">
+                  رقم الهاتف
+                </label>
+                <input
+                  type="text"
+                  value={allData?.data.phone}
+                  className="w-full cursor-not-allowed rounded-lg border border-white/10 bg-black/30 p-2 text-gray-500"
+                  disabled
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm text-gray-400">
+                  تغيير كلمة المرور
+                </label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-lg border border-white/10 bg-black/20 p-2 text-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                />
+              </div>
+              <button
+                onClick={handleSaveChanges}
+                className="w-full rounded-lg bg-cyan-500 p-3 font-bold text-black transition-colors hover:bg-cyan-400"
+              >
+                حفظ التغييرات
               </button>
             </div>
-            <div>
-              <h1
-                className="text-4xl font-black text-white mb-3"
-                style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
-              >
-                {profileData.name}
-              </h1>
-              <p className="text-lg text-gray-400">{profileData.title}</p>
-            </div>
           </div>
 
-          {/* Stats */}
-          <div className="mb-12 grid grid-cols-2 gap-6 md:grid-cols-4">
-            <div className="rounded-2xl glass-effect p-6 text-center">
-              <p className="text-sm text-gray-400">مجموع النقاط</p>
-              <p className="text-4xl font-black text-cyan-300">150</p>
-            </div>
-            <div className="rounded-2xl glass-effect p-6 text-center">
-              <p className="text-sm text-gray-400">ترتيبك العام</p>
-              <p className="text-4xl font-black text-red-400">7</p>
-            </div>
-            <div className="rounded-2xl glass-effect p-6 text-center">
-              <p className="text-sm text-gray-400">كورسات مكتملة</p>
-              <p className="text-4xl font-black text-white">1</p>
-            </div>
-            <div className="rounded-2xl glass-effect p-6 text-center">
-              <p className="text-sm text-gray-400">الأوسمة المحصلة</p>
-              <p className="text-4xl font-black text-white">2</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-            {/* Edit Profile */}
-            <div className="lg:col-span-1">
-              <h2 className="mb-6 text-2xl font-bold">تعديل البيانات</h2>
-              <div className="space-y-4 rounded-2xl glass-effect p-6">
-                <div>
-                  <label className="mb-1 block text-sm text-gray-400">
-                    الاسم الكامل
-                  </label>
-                  <input
-                    type="text"
-                    value={profileData.name}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
-                    className="w-full rounded-lg border border-white/10 bg-black/20 p-2 text-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                  />
+          {/* Recent Activity */}
+          <div className="lg:col-span-2">
+            <h2 className="mb-6 text-2xl font-bold">سجل المهام الأخير</h2>
+            <div className="space-y-4 rounded-2xl glass-effect p-6">
+              {/* Activity 1 */}
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 rounded-full bg-green-500/20 p-3">
+                  <svg
+                    className="h-5 w-5 text-green-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 12l2 2 4-4m6 6l-3.5-7L9 12l-4 8 4-4 2 2 4-4z"
+                    ></path>
+                  </svg>
                 </div>
-                <div>
-                  <label className="mb-1 block text-sm text-gray-400">
-                    نبذة تعريفية (الرتبة)
-                  </label>
-                  <input
-                    type="text"
-                    value={profileData.title}
-                    onChange={(e) => handleInputChange("title", e.target.value)}
-                    className="w-full rounded-lg border border-white/10 bg-black/20 p-2 text-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm text-gray-400">
-                    البريد الإلكتروني
-                  </label>
-                  <input
-                    type="email"
-                    value={profileData.email}
-                    className="w-full cursor-not-allowed rounded-lg border border-white/10 bg-black/30 p-2 text-gray-500"
-                    disabled
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm text-gray-400">
-                    رقم الهاتف
-                  </label>
-                  <input
-                    type="text"
-                    value={profileData.phone}
-                    className="w-full cursor-not-allowed rounded-lg border border-white/10 bg-black/30 p-2 text-gray-500"
-                    disabled
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm text-gray-400">
-                    تغيير كلمة المرور
-                  </label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    value={profileData.password}
-                    onChange={(e) =>
-                      handleInputChange("password", e.target.value)
-                    }
-                    className="w-full rounded-lg border border-white/10 bg-black/20 p-2 text-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                  />
-                </div>
-                <button
-                  onClick={handleSaveChanges}
-                  className="w-full rounded-lg bg-cyan-500 p-3 font-bold text-black transition-colors hover:bg-cyan-400"
-                >
-                  حفظ التغييرات
-                </button>
+                <p className="flex-1 text-sm">
+                  حصلت على{" "}
+                  <span className="font-bold text-white">وسام السرعة</span>{" "}
+                  لإنهاء واجب الفيزياء مبكرًا.
+                </p>
+                <p className="text-xs whitespace-nowrap text-gray-500">
+                  منذ ساعة
+                </p>
               </div>
-            </div>
 
-            {/* Recent Activity */}
-            <div className="lg:col-span-2">
-              <h2 className="mb-6 text-2xl font-bold">سجل المهام الأخير</h2>
-              <div className="space-y-4 rounded-2xl glass-effect p-6">
-                {/* Activity 1 */}
-                <div className="flex items-center gap-4">
-                  <div className="flex-shrink-0 rounded-full bg-green-500/20 p-3">
-                    <svg
-                      className="h-5 w-5 text-green-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9 12l2 2 4-4m6 6l-3.5-7L9 12l-4 8 4-4 2 2 4-4z"
-                      ></path>
-                    </svg>
-                  </div>
-                  <p className="flex-1 text-sm">
-                    حصلت على{" "}
-                    <span className="font-bold text-white">وسام السرعة</span>{" "}
-                    لإنهاء واجب الفيزياء مبكرًا.
-                  </p>
-                  <p className="text-xs whitespace-nowrap text-gray-500">
-                    منذ ساعة
-                  </p>
+              {/* Activity 2 */}
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 rounded-full bg-cyan-500/20 p-3">
+                  <svg
+                    className="h-5 w-5 text-cyan-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                    ></path>
+                  </svg>
                 </div>
+                <p className="flex-1 text-sm">
+                  قمت بتسليم واجب{" "}
+                  <span className="font-bold text-white">
+                    "تمرين على التفاضل"
+                  </span>
+                  .
+                </p>
+                <p className="text-xs whitespace-nowrap text-gray-500">
+                  منذ 5 ساعات
+                </p>
+              </div>
 
-                {/* Activity 2 */}
-                <div className="flex items-center gap-4">
-                  <div className="flex-shrink-0 rounded-full bg-cyan-500/20 p-3">
-                    <svg
-                      className="h-5 w-5 text-cyan-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                      ></path>
-                    </svg>
-                  </div>
-                  <p className="flex-1 text-sm">
-                    قمت بتسليم واجب{" "}
-                    <span className="font-bold text-white">
-                      "تمرين على التفاضل"
-                    </span>
-                    .
-                  </p>
-                  <p className="text-xs whitespace-nowrap text-gray-500">
-                    منذ 5 ساعات
-                  </p>
+              {/* Activity 3 */}
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 rounded-full bg-red-500/20 p-3">
+                  <svg
+                    className="h-5 w-5 text-red-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
+                    ></path>
+                  </svg>
                 </div>
-
-                {/* Activity 3 */}
-                <div className="flex items-center gap-4">
-                  <div className="flex-shrink-0 rounded-full bg-red-500/20 p-3">
-                    <svg
-                      className="h-5 w-5 text-red-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
-                      ></path>
-                    </svg>
-                  </div>
-                  <p className="flex-1 text-sm">
-                    فاتك موعد امتحان{" "}
-                    <span className="font-bold text-white">
-                      "الأحياء الفضائية"
-                    </span>
-                    . تم خصم 75 نقطة.
-                  </p>
-                  <p className="text-xs whitespace-nowrap text-gray-500">
-                    بالأمس
-                  </p>
-                </div>
+                <p className="flex-1 text-sm">
+                  فاتك موعد امتحان{" "}
+                  <span className="font-bold text-white">
+                    "الأحياء الفضائية"
+                  </span>
+                  . تم خصم 75 نقطة.
+                </p>
+                <p className="text-xs whitespace-nowrap text-gray-500">
+                  بالأمس
+                </p>
               </div>
             </div>
           </div>
-        </main>
+        </div>
+      </main>
     </>
   );
 };

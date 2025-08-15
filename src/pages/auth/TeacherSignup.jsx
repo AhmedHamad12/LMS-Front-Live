@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from "../../api/axios";
 import { useState } from "react";
 import { Cookies } from "react-cookie";
 import { Link, useNavigate } from "react-router";
@@ -25,9 +25,8 @@ function TeacherSignup() {
 
     await axios
       .post(
-        "https://api.elmohdra.com/api/Account/Register/Teacher",
+        "/api/Account/Register/Teacher",
         { displayName: name, email, password, joinedAt },
-        { headers: { "Content-Type": "application/json" } }
       )
       .then((response) => {
         cookies.set("token", response.data.token);

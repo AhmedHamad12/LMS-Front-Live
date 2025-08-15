@@ -18,11 +18,6 @@ export default function Login() {
       .post(
         "/api/Account/Login",
         { email, password },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
       )
       .then((response) => {
         cookies.set("token", response.data.token);

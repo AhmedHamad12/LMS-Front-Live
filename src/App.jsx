@@ -45,95 +45,72 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import CourseManagement from "./pages/teacher/CourseManagement";
 import CourseData from "./pages/students/CourseData";
 import Teacher from "./pages/teacher/Teacher";
-import { AuthProvider } from "./contexts/AuthContext.jsx";
-import UnauthorizedOverlay from "./Components/Auth/UnauthorizedOverlay";
-import { useEffect } from "react";
-import { useAuth } from "./hooks/useAuth";
-import { setUnauthorizedHandler } from "./api/axios";
-import DetailedSubmissions from "./pages/teacher/DetailedSubmissions.jsx";
-
-// Component to wire up the auth context with axios
-const AuthInitializer = () => {
-  const { showUnauthorizedOverlay } = useAuth();
-
-  useEffect(() => {
-    setUnauthorizedHandler(showUnauthorizedOverlay);
-  }, [showUnauthorizedOverlay]);
-
-  return null;
-};
+import AddAssignment from "./pages/teacher/AddAssignment";
+import AIPage from "./pages/AIPage";
 
 function App() {
   const queryClient = new QueryClient();
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <AuthInitializer />
-        <BackgroundAnimation/>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Home />} />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/ai" element={<AIPage />} />
 
-            <Route path="/teacher" element={<Teacher />}>
-              <Route
-                path="addlesson/:courseId/:chapterId"
-                element={<AddLesson />}
-              />
-              <Route path={`addchapter/:courseId`} element={<AddChapter />} />
-              <Route path="addcourse" element={<AddCourse />} />
-              <Route path="dashboard" element={<TeacherDashboard />} />
-              <Route path="teacherstudents" element={<TeacherStudents />} />
-              <Route
-                path="course/mange/:courseId"
-                element={<CourseManagement />}
-              />
-              <Route path="earn" element={<Earn />} />
-              <Route path="quizzes" element={<Quizzes />} />
-              <Route path="quizzes/create" element={<CreateQuiz />} />
-              <Route path="quizzes/:quizId/questions" element={<Questions />} />
-              <Route path="quizzes/:quizId/submissions" element={<Submissions />} />
-              <Route path="quizzes/:quizId/submissions/:submissionId" element={<DetailedSubmissions />} />
+          <Route path="/teacher" element={<Teacher />}>
+            <Route
+              path="addlesson/:courseId/:unitId"
+              element={<AddLesson />}
+            />
+            <Route path={`addchapter/:courseId`} element={<AddChapter />} />
+            <Route path="addcourse" element={<AddCourse />} />
+            <Route path="dashboard" element={<TeacherDashboard />} />
+            <Route path="teacherstudents" element={<TeacherStudents />} />
+            <Route
+              path="course/mange/:courseId"
+              element={<CourseManagement />}
+            />
+            <Route path="earn" element={<Earn />} />
+            <Route path="add/assignment/:courseId/:chapterId/:lessonId" element={<AddAssignment />} />
+            <Route path="quizzes" element={<Quizzes />} />
+            <Route path="quizzes/create" element={<CreateQuiz />} />
+            <Route path="quizzes/:quizId/questions" element={<Questions />} />
+          </Route>
 
+          <Route path="/reset/email" element={<Email />} />
+          <Route path="/reset/check-code" element={<OTP />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
-              
-            </Route>
+          <Route path="/student" element={<Students />}>
+            <Route path="allcourses" element={<AllCourses />} />
+            <Route path="course" element={<Course />} />
+            <Route path="course/data/:courseId" element={<CourseData />} />
+            <Route path="mytasks" element={<MyTasks />} />
+            <Route path="myexams" element={<MyExams />} />
+            <Route path="rewards" element={<Rewards />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="mycourses" element={<MyCourses />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="prize" element={<Prize />} />
+          </Route>
 
-            <Route path="/reset/email" element={<Email />} />
-            <Route path="/reset/check-code" element={<OTP />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/add-student" element={<AddStudent />} />
+          <Route path="/add-teacher" element={<AddTeacher />} />
+          <Route path="/student-signup" element={<StudentRegister />} />
+          <Route path="/teacher-signup" element={<TeacherSignup />} />
+          <Route path="/login-admin" element={<LoginAdmin />} />
 
-            <Route path="/students" element={<Students />}>
-              <Route path="allcourses" element={<AllCourses />} />
-              <Route path="course" element={<Course />} />
-              <Route path="course/data/:courseId" element={<CourseData />} />
-              <Route path="mytasks" element={<MyTasks />} />
-              <Route path="myexams" element={<MyExams />} />
-              <Route path="rewards" element={<Rewards />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="mycourses" element={<MyCourses />} />
-              <Route path="profile" element={<Profile />} />
-              <Route path="prize" element={<Prize />} />
-            </Route>
-
-            <Route path="/login" element={<Login />} />
-            <Route path="/add-student" element={<AddStudent />} />
-            <Route path="/add-teacher" element={<AddTeacher />} />
-            <Route path="/student-signup" element={<StudentRegister />} />
-            <Route path="/teacher-signup" element={<TeacherSignup />} />
-            <Route path="/login-admin" element={<LoginAdmin />} />
-
-            <Route path="/admin" element={<Admin />}>
-              <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="users" element={<Users />} />
-              <Route path="courses" element={<Courses />} />
-              <Route path="reports" element={<Reports />} />
-            </Route>
-          </Routes>
-          <UnauthorizedOverlay />
-        </BrowserRouter>
-        <Toaster />
-        <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
-      </AuthProvider>
+          <Route path="/admin" element={<Admin />}>
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="users" element={<Users />} />
+            <Route path="courses" element={<Courses />} />
+            <Route path="reports" element={<Reports />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+      <Toaster />
+      <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
     </QueryClientProvider>
   );
 }

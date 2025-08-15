@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from "../../api/axios";
 import React, { useState } from "react";
 import { Cookies } from "react-cookie";
 import { Link, useNavigate } from "react-router";
@@ -30,7 +30,7 @@ export default function AddTeacher() {
 
     try {
       const response = await axios.post(
-        "https://api.elmohdra.com/api/Teacher/addTeacher",
+        "/api/Teacher/addTeacher",
         formData,
         {
           headers: {

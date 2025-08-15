@@ -74,7 +74,7 @@ const Submissions = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
+      <div className="flex items-center justify-center min-h-screen ">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4"></div>
           <p className="text-gray-400">جاري تحميل التقديمات...</p>
@@ -90,7 +90,7 @@ const Submissions = () => {
     : 0;
 
   return (
-    <div className="min-h-screen bg-black text-white font-[Cairo]" dir="rtl">
+    <div className="min-h-screen  text-white font-[Cairo]" dir="rtl">
       <div className="p-8 max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="mb-8">

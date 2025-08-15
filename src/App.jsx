@@ -69,6 +69,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <AuthInitializer />
+        <BackgroundAnimation/>
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Home />} />

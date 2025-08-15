@@ -257,7 +257,7 @@ const DetailedSubmissions = () => {
     const totalQuestions = submission.answers.length;
 
     return (
-        <div className="min-h-screen bg-black text-white font-[Cairo]" dir="rtl">
+        <div className="min-h-screen  text-white font-[Cairo]" dir="rtl">
             <div className="p-8 max-w-6xl mx-auto">
                 {/* Header Section */}
                 <div className="mb-8">

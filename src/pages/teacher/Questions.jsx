@@ -8,7 +8,7 @@ import Select from "react-select";
 const QUESTION_TYPE_OPTIONS = [
   { value: 1, label: "اختيار من متعدد" },
   { value: 2, label: "صح أو خطأ" },
-  { value: 3, label: "إجابة نصية" },
+  // { value: 3, label: "إجابة نصية" },
 ];
 
 const customSelectStyles = {
@@ -65,6 +65,7 @@ const Questions = () => {
   const [questions, setquestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [openAccordion, setOpenAccordion] = useState(null);
+  const [validationError, setValidationError] = useState("");
 
   const cookies = new Cookies();
   const token = cookies.get("token");
@@ -181,6 +182,20 @@ const Questions = () => {
           newQuestion.options.findIndex((opt) => opt.isCorrect)
         );
       }
+
+      // inside handleSubmit before sending request
+if (newQuestion.type.value === 1 || newQuestion.type.value === 2) {
+  const correctIndex = newQuestion.options.findIndex((opt) => opt.isCorrect);
+  if (correctIndex === -1) {
+    setValidationError("يجب اختيار إجابة صحيحة واحدة على الأقل");
+    setLoading(false);
+    return;
+  }
+}
+setValidationError("");
+
+
+
       await axios.post(`/api/Quiz/${quizId}/questions`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -415,6 +430,9 @@ const Questions = () => {
             </div>
           </div>
         )}
+        {validationError && (
+  <p className="text-red-500 text-sm mb-2">{validationError}</p>
+)}
         <button
           type="submit"
           className="w-full mt-6 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold text-lg transition-colors disabled:opacity-60"

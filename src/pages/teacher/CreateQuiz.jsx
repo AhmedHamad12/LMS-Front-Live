@@ -150,11 +150,9 @@ const CreateQuiz = () => {
       console.log("payload",payload);
 
       const response = await toast.promise(
-        axios.post("/api/Quiz", payload, {
+        axios.post("/api/Quiz/CreateQuiz", payload, {
           withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        
         }),
         {
           loading: "جاري إنشاء الاختبار...",

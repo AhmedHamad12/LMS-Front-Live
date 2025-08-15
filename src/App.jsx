@@ -76,7 +76,8 @@ const AuthInitializer = () => {
   return null;
 };
 
-function App() {
+function App() {      
+  
   const queryClient = new QueryClient();
 
   return (

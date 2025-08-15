@@ -50,6 +50,7 @@ import UnauthorizedOverlay from "./Components/Auth/UnauthorizedOverlay";
 import { useEffect } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { setUnauthorizedHandler } from "./api/axios";
+import DetailedSubmissions from "./pages/teacher/DetailedSubmissions.jsx";
 
 // Component to wire up the auth context with axios
 const AuthInitializer = () => {
@@ -89,6 +90,11 @@ function App() {
               <Route path="quizzes" element={<Quizzes />} />
               <Route path="quizzes/create" element={<CreateQuiz />} />
               <Route path="quizzes/:quizId/questions" element={<Questions />} />
+              <Route path="quizzes/:quizId/submissions" element={<Submissions />} />
+              <Route path="quizzes/:quizId/submissions/:submissionId" element={<DetailedSubmissions />} />
+
+
+              
             </Route>
 
             <Route path="/reset/email" element={<Email />} />

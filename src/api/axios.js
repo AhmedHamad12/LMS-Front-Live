@@ -23,7 +23,9 @@ api.interceptors.request.use(
   (config) => {
     try {
       const cookies = new Cookies();
-      const token = cookies.get("token");
+      // TODO: return to dynamic token
+      // const token = cookies.get("token");
+      const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjIwNjM1OTE2LTkyNDctNDAwMi1hOGRmLWU3YzMyMTUxNWU1NSIsInVzZXJJZCI6IjIwNjM1OTE2LTkyNDctNDAwMi1hOGRmLWU3YzMyMTUxNWU1NSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2dpdmVubmFtZSI6IkFib0hhbnkiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtb2hhbWVkaGFueTQ0MDFAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiVGVhY2hlciIsInJvbGVzIjoiVGVhY2hlciIsImV4cCI6MTc1NzQ1Mjk2NywiaXNzIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NzI1MS8iLCJhdWQiOiJNeVNlY3VyZUF1ZGllbmNlIn0.bJpgwoBHtLyIMkIU-fOkX4w4FA6N1UaYvpoy6Rq-MqQ"
       if (token && !config.headers?.Authorization) {
         config.headers = {
           ...(config.headers || {}),

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import axios from "../../api/axios";
 import React, { useEffect, useRef } from "react";
 import { Cookies } from "react-cookie";
 import { Link } from "react-router-dom";
@@ -17,9 +17,9 @@ const TeacherDashboard = () => {
   const token = cookies.get("token");
 
   //*************************************************** */
-  const fetchUser = () => {
-    return axios
-      .get("http://lms278.runasp.net/api/Account/GetCurrentUser", {
+  const fetchUser = async () => {
+    return await axios
+      .get("/api/Account/GetCurrentUser", {
         headers: {
           accept: "text/plain",
           Authorization: `Bearer ${token}`,
@@ -30,9 +30,9 @@ const TeacherDashboard = () => {
       });
   };
 
-  const fetchCourses = (teacherID) => {
-    return axios
-      .get(`http://lms278.runasp.net/api/Course/${teacherID}`, {
+  const fetchCourses =  async() => {
+    return await axios
+      .get(`/api/teacher/courses`, {
         headers: {
           accept: "/",
           Authorization: `Bearer ${token}`,
@@ -48,25 +48,19 @@ const TeacherDashboard = () => {
     queryFn: fetchUser,
   });
 
-  const teacherID = user?.data?.teacherId;
-
   const { data: courses } = useQuery({
-    queryKey: ["courses", teacherID],
-    queryFn: () => fetchCourses(teacherID),
-    enabled: !!teacherID, // only after the teacherID has been retrieved fetch the details
+    queryKey: ["courses"],
+    queryFn: () => fetchCourses(),
   });
 
-  const fetchAllData = () => {
-    return axios
-      .get(
-        `http://lms278.runasp.net/api/Teacher/getTeacherByid/${user.data.teacherId}`,
-        {
-          headers: {
-            accept: "text/plain",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
+  const fetchAllData = async () => {
+    return await axios
+      .get(`/api/Teacher/getTeacherByid`, {
+        headers: {
+          accept: "text/plain",
+          Authorization: `Bearer ${token}`,
+        },
+      })
       .catch((error) => {
         console.error("User data fetch error:", error);
       });
@@ -301,14 +295,16 @@ const TeacherDashboard = () => {
             <div className="lg:col-span-3">
               <h2 className="text-2xl font-bold mb-6">إدارة الكورسات</h2>
               <div className="space-y-4">
-                {courses?.data?.map((course) => (
+                {courses?.data?.items.map((course) => (
                   <div
                     key={course.id}
                     className="glass-effect rounded-2xl p-4 flex items-center justify-between"
                   >
                     <div>
                       <h3 className="font-bold text-white">{course.title}</h3>
-                      <p className="text-xs text-gray-400">250 طالب مشترك</p>
+                      <p className="text-xs text-gray-400">
+                        {course.stats.studentsCount} طالب مشترك
+                      </p>
                     </div>
                     <Link
                       to={`/teacher/course/mange/${course.id}`}

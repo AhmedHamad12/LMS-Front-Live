@@ -45,6 +45,8 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import CourseManagement from "./pages/teacher/CourseManagement";
 import CourseData from "./pages/students/CourseData";
 import Teacher from "./pages/teacher/Teacher";
+import AddAssignment from "./pages/teacher/AddAssignment";
+import AIPage from "./pages/AIPage";
 
 function App() {
   const queryClient = new QueryClient();
@@ -53,10 +55,11 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/ai" element={<AIPage />} />
 
           <Route path="/teacher" element={<Teacher />}>
             <Route
-              path="addlesson/:courseId/:chapterId"
+              path="addlesson/:courseId/:unitId"
               element={<AddLesson />}
             />
             <Route path={`addchapter/:courseId`} element={<AddChapter />} />
@@ -68,6 +71,7 @@ function App() {
               element={<CourseManagement />}
             />
             <Route path="earn" element={<Earn />} />
+            <Route path="add/assignment/:courseId/:chapterId/:lessonId" element={<AddAssignment />} />
             <Route path="quizzes" element={<Quizzes />} />
             <Route path="quizzes/create" element={<CreateQuiz />} />
             <Route path="quizzes/:quizId/questions" element={<Questions />} />
@@ -77,7 +81,7 @@ function App() {
           <Route path="/reset/check-code" element={<OTP />} />
           <Route path="/reset-password" element={<ResetPassword />} />
 
-          <Route path="/students" element={<Students />}>
+          <Route path="/student" element={<Students />}>
             <Route path="allcourses" element={<AllCourses />} />
             <Route path="course" element={<Course />} />
             <Route path="course/data/:courseId" element={<CourseData />} />

@@ -476,7 +476,7 @@
 // export default Course;
 
 
-import axios from "axios";
+import axios from "../../api/axios";
 import React, { useState, useEffect, useRef } from "react";
 import { Cookies } from "react-cookie";
 import * as THREE from "three";
@@ -502,9 +502,7 @@ const Course = () => {
 
   const fetchCourseData = async () => {
     try {
-      const response = await axios.get(
-        "http://lms278.runasp.net/api/Lesson/17"
-      );
+      const response = await axios.get("/api/Lesson/");
       setData(response.data);
     } catch (error) {
       console.error("Error fetching course data:", error);

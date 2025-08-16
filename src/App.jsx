@@ -1,65 +1,100 @@
 import "./index.css";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-// import CourseManagement from "./pages/teacher/CourseManagement";
+import { useEffect } from "react";
+import { Toaster } from "react-hot-toast";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
+// Contexts & Auth
+import { AuthProvider } from "./contexts/AuthContext.jsx";
+import { useAuth } from "./hooks/useAuth";
+import { setUnauthorizedHandler } from "./api/axios";
+import UnauthorizedOverlay from "./Components/Auth/UnauthorizedOverlay";
+
+// UI & Components
+import BackgroundAnimation from "./Components/BackgroundAnimation";
+
+// Pages - Teacher
+import Teacher from "./pages/teacher/Teacher";
 import TeacherDashboard from "./pages/teacher/Dashboard";
 import TeacherStudents from "./pages/teacher/Students";
 import Earn from "./pages/teacher/Earn";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import Admin from "./pages/admin/Admin";
-import Users from "./pages/admin/Users";
-import Courses from "./pages/admin/Courses";
-import Reports from "./pages/admin/Reports";
-import BackgroundAnimation from "./Components/BackgroundAnimation";
+import CourseManagement from "./pages/teacher/CourseManagement";
+import AddLesson from "./pages/teacher/AddLesson";
+import AddCourse from "./pages/teacher/AddCourse";
+import AddChapter from "./pages/teacher/AddChapter";
+import Quizzes from "./pages/teacher/Quizzes";
+import Questions from "./pages/teacher/Questions";
+import CreateQuiz from "./pages/teacher/CreateQuiz";
+import Submissions from "./pages/teacher/Submissions";
+import DetailedSubmissions from "./pages/teacher/DetailedSubmissions.jsx";
+import AddAssignment from "./pages/teacher/AddAssignment";
+
+// Pages - Students
+import Students from "./pages/students/Students";
 import AllCourses from "./pages/students/AllCourses";
 import Course from "./pages/students/Course";
+import CourseData from "./pages/students/CourseData";
 import MyTasks from "./pages/students/MyTasks";
 import MyExams from "./pages/students/MyExams";
 import Rewards from "./pages/students/Rewards";
-import Students from "./pages/students/Students";
+import Dashboard from "./pages/students/Dashboard";
+import MyCourses from "./pages/students/MyCourses";
+import Profile from "./pages/students/Profile";
+import Prize from "./pages/students/Prize";
 
-import Home from "./pages/Home";
+// Pages - Admin
+import Admin from "./pages/admin/Admin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import Users from "./pages/admin/Users";
+import Courses from "./pages/admin/Courses";
+import Reports from "./pages/admin/Reports";
+
+// Pages - Auth
 import Login from "./pages/auth/Login";
 import AddStudent from "./pages/auth/AddStudent";
 import AddTeacher from "./pages/auth/AddTeacher";
 import StudentRegister from "./pages/auth/StudentRegister";
 import TeacherSignup from "./pages/auth/TeacherSignup";
 import LoginAdmin from "./pages/auth/LoginAdmin";
-import Dashboard from "./pages/students/Dashboard";
-import MyCourses from "./pages/students/MyCourses";
-import Profile from "./pages/students/Profile";
-import Prize from "./pages/students/Prize";
-
-import { Toaster } from "react-hot-toast";
 import Email from "./pages/auth/Reset password/Email";
 import OTP from "./pages/auth/Reset password/OTP";
 import ResetPassword from "./pages/auth/Reset password/ResetPassword";
-import Quizzes from "./pages/teacher/Quizzes";
-import Questions from "./pages/teacher/Questions";
-import CreateQuiz from "./pages/teacher/CreateQuiz";
-import Submissions from "./pages/teacher/Submissions";
-import AddLesson from "./pages/teacher/AddLesson";
-import AddCourse from "./pages/teacher/AddCourse";
-import AddChapter from "./pages/teacher/AddChapter";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import CourseManagement from "./pages/teacher/CourseManagement";
-import CourseData from "./pages/students/CourseData";
-import Teacher from "./pages/teacher/Teacher";
-import AddAssignment from "./pages/teacher/AddAssignment";
+
+// Pages - Others
+import Home from "./pages/Home";
 import AIPage from "./pages/AIPage";
 import NotFoundPage from "./Components/NotFound";
 
-function App() {
+// Wire auth context with axios
+const AuthInitializer = () => {
+  const { showUnauthorizedOverlay } = useAuth();
+
+  useEffect(() => {
+    setUnauthorizedHandler(showUnauthorizedOverlay);
+  }, [showUnauthorizedOverlay]);
+
+  return null;
+};
+
+function App() {      
+  
   const queryClient = new QueryClient();
+
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/ai" element={<AIPage />} />
+      <AuthProvider>
+        <AuthInitializer />
+        <BackgroundAnimation />
+        <BrowserRouter>
+          <Routes>
+            {/* General */}
+            <Route path="/" element={<Home />} />
+            <Route path="/ai" element={<AIPage />} />
 
-          <Route path="/teacher" element={<Teacher />}>
-            <Route path="addlesson/:courseId/:unitId" element={<AddLesson />} />
+            {/* Teacher */}
+            <Route path="/teacher" element={<Teacher />}>
+               <Route path="addlesson/:courseId/:unitId" element={<AddLesson />} />
             <Route path={`addchapter/:courseId`} element={<AddChapter />} />
             <Route path="addcourse" element={<AddCourse />} />
             <Route path="dashboard" element={<TeacherDashboard />} />
@@ -73,16 +108,26 @@ function App() {
               path="add/assignment/:courseId/:chapterId/:lessonId"
               element={<AddAssignment />}
             />
-            <Route path="quizzes" element={<Quizzes />} />
-            <Route path="quizzes/create" element={<CreateQuiz />} />
-            <Route path="quizzes/:quizId/questions" element={<Questions />} />
-          </Route>
+              <Route path="quizzes" element={<Quizzes />} />
+              <Route path="quizzes/create" element={<CreateQuiz />} />
+              <Route path="quizzes/:quizId/questions" element={<Questions />} />
+              <Route
+                path="quizzes/:quizId/submissions"
+                element={<Submissions />}
+              />
+              <Route
+                path="quizzes/:quizId/submissions/:submissionId"
+                element={<DetailedSubmissions />}
+              />
+            </Route>
 
-          <Route path="/reset/email" element={<Email />} />
-          <Route path="/reset/check-code" element={<OTP />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+            {/* Reset Password */}
+            <Route path="/reset/email" element={<Email />} />
+            <Route path="/reset/check-code" element={<OTP />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
-          <Route path="course/:courseId" element={<Course />} />
+            {/* Students */}
+             <Route path="course/:courseId" element={<Course />} />
           <Route path="/student" element={<Students />}>
             <Route path="allcourses" element={<AllCourses />} />
             <Route path="course/data/:courseId" element={<CourseData />} />
@@ -95,25 +140,28 @@ function App() {
             <Route path="prize" element={<Prize />} />
           </Route>
 
-          <Route path="/login" element={<Login />} />
-          <Route path="/add-student" element={<AddStudent />} />
-          <Route path="/add-teacher" element={<AddTeacher />} />
-          <Route path="/student-signup" element={<StudentRegister />} />
-          <Route path="/teacher-signup" element={<TeacherSignup />} />
-          <Route path="/login-admin" element={<LoginAdmin />} />
+            {/* Auth */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/add-student" element={<AddStudent />} />
+            <Route path="/add-teacher" element={<AddTeacher />} />
+            <Route path="/student-signup" element={<StudentRegister />} />
+            <Route path="/teacher-signup" element={<TeacherSignup />} />
+            <Route path="/login-admin" element={<LoginAdmin />} />
 
-          <Route path="/admin" element={<Admin />}>
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="users" element={<Users />} />
-            <Route path="courses" element={<Courses />} />
-            <Route path="reports" element={<Reports />} />
-          </Route>
+            {/* Admin */}
+            <Route path="/admin" element={<Admin />}>
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="users" element={<Users />} />
+              <Route path="courses" element={<Courses />} />
+              <Route path="reports" element={<Reports />} />
+            </Route>
+          </Routes>
 
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </BrowserRouter>
-      <Toaster />
-      <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
+          <UnauthorizedOverlay />
+        </BrowserRouter>
+        <Toaster />
+        <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

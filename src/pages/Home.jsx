@@ -115,7 +115,7 @@ export default function Home() {
             </Link>
           )}
           <a
-            href="/students/allcourses"
+            href="/student/allcourses"
             className="hover:shadow-[0 0 25px rgba(0, 191, 255, 0.7)] hidden animate-[pulse-primary] rounded-lg bg-[#00BFFF] px-[30px] py-3 text-sm font-bold text-black shadow-[0_0_15px_rgba(0,191,255,0.4)] transition-all duration-300 ease-in-out hover:-translate-y-[3px] hover:animate-none sm:block"
           >
             ابدأ الآن

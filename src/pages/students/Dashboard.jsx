@@ -133,6 +133,24 @@ export default function Dashboard() {
     queryFn: getUserScore,
   });
 
+  const getAssignments = async () => {
+    return await axios.get(
+      `/api/Assignment/GetAssignmentsForStudent?category=1`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  };
+
+  const { data: userAssignments } = useQuery({
+    queryKey: ["user-assignments"],
+    queryFn: getAssignments,
+  });
+
+  console.log(userAssignments);
+
   const getNotifications = async () => {
     return await axios.get(`/api/Notification/student/${userScore?.data.id}`, {
       headers: {
@@ -209,9 +227,9 @@ export default function Dashboard() {
           }
         `}</style>
 
-        <h1 className="mb-2 text-2xl sm:text-3xl lg:text-4xl font-black text-white title-glow">
+        <h2 className="mb-2 text-2xl sm:text-3xl lg:text-4xl font-black text-white title-glow">
           أهلاً بعودتك يا رائد الفضاء!
-        </h1>
+        </h2>
         <p className="mb-6 sm:mb-8 text-base sm:text-lg text-gray-400">
           مهمتك التالية في انتظارك. استعد للانطلاق.
         </p>
@@ -224,7 +242,7 @@ export default function Dashboard() {
                 مهماتك الحالية (الكورسات)
               </h2>
               {enrollCourses?.data.map((course, index) => (
-                <div className="overflow-hidden rounded-2xl glass-effect">
+                <div className="overflow-hidden rounded-2xl glass-effect my-2">
                   <button
                     onClick={() =>
                       setOpenCourse(openCourse === index ? null : index)
@@ -235,11 +253,13 @@ export default function Dashboard() {
                       <h3 className="text-lg sm:text-xl font-bold text-white">
                         {course.title}
                       </h3>
-                      <p className="text-sm text-gray-400">{formatted(course.enrolledAt)}</p>
+                      <p className="text-sm text-gray-400">
+                        {formatted(course.enrolledAt)}
+                      </p>
                     </div>
                     <svg
                       className={`h-6 w-6 transform text-cyan-400 transition-transform duration-300 ${
-                        openCourse === 1 ? "rotate-180" : ""
+                        openCourse === index ? "rotate-180" : ""
                       }`}
                       fill="none"
                       stroke="currentColor"
@@ -315,24 +335,26 @@ export default function Dashboard() {
               >
                 مهام ذات أولوية
               </h2>
-              <div className="space-y-3 rounded-2xl border border-white/5 bg-gradient-to-br from-blue-900/40 to-gray-900/50 p-4 backdrop-blur-md">
-                <Link
-                  to="#"
-                  className="block rounded-lg bg-yellow-500/10 p-3 transition-colors hover:bg-yellow-500/20"
-                >
-                  <div className="mb-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
-                    <p className="text-sm font-bold text-yellow-300">
-                      واجب الفيزياء - الفصل الثاني
+              {userAssignments?.data?.map((item) => (
+                <div className="space-y-3 rounded-2xl border mb-2 border-white/5 bg-gradient-to-br from-blue-900/40 to-gray-900/50 p-4 backdrop-blur-md">
+                  <a
+                    href={item.files}
+                    className="block rounded-lg bg-yellow-500/10 p-3 transition-colors hover:bg-yellow-500/20"
+                  >
+                    <div className="mb-1  sm:items-center justify-between gap-2 sm:gap-0">
+                      <p className="text-sm font-bold text-yellow-300">
+                        {item.courseName}
+                      </p>
+                      <p className="rounded-full bg-yellow-900/50 px-2 py-1 font-mono text-xs text-yellow-300 my-2">
+                        ينتهي خلال {formatted(item.dueDate)}
+                      </p>
+                    </div>
+                    <p className="text-xs text-yellow-400/80 break-all">
+                      {item.assignmentDescription}
                     </p>
-                    <span className="rounded-full bg-yellow-900/50 px-2 py-1 font-mono text-xs text-yellow-300">
-                      ينتهي خلال {timeRemaining}
-                    </span>
-                  </div>
-                  <p className="text-xs text-yellow-400/80">
-                    أكمله الآن واحصل على وسام السرعة + 50 نقطة!
-                  </p>
-                </Link>
-              </div>
+                  </a>
+                </div>
+              ))}
             </div>
 
             {/* Incoming Data */}

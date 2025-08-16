@@ -326,7 +326,8 @@ export default function MyCourses() {
                   </div>
                 )}
 
-                <button
+                <Link
+                  to={`/course/${course.id}`}
                   className={`mt-auto w-full rounded-lg p-3 text-center font-bold transition-colors ${
                     course.status === "completed"
                       ? "bg-gray-700 text-white hover:bg-gray-600"
@@ -336,7 +337,7 @@ export default function MyCourses() {
                   {course.status === "completed"
                     ? "عرض الشهادة"
                     : "أكمل الرحلة"}
-                </button>
+                </Link>
               </div>
             </div>
           ))}

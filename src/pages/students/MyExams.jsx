@@ -1,61 +1,117 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as THREE from "three";
+import api from "../../api/axios";
+import toast from "react-hot-toast";
 
 const MyExams = () => {
   const [filter, setFilter] = useState("new");
   const [showStartModal, setShowStartModal] = useState(false);
   const [showExamInterface, setShowExamInterface] = useState(false);
   const [currentExam, setCurrentExam] = useState(null);
+  const [answers, setAnswers] = useState([]);
+
   const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [loading, setloading] = useState(false)
+  const [questions, setQuestions] = useState([])
+  const [attemptId, setAttemptId] = useState(null)
+  const [exams, setExams] = useState([])
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const canvasRef = useRef(null);
   const mainContentRef = useRef(null);
 
-  const exams = [
-    {
-      id: 1,
-      course: "الفيزياء الكونية",
-      title: "امتحان على الباب الأول",
-      status: "new",
-      questions: 25,
-      time: 45,
-      points: 100,
-      deadline: "اليوم 10:00 م",
-    },
-    {
-      id: 2,
-      course: "رياضيات الفضاء",
-      title: "محاكاة شاملة على التفاضل",
-      status: "new",
-      questions: 40,
-      time: 60,
-      points: 150,
-      deadline: "غداً 11:00 ص",
-    },
-    {
-      id: 3,
-      course: "الكيمياء الفلكية",
-      title: "امتحان مراجعة الوحدة الأولى",
-      status: "graded",
-      questions: 20,
-      time: 30,
-      points: 100,
-      score: "85/100",
-      rank: 12,
-    },
-    {
-      id: 4,
-      course: "الأحياء الفضائية",
-      title: "امتحان على التكاثر",
-      status: "missed",
-      questions: 20,
-      time: 30,
-      points: -75,
-      score: "فات موعده",
-    },
-  ];
+  const [timeLeft, setTimeLeft] = useState(null); // store remaining time in seconds
+  const timerRef = useRef(null); // to keep track of interval
+
+  useEffect(()=>{
+   
+
+    const fetchExams = async()=>{
+      try {
+        setloading(true)
+        const response = await api.get("/api/Quiz/getQuizForStudent")
+        const formattedExams = response.data.map((exam)=>(
+          {
+            id: exam.id,
+            course:exam.courseName,//TODO:fix by backend
+            title:exam.title,
+            status:exam.status === 0 ? "new":exam.status === 1 ? "processing": "missed",
+            questions:exam.questions,
+            time:exam.time,
+            points:exam.score,
+            deadline:new Date(exam.deadline).toLocaleTimeString('ar-EG',{
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }),
+            rank:exam.rank,
+          }
+        ))
+        setExams(formattedExams)
+        console.log("exams",response.data);
+        console.log("formattedExams",formattedExams);
+        
+        
+      } catch (error) {
+        console.log(error);
+        
+      }
+      finally{
+        setloading(false)
+      }
+    }
+    fetchExams()
+
+  },[])
+
+  useEffect(() => {
+    if (timeLeft === null) return;
+    if (timeLeft <= 0) {
+      clearInterval(timerRef.current);
+      handleFinishExam();
+      return;
+    }
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+  
+    return () => clearInterval(timerRef.current);
+  }, [timeLeft]);
+
+  const formatTime = (seconds) => {
+    const m = String(Math.floor(seconds / 60)).padStart(2, "0");
+    const s = String(seconds % 60).padStart(2, "0");
+    return `${m}:${s}`;
+  };
+
+  const handleAnswerSelect = (questionId, idx, text) => {
+    setSelectedAnswer(idx);
+  
+    setAnswers((prev) => {
+      const existing = prev.find((ans) => ans.questionId === questionId);
+  
+      if (existing) {
+        // replace old answer for this question
+        return prev.map((ans) =>
+          ans.questionId === questionId ? { questionId, answerIndex: idx, answerText: text } : ans
+        );
+      } else {
+        // add new answer
+        return [...prev, { questionId, answerIndex: idx, answerText: text }];
+      }
+    });
+  };
+  
+
+  const selectedForThisQuestion = answers.find(
+    (ans) => ans.questionId === questions[currentQuestionIndex].id
+  );
+  
+
 
   const filteredExams = exams.filter(
-    (exam) => filter === "all" || exam.status === filter
+    (exam) => filter === "" || exam.status === filter
   );
 
   const prepareExam = (exam) => {
@@ -66,15 +122,75 @@ const MyExams = () => {
   const startExam = () => {
     setShowStartModal(false);
     setShowExamInterface(true);
+    console.log("currentExam",currentExam);
+    const getExamQuestions = async()=>{
+      try {
+        setloading(true)
+        const response = await api.get(`/api/Quiz/${currentExam.id}/questions`)
+        setQuestions(response.data)
+        console.log("questions",response.data);
+        
+      } catch (error) {
+        toast.error("حدث خطأ ما")
+      }finally{
+        setloading(false)
+      }
+    }
+    getExamQuestions()
+
+    
+    setTimeLeft(currentExam.time * 60);
+
+    const getAttemptId = async()=>{
+      try {
+        const response = await api.get(`/api/Quiz/${currentExam.id}/start`)
+        setAttemptId(response.data.attemptId)
+      } catch (error) {
+        console.log(error);
+        
+      }
+    }
+    getAttemptId()
+
   };
 
-  
+  const handleFinishExam = async()=>{
+    setShowExamInterface(false)
+    console.log("answers",answers);
+    
+    const formattedAnswers = {
+      quizId: currentExam.id,
+      submitAnswerResponseDtos: answers.map((ans) => ({
+        questionId: ans.questionId,
+        selectedOptionId: ans.answerIndex, // index of selected option
+        writtenText: ans.answerText || ""  // fallback for written answers
+      }))
+    };
+
+    console.log("formatted answers ",formattedAnswers);
+
+    try {
+      const submitRes = await api.post("/api/Quiz/submit-answer",formattedAnswers)
+
+      const finalizeRes = await api.post(`/api/Quiz/attempts/${attemptId}/finish`)
+      
+    toast.success("تم إرسال الإجابات وإنهاء المحاولة بنجاح!");
+
+    } catch (error) {
+      toast.error("حدث خطأ ما")
+    }
+
+
+    setCurrentQuestionIndex(0)
+  }
 
   const StatusBadge = ({ status }) => {
     const statusConfig = {
       new: { text: "جديد", classes: "text-yellow-300 bg-yellow-500/20" },
       graded: { text: "تم التقييم", classes: "text-green-300 bg-green-500/20" },
       missed: { text: "فائت", classes: "text-red-300 bg-red-500/20" },
+      processing: { text: "قيد المعالجة", classes: "text-blue-300 bg-blue-500/20" },
+
     };
 
     const config = statusConfig[status];
@@ -266,72 +382,111 @@ const MyExams = () => {
 
       {/* Exam Interface */}
       {showExamInterface && (
-        <div className="fixed inset-0 bg-black z-40 flex flex-col">
-          <header className="p-4 flex-shrink-0 backdrop-blur-lg bg-gradient-to-br from-slate-800/40 to-slate-900/50 border border-white/5 flex justify-between items-center border-b border-white/5">
-            <div>
-              <p className="text-sm text-cyan-300">{currentExam?.course}</p>
-              <h2 className="text-xl font-bold text-white">
-                {currentExam?.title}
-              </h2>
-            </div>
-            <div className="text-center">
-              <p className="text-sm text-red-400">الوقت المتبقي</p>
-              <p className="text-2xl font-bold font-mono">
-                {currentExam?.time}:00
+  <div className="fixed inset-0 bg-black z-40 flex flex-col">
+    <header className="p-4 flex-shrink-0 backdrop-blur-lg bg-gradient-to-br from-slate-800/40 to-slate-900/50 border border-white/5 flex justify-between items-center border-b border-white/5">
+      <div>
+        <p className="text-sm text-cyan-300">{currentExam?.course}</p>
+        <h2 className="text-xl font-bold text-white">{currentExam?.title}</h2>
+      </div>
+      <div className="text-center">
+        <p className="text-sm text-red-400">الوقت المتبقي</p>
+        <p className="text-2xl font-bold font-mono">
+  {timeLeft !== null ? formatTime(timeLeft) : `${currentExam?.time}:00`}
+</p>
+
+      </div>
+    </header>
+
+    <div className="flex-grow p-8 flex flex-col items-center justify-center">
+      <div className="w-full max-w-4xl">
+        {questions.length > 0 && (
+          <>
+            <div className="flex justify-between items-center mb-4">
+              <p className="font-bold">
+                السؤال {currentQuestionIndex + 1} من {questions.length}
               </p>
-            </div>
-          </header>
-          <div className="flex-grow p-8 flex flex-col items-center justify-center">
-            <div className="w-full max-w-4xl">
-              <div className="flex justify-between items-center mb-4">
-                <p className="font-bold">
-                  السؤال 1 من {currentExam?.questions}
-                </p>
-                <div className="w-1/2 h-2 bg-gray-700 rounded-full">
-                  <div className="w-1/4 h-2 bg-cyan-400 rounded-full"></div>
-                </div>
-              </div>
-              <div className="backdrop-blur-lg bg-gradient-to-br from-slate-800/40 to-slate-900/50 border border-white/5 p-8 rounded-lg">
-                <p className="text-xl font-bold leading-relaxed mb-8">
-                  في دائرة كهربية تحتوي على مقاومة 5 أوم ويمر بها تيار شدته 2
-                  أمبير، ما هو فرق الجهد عبر المقاومة؟
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[
-                    { id: 1, text: "أ) 2.5 فولت" },
-                    { id: 2, text: "ب) 7 فولت" },
-                    { id: 3, text: "ج) 10 فولت" },
-                    { id: 4, text: "د) 0.4 فولت" },
-                  ].map((answer) => (
-                    <button
-                      key={answer.id}
-                      onClick={() => setSelectedAnswer(answer.id)}
-                      className={`p-4 rounded-lg border text-right transition-colors ${
-                        selectedAnswer === answer.id
-                          ? "bg-cyan-500/20 border-cyan-500"
-                          : "border-gray-600 hover:bg-cyan-500/10 hover:border-cyan-500/40"
-                      }`}
-                    >
-                      {answer.text}
-                    </button>
-                  ))}
-                </div>
+              <div className="w-1/2 h-2 bg-gray-700 rounded-full">
+                <div
+                  className="h-2 bg-cyan-400 rounded-full"
+                  style={{
+                    width: `${((currentQuestionIndex + 1) / questions.length) * 100}%`,
+                  }}
+                ></div>
               </div>
             </div>
-          </div>
-          <footer className="p-4 flex-shrink-0 backdrop-blur-lg bg-gradient-to-br from-slate-800/40 to-slate-900/50 border border-white/5 flex justify-between items-center border-t border-white/5">
-            <button
-              onClick={() => setShowExamInterface(false)}
-              className="px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500 transition-colors font-bold"
-            >
-              إنهاء وتسليم الإجابات
-            </button>
-            <button className="px-6 py-2 rounded-lg bg-cyan-500 text-black hover:bg-cyan-400 transition-colors font-bold">
-              السؤال التالي
-            </button>
-          </footer>
-        </div>
-      )}
+
+            <div className="backdrop-blur-lg bg-gradient-to-br from-slate-800/40 to-slate-900/50 border border-white/5 p-8 rounded-lg">
+              <p className="text-xl font-bold leading-relaxed mb-8">
+                {questions[currentQuestionIndex].text}
+              </p>
+
+              {/* optional image */}
+              {questions[currentQuestionIndex].imageUrl && (
+                <img
+                  src={questions[currentQuestionIndex].imageUrl}
+                  alt="question"
+                  className="mb-6 rounded-lg"
+                />
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {questions[currentQuestionIndex].options.map((opt, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() =>
+                      handleAnswerSelect(
+                        questions[currentQuestionIndex].id,
+                        idx,
+                        opt.text
+                      )
+                    }
+                    
+                    className={`p-4 rounded-lg border text-right transition-colors ${
+                      selectedForThisQuestion?.answerIndex === idx
+                        ? "bg-cyan-500/20 border-cyan-500"
+                        : "border-gray-600 hover:bg-cyan-500/10 hover:border-cyan-500/40"
+                    }`}
+                    
+                  >
+                    {opt.text}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+
+    <footer className="p-4 flex-shrink-0 backdrop-blur-lg bg-gradient-to-br from-slate-800/40 to-slate-900/50 border border-white/5 flex justify-center items-center border-t gap-5 border-white/5">
+      <button
+        onClick={() => handleFinishExam()}
+        className="px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500 transition-colors font-bold"
+      >
+        إنهاء وتسليم الإجابات
+      </button>
+
+      <button
+        disabled={currentQuestionIndex === questions.length - 1}
+        onClick={() =>
+          setCurrentQuestionIndex((prev) => Math.min(prev + 1, questions.length - 1))
+        }
+        className="px-6 py-2 rounded-lg bg-cyan-500 text-black hover:bg-cyan-400 transition-colors font-bold disabled:opacity-50"
+      >
+        السؤال التالي
+      </button>
+      <button
+        disabled={currentQuestionIndex === 0}
+        onClick={() =>
+          setCurrentQuestionIndex((prev) => Math.min(prev - 1, questions.length - 1))
+        }
+        className="px-6 py-2 rounded-lg bg-cyan-500 text-black hover:bg-cyan-400 transition-colors font-bold disabled:opacity-50"
+      >
+        السؤال السابق
+      </button>
+    </footer>
+  </div>
+)}
 
       <div className="flex h-screen w-full">
         {/* Main Content */}
@@ -383,7 +538,15 @@ const MyExams = () => {
               isActive={filter === "graded"}
               onClick={() => setFilter("graded")}
             >
+                         
               امتحانات منجزة
+            </FilterButton>
+            <FilterButton
+              value="processing"
+              isActive={filter === "processing"}
+              onClick={() => setFilter("processing")}
+            > 
+              امتحانات قيد المعالجة
             </FilterButton>
             <FilterButton
               value="missed"
@@ -393,9 +556,9 @@ const MyExams = () => {
               امتحانات فائتة
             </FilterButton>
             <FilterButton
-              value="all"
-              isActive={filter === "all"}
-              onClick={() => setFilter("all")}
+              value=""
+              isActive={filter === ""}
+              onClick={() => setFilter("")}
             >
               الكل
             </FilterButton>

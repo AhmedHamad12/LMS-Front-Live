@@ -140,7 +140,8 @@ const CreateQuiz = () => {
         title: form.title,
         teacherId: id,
         targetType: form.targetType.value,
-        targetId: form.targetId ? form.targetId.value : "",//TODO: fix for endpoint , or just use 16
+        targetId: "16",
+        //  form.targetId ? form.targetId.value : "",//TODO: fix for endpoint , or just use 16
         timeLimitMinutes: Number(form.timeLimitMinutes),
         passScore: Number(form.passScore),
         maxAttempts: Number(form.maxAttempts),
@@ -153,7 +154,7 @@ const CreateQuiz = () => {
       console.log("payload",payload);
 
       const response = await toast.promise(
-        axios.post(`/api/Quiz/CreateQuiz?CourseId=${form.targetId ? form.targetId.value : ""}`, payload, {
+        axios.post(`/api/Quiz/CreateQuiz?CourseId=16`, payload, {
           withCredentials: true,
         
         }),

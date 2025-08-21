@@ -5,79 +5,86 @@ import toast from "react-hot-toast";
 
 const MyExams = () => {
   const [filter, setFilter] = useState("new");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showStartModal, setShowStartModal] = useState(false);
   const [showExamInterface, setShowExamInterface] = useState(false);
   const [currentExam, setCurrentExam] = useState(null);
   const [answers, setAnswers] = useState([]);
-
   const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [loading, setloading] = useState(false)
-  const [questions, setQuestions] = useState([])
-  const [attemptId, setAttemptId] = useState(null)
-  const [exams, setExams] = useState([])
+  const [loading, setloading] = useState(false);
+  const [questions, setQuestions] = useState([]);
+  const [attemptId, setAttemptId] = useState(null);
+  const [exams, setExams] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const canvasRef = useRef(null);
   const mainContentRef = useRef(null);
 
-  const [timeLeft, setTimeLeft] = useState(null); // store remaining time in seconds
-  const timerRef = useRef(null); // to keep track of interval
+  const [timeLeft, setTimeLeft] = useState(null); // seconds
+  const timerRef = useRef(null);
 
-  useEffect(()=>{
-   
-
-    const fetchExams = async()=>{
+  useEffect(() => {
+    const endExpiredQuizzes = async () => {
       try {
-        setloading(true)
-        const response = await api.get("/api/Quiz/getQuizForStudent")
-        const formattedExams = response.data.map((exam)=>(
-          {
-            id: exam.id,
-            course:exam.courseName,//TODO:fix by backend
-            title:exam.title,
-            status:exam.status === 0 ? "new":exam.status === 1 ? "processing": "missed",
-            questions:exam.questions,
-            time:exam.time,
-            points:exam.score,
-            deadline:new Date(exam.deadline).toLocaleTimeString('ar-EG',{
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            }),
-            rank:exam.rank,
-          }
-        ))
-        setExams(formattedExams)
-        console.log("exams",response.data);
-        console.log("formattedExams",formattedExams);
-        
-        
+        await api.post("/api/Quiz/endExpiredQuizzesForStudent");
       } catch (error) {
         console.log(error);
-        
       }
-      finally{
-        setloading(false)
-      }
-    }
-    fetchExams()
+    };
+    endExpiredQuizzes();
 
-  },[])
+    const fetchExams = async () => {
+      try {
+        setloading(true);
+        const response = await api.get("/api/Quiz/getQuizForStudent");
+        const formattedExams = response.data.map((exam) => ({
+          id: exam.id,
+          course: exam.courseName,
+          title: exam.title,
+          status:
+            exam.status === 0
+              ? "new"
+              : exam.status === 1
+              ? "processing"
+              : "missed",
+          questions: exam.questions,
+          time: exam.time,
+          points: exam.score,
+          deadline: new Date(exam.deadline).toLocaleTimeString("ar-EG", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          rank: exam.rank,
+        }));
+        setExams(formattedExams);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setloading(false);
+      }
+    };
+    fetchExams();
+  }, []);
 
   useEffect(() => {
     if (timeLeft === null) return;
+
     if (timeLeft <= 0) {
       clearInterval(timerRef.current);
-      handleFinishExam();
+      if (showExamInterface) {
+        handleFinishExam(); // auto-submit only once
+      }
       return;
     }
+
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => prev - 1);
     }, 1000);
-  
+
     return () => clearInterval(timerRef.current);
-  }, [timeLeft]);
+  }, [timeLeft, showExamInterface]);
 
   const formatTime = (seconds) => {
     const m = String(Math.floor(seconds / 60)).padStart(2, "0");
@@ -87,28 +94,25 @@ const MyExams = () => {
 
   const handleAnswerSelect = (questionId, idx, text) => {
     setSelectedAnswer(idx);
-  
+
     setAnswers((prev) => {
       const existing = prev.find((ans) => ans.questionId === questionId);
-  
       if (existing) {
-        // replace old answer for this question
         return prev.map((ans) =>
-          ans.questionId === questionId ? { questionId, answerIndex: idx, answerText: text } : ans
+          ans.questionId === questionId
+            ? { questionId, answerIndex: idx, answerText: text }
+            : ans
         );
       } else {
-        // add new answer
         return [...prev, { questionId, answerIndex: idx, answerText: text }];
       }
     });
   };
-  
 
-  const selectedForThisQuestion = answers.find(
-    (ans) => ans.questionId === questions[currentQuestionIndex].id
-  );
-  
-
+  const selectedForThisQuestion =
+    questions.length > 0
+      ? answers.find((ans) => ans.questionId === questions[currentQuestionIndex]?.id)
+      : null;
 
   const filteredExams = exams.filter(
     (exam) => filter === "" || exam.status === filter
@@ -122,67 +126,68 @@ const MyExams = () => {
   const startExam = () => {
     setShowStartModal(false);
     setShowExamInterface(true);
-    console.log("currentExam",currentExam);
-    const getExamQuestions = async()=>{
-      try {
-        setloading(true)
-        const response = await api.get(`/api/Quiz/${currentExam.id}/questions`)
-        setQuestions(response.data)
-        console.log("questions",response.data);
-        
-      } catch (error) {
-        toast.error("حدث خطأ ما")
-      }finally{
-        setloading(false)
-      }
-    }
-    getExamQuestions()
 
-    
+    const getExamQuestions = async () => {
+      try {
+        setloading(true);
+        const response = await api.get(`/api/Quiz/${currentExam.id}/questions`);
+        setQuestions(response.data);
+      } catch (error) {
+        toast.error("حدث خطأ ما");
+      } finally {
+        setloading(false);
+      }
+    };
+    getExamQuestions();
+
     setTimeLeft(currentExam.time * 60);
 
-    const getAttemptId = async()=>{
+    const getAttemptId = async () => {
       try {
-        const response = await api.get(`/api/Quiz/${currentExam.id}/start`)
-        setAttemptId(response.data.attemptId)
+        const response = await api.post(
+          `/api/Quiz/${currentExam.id}/start`,
+          currentExam.id
+        );
+        setAttemptId(response.data.attemptId);
       } catch (error) {
-        console.log(error);
-        
+        console.log("error fetching attempt id", error.response);
+        toast.error(`${error.response?.data?.message || "خطأ"}`);
+        setQuestions([]);
+        setShowExamInterface(false);
       }
-    }
-    getAttemptId()
-
+    };
+    getAttemptId();
   };
 
-  const handleFinishExam = async()=>{
-    setShowExamInterface(false)
-    console.log("answers",answers);
-    
-    const formattedAnswers = {
+  const handleFinishExam = async () => {
+    if (isSubmitting) return;
+    if (!currentExam || !attemptId) return;
+
+    setIsSubmitting(true);
+    setShowExamInterface(false);
+
+    let formattedAnswers = {
       quizId: currentExam.id,
       submitAnswerResponseDtos: answers.map((ans) => ({
         questionId: ans.questionId,
-        selectedOptionId: ans.answerIndex, // index of selected option
-        writtenText: ans.answerText || ""  // fallback for written answers
-      }))
+        selectedOptionId: ans.answerIndex,
+        writtenText: ans.answerText || "",
+      })),
     };
 
-    console.log("formatted answers ",formattedAnswers);
-
     try {
-      const submitRes = await api.post("/api/Quiz/submit-answer",formattedAnswers)
-
-      const finalizeRes = await api.post(`/api/Quiz/attempts/${attemptId}/finish`)
-      
-    toast.success("تم إرسال الإجابات وإنهاء المحاولة بنجاح!");
-
+      await api.post("/api/Quiz/submit-answer", formattedAnswers);
+      await api.post(`/api/Quiz/attempts/${attemptId}/finish`);
+      toast.success("تم إرسال الإجابات وإنهاء المحاولة بنجاح!");
     } catch (error) {
-      toast.error("حدث خطأ ما")
+      toast.error("حدث خطأ أثناء إرسال الامتحان");
+      console.log("an error occurred in automatic submission", error);
+    } finally {
+      setCurrentQuestionIndex(0);
+      setAnswers([]);
+      setIsSubmitting(false);
     }
-
-
-    setCurrentQuestionIndex(0)
-  }
+  };
 
   const StatusBadge = ({ status }) => {
     const statusConfig = {
@@ -244,16 +249,7 @@ const MyExams = () => {
             <p className="font-bold text-lg text-white">{exam.time}</p>
             <p className="text-gray-400">دقيقة</p>
           </div>
-          <div>
-            <p
-              className={`font-bold text-lg ${
-                exam.status === "missed" ? "text-red-400" : "text-white"
-              }`}
-            >
-              {exam.points}
-            </p>
-            <p className="text-gray-400">نقطة</p>
-          </div>
+     
         </div>
         {exam.status === "graded" && (
           <div className="backdrop-blur-lg bg-gradient-to-br from-slate-800/40 to-slate-900/50 border border-white/5 rounded-lg p-3 text-center mb-6">
@@ -263,6 +259,22 @@ const MyExams = () => {
           </div>
         )}
       </div>
+     <div className="flex items-center justify-center text-center w-full ">
+     {
+          exam.status === "processing" &&   <div>
+          <p
+            className={` ${
+              exam.status === "missed" ? "text-red-400" : "text-white"
+            }`}
+          >
+            {/* {exam.points.slice(0,-2)} */}
+            {exam.points.substring(0,exam?.points?.length-2)}
+
+          </p>
+          
+        </div>
+        }
+     </div>
       {exam.status === "new" && (
         <button
           onClick={() => prepareExam(exam)}

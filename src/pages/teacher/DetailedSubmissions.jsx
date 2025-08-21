@@ -33,7 +33,7 @@ const DetailedSubmissions = () => {
                     studentName: raw.studentName,
                     submittedAt: raw.submittedAt,
                     score: raw.score,
-                    answers: raw.answers.map(ans => {
+                    answers: raw?.answers?.map(ans => {
                         let questionType;
                         if (ans.type === 1) questionType = 'mcq';
                         else if (ans.type === 2) questionType = 'trueFalse';
@@ -46,8 +46,8 @@ const DetailedSubmissions = () => {
                                 questionType,
                                 studentAnswer: ans.studentAnswer,
                                 isCorrect: ans.isCorrect,
-                                options: ans.options.map(o => o.text),
-                                correctAnswer: ans.options.find(o => o.isCorrect)?.text || null
+                                options2: ans?.options2?.map(o => o.text),
+                                correctAnswer: ans?.options2?.find(o => o.isCorrect)?.text || null
                             };
                         } 
                         else if (questionType === 'trueFalse') {
@@ -57,7 +57,7 @@ const DetailedSubmissions = () => {
                                 questionType,
                                 studentAnswer: ans.studentAnswer === true || ans.studentAnswer === "true",
                                 isCorrect: ans.isCorrect,
-                                correctAnswer: ans.options.find(o => o.isCorrect)?.text?.toLowerCase() === "true"
+                                correctAnswer: ans?.options2?.find(o => o.isCorrect)?.text?.toLowerCase() === "true"
                             };
                         } 
                         else {
@@ -157,7 +157,7 @@ const DetailedSubmissions = () => {
                         <div className="bg-black/30 p-4 rounded-lg border border-white/10">
                             <p className="text-gray-400 mb-3">الخيارات المتاحة:</p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                {answer.options.map((option, index) => (
+                                {answer?.options2?.map((option, index) => (
                                     <div 
                                         key={index}
                                         className={`p-3 rounded-lg border ${
@@ -199,7 +199,7 @@ const DetailedSubmissions = () => {
                         <div className="bg-black/30 p-4 rounded-lg border border-white/10">
                             <p className="text-gray-400 mb-3">الإجابة الصحيحة:</p>
                             <div className={`inline-flex items-center px-3 py-2 rounded-lg border ${
-                                answer.correctAnswer 
+                                !answer.correctAnswer 
                                     ? 'bg-green-400/20 text-green-400 border-green-400/30' 
                                     : 'bg-red-400/20 text-red-400 border-red-400/30'
                             }`}>
@@ -253,8 +253,8 @@ const DetailedSubmissions = () => {
         );
     }
 
-    const correctAnswers = submission.answers.filter(answer => answer.isCorrect).length;
-    const totalQuestions = submission.answers.length;
+    const correctAnswers = submission?.answers?.filter(answer => answer.isCorrect).length;
+    const totalQuestions = submission?.answers?.length;
 
     return (
         <div className="min-h-screen  text-white font-[Cairo]" dir="rtl">
@@ -290,7 +290,7 @@ const DetailedSubmissions = () => {
                         <div className="flex items-center">
                             <div className="h-16 w-16 rounded-full bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30">
                                 <span className="text-2xl font-bold text-cyan-400">
-                                    {submission.studentName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                    {submission?.studentName?.split(' ').map(n => n[0]).join('').toUpperCase()}
                                 </span>
                             </div>
                             <div className="mr-4">
@@ -329,7 +329,7 @@ const DetailedSubmissions = () => {
                     </div>
                     
                     <div className="p-6 space-y-6">
-                        {submission.answers.map((answer, index) => (
+                        {submission?.answers?.map((answer, index) => (
                             <div key={answer.questionId} className="bg-black/20 rounded-xl p-6 border border-white/5">
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex items-center space-x-3 space-x-reverse">

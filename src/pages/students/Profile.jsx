@@ -32,7 +32,7 @@ export default function Profile() {
       75,
       window.innerWidth / window.innerHeight,
       0.1,
-      1000,
+      1000
     );
     camera.position.z = 5;
 
@@ -59,7 +59,7 @@ export default function Profile() {
       }
       geometry.setAttribute(
         "position",
-        new THREE.BufferAttribute(positions, 3),
+        new THREE.BufferAttribute(positions, 3)
       );
       const material = new THREE.PointsMaterial({
         size: size,
@@ -134,9 +134,9 @@ export default function Profile() {
   const handleInputChange = (field, value) => {
     setProfileData((prev) => ({ ...prev, [field]: value }));
   };
-  
-    const cookies = new Cookies();
-    const token = cookies.get("token");
+
+  const cookies = new Cookies();
+  const token = cookies.get("token");
 
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -152,10 +152,14 @@ export default function Profile() {
           },
         }
       )
-      .then((res) => { console.log(res); setName(""); setPassword("")})
+      .then((res) => {
+        console.log(res);
+        setName("");
+        setPassword("");
+      })
       .catch((e) => console.log(e));
-    };
-  
+  };
+
   const fetchUser = () => {
     return axios
       .get("/api/Account/GetCurrentUser", {
@@ -209,6 +213,21 @@ export default function Profile() {
 
   console.log(user);
   console.log(allData);
+
+  const getNotifications = async () => {
+    return await axios.get(`/api/Notification/student/${userScore?.data.id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  };
+
+  const { data: notifications } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: getNotifications,
+  });
+
+  console.log(notifications)
 
   return (
     <>
@@ -372,95 +391,36 @@ export default function Profile() {
           {/* Recent Activity */}
           <div className="lg:col-span-2">
             <h2 className="mb-6 text-2xl font-bold">سجل المهام الأخير</h2>
-            <div className="space-y-4 rounded-2xl glass-effect p-6">
+            <div className="space-y-4 max-h-80 overflow-y-auto rounded-2xl glass-effect p-6">
               {/* Activity 1 */}
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0 rounded-full bg-green-500/20 p-3">
-                  <svg
-                    className="h-5 w-5 text-green-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M9 12l2 2 4-4m6 6l-3.5-7L9 12l-4 8 4-4 2 2 4-4z"
-                    ></path>
-                  </svg>
+              {notifications?.data.map((item) => (
+                <div className="flex items-center gap-4">
+                  <div className="flex-shrink-0 rounded-full bg-green-500/20 p-3">
+                    <svg
+                      className="h-5 w-5 text-green-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 12l2 2 4-4m6 6l-3.5-7L9 12l-4 8 4-4 2 2 4-4z"
+                      ></path>
+                    </svg>
+                  </div>
+                  <div className="mr-3">
+                    <p className="text-sm font-bold text-white">{item.title}</p>
+                    <p className="text-xs text-gray-400 my-2">{item.timeAgo}</p>
+                    <p className="text-xs text-gray-400">{item.message}</p>
+                  </div>
                 </div>
-                <p className="flex-1 text-sm">
-                  حصلت على{" "}
-                  <span className="font-bold text-white">وسام السرعة</span>{" "}
-                  لإنهاء واجب الفيزياء مبكرًا.
-                </p>
-                <p className="text-xs whitespace-nowrap text-gray-500">
-                  منذ ساعة
-                </p>
-              </div>
-
-              {/* Activity 2 */}
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0 rounded-full bg-cyan-500/20 p-3">
-                  <svg
-                    className="h-5 w-5 text-cyan-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                    ></path>
-                  </svg>
-                </div>
-                <p className="flex-1 text-sm">
-                  قمت بتسليم واجب{" "}
-                  <span className="font-bold text-white">
-                    "تمرين على التفاضل"
-                  </span>
-                  .
-                </p>
-                <p className="text-xs whitespace-nowrap text-gray-500">
-                  منذ 5 ساعات
-                </p>
-              </div>
-
-              {/* Activity 3 */}
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0 rounded-full bg-red-500/20 p-3">
-                  <svg
-                    className="h-5 w-5 text-red-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
-                    ></path>
-                  </svg>
-                </div>
-                <p className="flex-1 text-sm">
-                  فاتك موعد امتحان{" "}
-                  <span className="font-bold text-white">
-                    "الأحياء الفضائية"
-                  </span>
-                  . تم خصم 75 نقطة.
-                </p>
-                <p className="text-xs whitespace-nowrap text-gray-500">
-                  بالأمس
-                </p>
-              </div>
+              ))}
             </div>
           </div>
         </div>
       </main>
     </>
   );
-};
+}

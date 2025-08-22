@@ -12,6 +12,13 @@ export default function TeacherAside() {
   const cookies = new Cookies();
   const token = cookies.get("token");
 
+  const handleLogout = () => {
+    // Clear the token from local storage
+    cookies.remove("token");
+    // Redirect to the login page
+    window.location.href = "/login";
+  };
+
   const fetchUser = () => {
     return axios
       .get("/api/Account/GetCurrentUser", {
@@ -152,7 +159,7 @@ export default function TeacherAside() {
             className="absolute bottom-full mb-2 w-full glass-effect rounded-lg overflow-hidden"
             onClick={() => setProfileOpen(false)}
           >
-            <button className="block px-4 py-3 text-right text-sm text-red-400 hover:bg-red-500/20">
+            <button className="block px-4 py-3 text-right text-sm text-red-400 hover:bg-red-500/20 w-full cursor-pointer" onClick={handleLogout}>
               تسجيل الخروج
             </button>
           </div>

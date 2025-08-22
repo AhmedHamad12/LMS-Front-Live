@@ -1,7 +1,19 @@
+import { Cookies } from "react-cookie";
 import { Link, useLocation } from "react-router-dom";
 
 function StudentsSideBar() {
   const location = useLocation();
+
+  const cookies = new Cookies();
+    
+
+  const handleLogout = () => {
+    // Clear the token from local storage
+    cookies.remove("token");
+    // Redirect to the login page
+    window.location.href = "/login";
+  };
+
 
   return (
     <aside className="w-20 lg:w-64 glass-effect p-2 lg:p-6 flex flex-col justify-between transition-all duration-300 flex-shrink-0 h-screen fixed top-0 right-0 z-50">
@@ -99,12 +111,11 @@ function StudentsSideBar() {
           })}
         </nav>
       </div>
-      <div className="hidden lg:block">
+      {/* <div className="hidden lg:block "> */}
         <div className="text-center text-gray-400 text-sm">
-          <p>المجرّة التعليمية</p>
-          <p className="text-xs">© 2024</p>
+          <button className="bg-red-500 text-white px-4 py-2 rounded-md  w-[100%] cursor-pointer hover:bg-red-700" onClick={handleLogout}>Logout</button>
         </div>
-      </div>
+      {/* </div> */}
     </aside>
   );
 }

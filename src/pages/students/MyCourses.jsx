@@ -268,7 +268,7 @@ export default function MyCourses() {
                   alt={course.title}
                   className="h-48 w-full object-cover"
                 />
-                {course.status === "completed" && (
+                {/* {course.status === "completed" && (
                   <>
                     <div className="absolute inset-0 bg-green-900/40"></div>
                     <div className="absolute top-4 right-4 flex items-center gap-1 rounded-full bg-green-500 px-3 py-1 text-xs font-bold text-white">
@@ -286,7 +286,7 @@ export default function MyCourses() {
                       مكتمل
                     </div>
                   </>
-                )}
+                )} */}
               </div>
               <div className="flex flex-grow flex-col p-6">
                 <h3 className="mb-2 text-xl font-bold text-white">
@@ -294,7 +294,7 @@ export default function MyCourses() {
                 </h3>
                 <p className="mb-4 text-sm text-gray-400">{course.description}</p>
 
-                {course.status === "in-progress" ? (
+                {/* {course.status === "in-progress" ? (
                   <div className="mb-6 space-y-2 text-sm text-gray-300">
                     <p>
                       الأبواب المكتملة:{" "}
@@ -324,7 +324,7 @@ export default function MyCourses() {
                       </span>
                     </p>
                   </div>
-                )}
+                )} */}
 
                 <Link
                   to={`/course/${course.id}`}

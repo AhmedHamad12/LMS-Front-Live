@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import axios from "../../api/axios";
 import { Cookies } from "react-cookie";
 import { useQuery } from "@tanstack/react-query";
+import BackgroundAnimation from "../../Components/BackgroundAnimation";
+import * as THREE from "three";
 
 export default function Dashboard() {
   const [userPoints, setUserPoints] = useState(150);
@@ -10,112 +12,228 @@ export default function Dashboard() {
   const [timeRemaining, setTimeRemaining] = useState("12:34:56");
 
   // Simulate countdown timer
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      const target = new Date(
-        now.getTime() + 12 * 60 * 60 * 1000 + 34 * 60 * 1000 + 56 * 1000
-      );
-      const diff = target - now;
+  // useEffect(() => {
+  //   const timer = setInterval(() => {
+  //     const now = new Date();
+  //     const target = new Date(
+  //       now.getTime() + 12 * 60 * 60 * 1000 + 34 * 60 * 1000 + 56 * 1000
+  //     );
+  //     const diff = target - now;
 
-      if (diff > 0) {
-        const hours = Math.floor(diff / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-        setTimeRemaining(
-          `${hours.toString().padStart(2, "0")}:${minutes
-            .toString()
-            .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+  //     if (diff > 0) {
+  //       const hours = Math.floor(diff / (1000 * 60 * 60));
+  //       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  //       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+  //       setTimeRemaining(
+  //         `${hours.toString().padStart(2, "0")}:${minutes
+  //           .toString()
+  //           .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+  //       );
+  //     }
+  //   }, 1000);
+
+  //   return () => clearInterval(timer);
+  // }, []);
+
+  // // Background canvas effect
+  // useEffect(() => {
+  //   const canvas = document.getElementById("bg-canvas");
+  //   if (!canvas) return; // Exit if canvas is not found
+
+  //   const ctx = canvas.getContext("2d");
+  //   if (!ctx) return; // Exit if context is not available
+
+  //   const resizeCanvas = () => {
+  //     canvas.width = window.innerWidth;
+  //     canvas.height = window.innerHeight;
+  //   };
+
+  //   resizeCanvas();
+  //   window.addEventListener("resize", resizeCanvas);
+
+  //   const particles = [];
+  //   const particleCount = 100;
+
+  //   // Create particles
+  //   for (let i = 0; i < particleCount; i++) {
+  //     particles.push({
+  //       x: Math.random() * canvas.width,
+  //       y: Math.random() * canvas.height,
+  //       vx: (Math.random() - 0.5) * 0.5,
+  //       vy: (Math.random() - 0.5) * 0.5,
+  //       size: Math.random() * 2 + 1,
+  //       opacity: Math.random() * 0.8 + 0.2,
+  //     });
+  //   }
+
+  //   const animate = () => {
+  //     // Check if context is still available
+  //     if (!ctx) return;
+
+  //     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  //     // Create gradient background
+  //     const gradient = ctx.createLinearGradient(
+  //       0,
+  //       0,
+  //       canvas.width,
+  //       canvas.height
+  //     );
+  //     gradient.addColorStop(0, "#000011");
+  //     gradient.addColorStop(0.5, "#000033");
+  //     gradient.addColorStop(1, "#000000");
+
+  //     ctx.fillStyle = gradient;
+  //     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  //     // Update and draw particles
+  //     particles.forEach((particle) => {
+  //       particle.x += particle.vx;
+  //       particle.y += particle.vy;
+
+  //       if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
+  //       if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+
+  //       ctx.beginPath();
+  //       ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+  //       ctx.fillStyle = `rgba(0, 191, 255, ${particle.opacity})`;
+  //       ctx.fill();
+  //     });
+
+  //     requestAnimationFrame(animate);
+  //   };
+
+  //   animate();
+
+  //   return () => {
+  //     window.removeEventListener("resize", resizeCanvas);
+  //   };
+  // }, []);
+
+  // const handleAnswerClick = (answer) => {
+  //   if (answer === "الأمبير") {
+  //     setUserPoints((prev) => prev + 25);
+  //     alert("إجابة صحيحة! لقد حصلت على 25 نقطة إضافية!");
+  //   } else {
+  //     alert("إجابة خاطئة. حاول مرة أخرى!");
+  //   }
+  // };
+
+
+  const canvasRef = useRef(null);
+  const mainContentRef = useRef(null);
+  const sceneRef = useRef(null);
+  const cameraRef = useRef(null);
+  const rendererRef = useRef(null);
+  const starsRef = useRef({ far: null, mid: null, close: null });
+
+    useEffect(() => {
+      if (!canvasRef.current) return;
+  
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      camera.position.z = 5;
+  
+      const renderer = new THREE.WebGLRenderer({
+        canvas: canvasRef.current,
+      });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
+  
+      sceneRef.current = scene;
+      cameraRef.current = camera;
+      rendererRef.current = renderer;
+  
+      // Create starfield
+      const createStarfield = (count, size, color) => {
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(count * 3);
+        for (let i = 0; i < count; i++) {
+          positions[i * 3 + 0] = (Math.random() - 0.5) * 200;
+          positions[i * 3 + 1] = (Math.random() - 0.5) * 200;
+          positions[i * 3 + 2] = (Math.random() - 0.5) * 200;
+        }
+        geometry.setAttribute(
+          "position",
+          new THREE.BufferAttribute(positions, 3)
         );
+        const material = new THREE.PointsMaterial({
+          size: size,
+          color: color,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+          transparent: true,
+          opacity: 0.7,
+        });
+        const starfield = new THREE.Points(geometry, material);
+        scene.add(starfield);
+        return starfield;
+      };
+  
+      starsRef.current.far = createStarfield(8000, 0.05, 0x888888);
+      starsRef.current.mid = createStarfield(5000, 0.1, 0xbbbbbb);
+      starsRef.current.close = createStarfield(1500, 0.15, 0xffffff);
+  
+      // Animation loop
+      const clock = new THREE.Clock();
+      const animate = () => {
+        const elapsedTime = clock.getElapsedTime();
+        if (starsRef.current.far)
+          starsRef.current.far.rotation.y = elapsedTime * 0.01;
+        if (starsRef.current.mid)
+          starsRef.current.mid.rotation.y = elapsedTime * 0.02;
+        if (starsRef.current.close)
+          starsRef.current.close.rotation.y = elapsedTime * 0.03;
+  
+        renderer.render(scene, camera);
+        requestAnimationFrame(animate);
+      };
+  
+      animate();
+  
+      // Handle window resize
+      const handleResize = () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+      };
+  
+      window.addEventListener("resize", handleResize);
+  
+      return () => {
+        window.removeEventListener("resize", handleResize);
+      };
+    }, []);
+  
+    // Scroll-based animation
+    useEffect(() => {
+      const handleScroll = () => {
+        if (!mainContentRef.current || !cameraRef.current) return;
+        const scrollY = mainContentRef.current.scrollTop;
+        const docHeight =
+          mainContentRef.current.scrollHeight -
+          mainContentRef.current.clientHeight;
+        const scrollPercent = docHeight > 0 ? scrollY / docHeight : 0;
+  
+        cameraRef.current.position.z = 5 - scrollPercent * 10;
+      };
+  
+      if (mainContentRef.current) {
+        mainContentRef.current.addEventListener("scroll", handleScroll);
       }
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  // Background canvas effect
-  useEffect(() => {
-    const canvas = document.getElementById("bg-canvas");
-    if (!canvas) return; // Exit if canvas is not found
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return; // Exit if context is not available
-
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-
-    resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
-
-    const particles = [];
-    const particleCount = 100;
-
-    // Create particles
-    for (let i = 0; i < particleCount; i++) {
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5,
-        size: Math.random() * 2 + 1,
-        opacity: Math.random() * 0.8 + 0.2,
-      });
-    }
-
-    const animate = () => {
-      // Check if context is still available
-      if (!ctx) return;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Create gradient background
-      const gradient = ctx.createLinearGradient(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-      gradient.addColorStop(0, "#000011");
-      gradient.addColorStop(0.5, "#000033");
-      gradient.addColorStop(1, "#000000");
-
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Update and draw particles
-      particles.forEach((particle) => {
-        particle.x += particle.vx;
-        particle.y += particle.vy;
-
-        if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
-        if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
-
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(0, 191, 255, ${particle.opacity})`;
-        ctx.fill();
-      });
-
-      requestAnimationFrame(animate);
-    };
-
-    animate();
-
-    return () => {
-      window.removeEventListener("resize", resizeCanvas);
-    };
-  }, []);
-
-  const handleAnswerClick = (answer) => {
-    if (answer === "الأمبير") {
-      setUserPoints((prev) => prev + 25);
-      alert("إجابة صحيحة! لقد حصلت على 25 نقطة إضافية!");
-    } else {
-      alert("إجابة خاطئة. حاول مرة أخرى!");
-    }
-  };
+  
+      return () => {
+        if (mainContentRef.current) {
+          mainContentRef.current.removeEventListener("scroll", handleScroll);
+        }
+      };
+    }, []);
 
   const cookies = new Cookies();
   const token = cookies.get("token");
@@ -194,13 +312,13 @@ export default function Dashboard() {
 
   return (
     <div
-      className="min-h-screen bg-black text-gray-100"
+      className="min-h-screen  text-gray-100"
       style={{ fontFamily: "Cairo, sans-serif" }}
     >
       {/* Background Canvas */}
       <canvas
-        id="bg-canvas"
-        className="fixed top-0 left-0 -z-10 h-full w-full"
+        ref={canvasRef}
+        className="fixed top-0 left-0 w-full h-full -z-10"
       />
 
       {/* Main Content */}
@@ -366,7 +484,7 @@ export default function Dashboard() {
                 البيانات الواردة
               </h2>
               <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-blue-900/40 to-gray-900/50 p-4 backdrop-blur-md">
-                <div className="max-h-48 space-y-3 overflow-y-auto pr-2">
+                <div className="h-22 overflow-y-auto">
                   {/* <div className="flex items-start"> */}
                   {/* <div className="h-fit rounded-full bg-cyan-500/20 p-2">
                       <svg
@@ -433,13 +551,13 @@ export default function Dashboard() {
                       </div>
                       <div className="mr-3">
                         <p className="text-sm font-bold text-white">
-                          {item.title} notification 1
+                          {item.title} 
+                        </p>
+                        <p className="text-xs text-gray-400 my-2">
+                          {item.timeAgo} 
                         </p>
                         <p className="text-xs text-gray-400">
-                          {item.timeAge} 10/8/2025
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {item.message} message
+                          {item.message} 
                         </p>
                       </div>
                     </div>

@@ -154,8 +154,9 @@ const AllCourses = () => {
     (course) =>
       // (filter === "all" || course.subject === filter) &&
       search === "" ||
-      course.title.includes(search) ||
-      course.teacher.firstName.includes(search)
+      course.title.includes(search) 
+      // ||
+      // course.teacher.firstName.includes(search)
   );
 
   // Three.js setup

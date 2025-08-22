@@ -321,6 +321,7 @@
 
 // export default Course;
 
+import { Trophy } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Cookies } from "react-cookie";
 import { useParams } from "react-router-dom";
@@ -338,6 +339,7 @@ export default function Course() {
   const [openCourse, setOpenCourse] = useState(1);
   const [enrollCourses, setEnrollCourses] = useState({});
   const [isActive, setIsActive] = useState(null);
+  const [circleProgress,setCircleProgress] = useState(0); // example: 70%
 
   const playerRef = useRef(null);
   const playerInstanceRef = useRef(null);
@@ -421,6 +423,8 @@ export default function Course() {
       // const course = (res || []).find((c) => (c.id ?? c.Id) === courseId);
 
       setEnrollCourses(res);
+      setCircleProgress(Math.floor(+res?.courseProgress));
+
 
       if (!course) {
         setLessons([{ type: "error", title: "الكورس غير موجود" }]);
@@ -660,44 +664,61 @@ export default function Course() {
     };
   }, []);
 
+  
+
+
+  const radius = 30;
+  const stroke = 4;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (circleProgress / 100) * circumference;
+
   return (
     <div className=" bg-gray-950 text-gray-100" dir="rtl">
-      <div className="grid grid-cols-[320px_1fr] min-h-[calc(100vh-58px)] h-screen">
-        {/* Sidebar */}
-        {/* <aside className="border-l border-gray-800 bg-gray-950 overflow-auto px-2">
-          <ul className="list-none m-0 p-0">
-            {lessons.length === 0 ? (
-              <li className="px-4 py-2 text-gray-400 text-sm border-t border-gray-950 sticky top-0 bg-gray-950">
-                اختر درس للمشاهدة
-              </li>
-            ) : (
-              lessons.map((item, index) => (
-                <li key={index}>
-                  {item.type === "unit" ? (
-                    <div className="px-4 py-2 text-gray-400 text-sm border-t border-gray-950 sticky top-0 bg-gray-950 my-2">
-                      {item.title}
-                    </div>
-                  ) : item.type === "error" ? (
-                    <div className="px-4 py-2 text-gray-400 text-sm border-t border-gray-950 sticky top-0 bg-gray-950">
-                      {item.title}
-                    </div>
-                  ) : (
-                    <div
-                      className="px-4 py-4 border-b-[1px]  border-gray-600 cursor-pointer hover:bg-gray-700 flex gap-2 items-center"
-                      onClick={() => openLesson(item.id, item.videoId)}
-                    >
-                      <span className="flex-1">{item.title}</span>
-                      <span className="text-xs bg-gray-700 text-blue-300 px-2 py-1 rounded-full">
-                        #{item.id}
-                      </span>
-                    </div>
-                  )}
-                </li>
-              ))
-            )}
-          </ul>
-        </aside> */}
+      <div className=" text-2xl font-semibold bg-gray-950 border-b border-gray-800 py-2 px-12 flex items-center justify-between">
+        <p>{enrollCourses?.course?.title}</p>
 
+        <div className="flex items-center space-x-3 text-gray-200">
+          {/* Circular progress */}
+          <div className="relative w-16 h-16">
+            <svg
+              className="w-full h-full transform -rotate-90"
+              viewBox="0 0 80 80"
+            >
+              {/* Background circle */}
+              <circle
+                cx="40"
+                cy="40"
+                r={radius}
+                stroke="gray"
+                strokeWidth={stroke}
+                fill="none"
+                className="opacity-30"
+              />
+              {/* Progress circle */}
+              <circle
+                cx="40"
+                cy="40"
+                r={radius}
+                stroke="rgb(129, 140, 248)" // Tailwind indigo-400
+                strokeWidth={stroke}
+                fill="none"
+                strokeDasharray={circumference}
+                strokeDashoffset={offset}
+                strokeLinecap="round"
+              />
+            </svg>
+
+            {/* Icon inside */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Trophy className="w-6 h-6 text-indigo-400" />
+            </div>
+          </div>
+
+          {/* Text */}
+          <span className="text-lg">تقدمك ({circleProgress}%)</span>
+        </div>
+      </div>
+      <div className="grid grid-cols-[320px_1fr] min-h-[calc(100vh-58px)] h-screen">
         <div className="border-l border-gray-800 bg-gray-950 overflow-auto px-2">
           <div>
             {enrollCourses?.units?.map((course, index) => (
@@ -740,11 +761,18 @@ export default function Course() {
                     {course.lessons?.map((unit) => (
                       <div
                         key={unit.id}
-                        className={`py-4 px-6 border-b-[0.1px] border-gray-600 flex items-center cursor-pointer hover:bg-white/5 ${
+                        className={`py-4 px-4 border-b-[0.1px] border-gray-600 flex items-center gap-4 cursor-pointer hover:bg-white/5 ${
                           unit.id === isActive ? "bg-white/5" : ""
                         }`}
-                        onClick={() => openLesson(unit.id, unit.videoId)}
+                        onClick={() => openLesson(unit.id, unit.vimeoId)}
                       >
+                        <input
+                          type="checkbox"
+                          // disabled
+                          readOnly
+                          className="w-5 h-5 accent-cyan-400 disabled:opacity-100 disabled:accent-cyan-400 disabled:cursor-not-allowed "
+                          checked={unit.progress.percent > 80}
+                        />
                         <p className="font-bold text-white">{unit.title}</p>
                       </div>
                     ))}

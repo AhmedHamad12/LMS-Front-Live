@@ -140,8 +140,8 @@ const CreateQuiz = () => {
         title: form.title,
         teacherId: id,
         targetType: form.targetType.value,
-        targetId: "16",
-        //  form.targetId ? form.targetId.value : "",//TODO: fix for endpoint , or just use 16
+        targetId: form.targetId ? form.targetId.value : "",
+        //  form.targetId ? form.targetId.value : "",//TODO: fix for endpoint , or just use 16 //TODO: return to dynamix
         timeLimitMinutes: Number(form.timeLimitMinutes),
         passScore: Number(form.passScore),
         maxAttempts: Number(form.maxAttempts),
@@ -152,9 +152,9 @@ const CreateQuiz = () => {
       //      axios.post(`/api/Quiz/CreateQuiz?CourseId=${form.targetId ? form.targetId.value : ""}`, payload
       //or just 16
       console.log("payload",payload);
-
+//TODO: return to dynamic
       const response = await toast.promise(
-        axios.post(`/api/Quiz/CreateQuiz?CourseId=16`, payload, {
+        axios.post(`/api/Quiz/CreateQuiz?CourseId=${form.targetId ? form.targetId.value : ""}`, payload, {
           withCredentials: true,
         
         }),
@@ -175,10 +175,32 @@ const CreateQuiz = () => {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center  bg-opacity-80"
+      className="min-h-screen flex flex-col gap-5  items-center justify-center  bg-opacity-80"
       dir="rtl"
       style={{ fontFamily: "Cairo, sans-serif" }}
     >
+        <div className="w-[80%] mt-5">
+      <button
+          onClick={() => navigate("/teacher/quizzes")}
+          className="self-start flex items-center gap-1 text-cyan-400 hover:text-cyan-300 transition font-medium"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          <span>العودة للاختبارات</span>
+        </button>
+      </div>
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-lg glass-effect rounded-2xl p-8 border border-white/10 bg-gradient-to-br from-slate-800/40 to-slate-900/50 backdrop-blur-lg shadow-xl"

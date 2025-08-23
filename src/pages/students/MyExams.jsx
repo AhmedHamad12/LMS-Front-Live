@@ -71,7 +71,7 @@ const MyExams = () => {
   useEffect(() => {
     if (timeLeft === null) return;
 
-    if (timeLeft <= 0) {
+    if (timeLeft <= 3) {
       clearInterval(timerRef.current);
       if (showExamInterface) {
         handleFinishExam(); // auto-submit only once
@@ -394,7 +394,7 @@ const MyExams = () => {
 
       {/* Exam Interface */}
       {showExamInterface && (
-  <div className="fixed inset-0 bg-black z-40 flex flex-col">
+  <div className="fixed inset-0 bg-black z-40 flex flex-col overflow-auto">
     <header className="p-4 flex-shrink-0 backdrop-blur-lg bg-gradient-to-br from-slate-800/40 to-slate-900/50 border border-white/5 flex justify-between items-center border-b border-white/5">
       <div>
         <p className="text-sm text-cyan-300">{currentExam?.course}</p>

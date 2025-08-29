@@ -116,17 +116,29 @@ const MyTasks = () => {
     setShowAssignmentModal(true);
   };
 
-  const submitAssignment = () => {
+  const submitAssignment = async () => {
     if (currentAssignment) {
-      // In a real app, you would update the assignment status in the backend
-      const updatedAssignments = assignments.map((a) =>
-        a.id === currentAssignment.id ? { ...a, status: "submitted" } : a
-      );
-      setCurrentAssignment(null);
-    }
-    setShowAssignmentModal(false);
-    setTextAnswer("");
-    setFileUpload(null);
+      console.log(currentAssignment);
+      const formData = new FormData();
+      formData.append("AssignmentId", currentAssignment.id);
+      if (fileUpload) {
+        formData.append("Files", fileUpload);
+      }
+      formData.append("SubmissionComment", textAnswer);
+      await axios.post(`/api/SubmitedAssignment/AddSubmitedAssignment`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }).then((res) => {
+        console.log(res);
+        setShowAssignmentModal(false);
+        setTextAnswer("");
+        setFileUpload(null);
+        setCurrentAssignment(null);
+      }).catch((err) => {
+        console.log(err);
+      });
+    };
   };
 
   const handleFileUpload = (event) => {
@@ -308,17 +320,17 @@ const MyTasks = () => {
           <div className="bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-xl border border-white/5 rounded-2xl w-full max-w-2xl border-cyan-500/20 shadow-2xl shadow-cyan-500/10 flex flex-col max-h-[90vh]">
             <header className="p-4 border-b border-white/10 flex-shrink-0">
               <p className="text-sm font-bold text-cyan-300">
-                {currentAssignment?.course}
+                {currentAssignment?.courseName}
               </p>
-              <h2 className="text-2xl font-bold text-white">
-                {currentAssignment?.title}
-              </h2>
+              {/* <h2 className="text-2xl font-bold text-white">
+                {currentAssignment?.assignmentDescription}
+              </h2> */}
             </header>
 
             <div className="p-6 flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-black/20">
               <h3 className="font-bold mb-2">تعليمات المهمة:</h3>
               <p className="text-gray-300 mb-6">
-                {currentAssignment?.instructions}
+                {currentAssignment?.assignmentDescription}
               </p>
 
               <h3 className="font-bold mb-2">تسليم إجابتك:</h3>
@@ -564,7 +576,11 @@ const MyTasks = () => {
                 </div>
 
                 <div className="mb-2">
-                  <a href={assignment.files} className="w-full text-center block p-3 rounded-lg bg-gray-700 text-white font-bold hover:bg-gray-600 transition-colors">
+                  <a
+                    href={assignment.files}
+                    target="_blank"
+                    className="w-full text-center block p-3 rounded-lg bg-gray-700 text-white font-bold hover:bg-gray-600 transition-colors"
+                  >
                     عرض الواجب
                   </a>
                 </div>

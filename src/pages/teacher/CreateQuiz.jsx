@@ -5,6 +5,10 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import Select from "react-select";
 import { Cookies } from "react-cookie";
+import dayjs from 'dayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 
 // TODO:Replace with actual auth
 
@@ -80,6 +84,8 @@ const CreateQuiz = () => {
     timeLimitMinutes: "",
     passScore: 100,
     maxAttempts: 1,
+    startExam:"",
+    endExam:"",
   });
   const [targetOptions, setTargetOptions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -107,7 +113,7 @@ const CreateQuiz = () => {
             }))
           : [];
         setTargetOptions(options);
-        console.log("data ", res.data);
+        console.log("target type data ", res.data);
       } catch {
         setTargetOptions([]);
         toast.error("error");
@@ -141,19 +147,24 @@ const CreateQuiz = () => {
         teacherId: id,
         targetType: form.targetType.value,
         targetId: form.targetId ? form.targetId.value : "",
+        //  form.targetId ? form.targetId.value : "",//TODO: fix for endpoint , or just use 16 //TODO: return to dynamix
         timeLimitMinutes: Number(form.timeLimitMinutes),
         passScore: Number(form.passScore),
         maxAttempts: Number(form.maxAttempts),
+        startExam: form.startExam,
+        endExam: form.endExam,
       };
-      console.log(payload);
 
+      //      axios.post(`/api/Quiz/CreateQuiz?CourseId=${form.targetId ? form.targetId.value : ""}`, payload
+      //or just 16
+      console.log("payload",payload);
+//TODO: return to dynamic
       const response = await toast.promise(
-        
-        axios.post("/api/Quiz", payload, {
+
+        axios.post(`/api/Quiz/CreateQuiz?CourseId=${form.targetId ? form.targetId.value : ""}`, payload, {
+
           withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        
         }),
 
         {
@@ -173,10 +184,32 @@ const CreateQuiz = () => {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center  bg-opacity-80"
+      className="min-h-screen flex flex-col gap-5  items-center justify-center  bg-opacity-80"
       dir="rtl"
       style={{ fontFamily: "Cairo, sans-serif" }}
     >
+        <div className="w-[80%] mt-5">
+      <button
+          onClick={() => navigate("/teacher/quizzes")}
+          className="self-start flex items-center gap-1 text-cyan-400 hover:text-cyan-300 transition font-medium"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          <span>العودة للاختبارات</span>
+        </button>
+      </div>
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-lg glass-effect rounded-2xl p-8 border border-white/10 bg-gradient-to-br from-slate-800/40 to-slate-900/50 backdrop-blur-lg shadow-xl"
@@ -228,7 +261,119 @@ const CreateQuiz = () => {
             noOptionsMessage={() => "لا توجد خيارات متاحة"}
           />
         </div>
-        <div className="mb-6">
+
+{/* Start Date Picker */}
+<div>
+  <label className="block text-gray-300 my-3">تاريخ بدء الاختبار *</label>
+  <LocalizationProvider dateAdapter={AdapterDayjs}>
+    <DateTimePicker
+      value={form.startExam ? dayjs(form.startExam) : null}
+      onChange={newValue =>
+        setForm({
+          ...form,
+          startExam: newValue ? newValue.toISOString() : '',
+        })
+      }
+      slotProps={{
+        textField: {
+          fullWidth: true,
+          required: true,
+          variant: 'outlined',
+          placeholder: 'اختر تاريخ البدء',
+          InputProps: {
+            className:
+              'w-full text-white rounded-lg p-3 bg-slate-900/60 border border-cyan-400/20 focus:border-cyan-400 outline-none',
+          },
+          inputProps: {
+            style: {
+              color: 'white',
+            },
+          },
+          sx: {
+            '& .MuiOutlinedInput-root': {
+              backgroundColor: '#0f172a',
+              borderRadius: 2,
+              color: 'white',
+              fontFamily: 'Cairo, sans-serif',
+            },
+            '& .MuiOutlinedInput-input': {
+              color: 'white',
+            },
+            '& .MuiOutlinedInput-input::placeholder': {
+              color: 'white',
+              opacity: 1,
+            },
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: '#0891b2',
+            },
+            '& .Mui-focused .MuiOutlinedInput-notchedOutline': {
+              borderColor: '#22d3ee',
+            },
+          },
+        },
+      }}
+      ampm={false}
+      disablePast
+    />
+  </LocalizationProvider>
+</div>
+
+
+            {/* End Date Picker */}
+            <div>
+              <label className="block m text-gray-300 my-3">تاريخ نهاية الاختبار *</label>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DateTimePicker
+                  value={form.endExam ? dayjs(form.endExam) : null}
+                  onChange={newValue =>
+                    setForm({
+                      ...form,
+                      endExam: newValue ? newValue.toISOString() : '',
+                    })
+                  }
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      required: true,
+                      variant: 'outlined',
+                      placeholder: 'اختر تاريخ النهاية',
+                      InputProps: {
+                        className: 'w-full rounded-lg p-3 bg-slate-900/60 text-white border border-cyan-400/20 focus:border-cyan-400 outline-none',
+                      },
+                      inputProps: {
+                        style: { color: 'white', '::placeholder': { color: 'white', opacity: 1 } },
+                      },
+                      sx: {
+                        '& .MuiOutlinedInput-root': {
+                          backgroundColor: '#0f172a',
+                          borderRadius: 2,
+                          color: 'white',
+                          fontFamily: 'Cairo, sans-serif',
+                        },
+                        '& .MuiInputBase-input::placeholder': {
+                          color: 'white',
+                          opacity: 1,
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#0891b2',
+                        },
+                        '& .Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#22d3ee',
+                        },
+                      },
+                    },
+                  }}
+                  ampm={false}
+                  disablePast
+                  minDateTime={form.startExam ? dayjs(form.startExam) : undefined}
+                />
+              </LocalizationProvider>
+            </div>
+
+
+
+
+        <div className="my-6">
           <label className="block text-gray-300 mb-2">المدة (بالدقائق) *</label>
           <input
             type="number"

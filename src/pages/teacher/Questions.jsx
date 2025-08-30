@@ -1,13 +1,13 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Select from "react-select";
 
 const QUESTION_TYPE_OPTIONS = [
   { value: 1, label: "اختيار من متعدد" },
   { value: 2, label: "صح أو خطأ" },
-  { value: 3, label: "إجابة نصية" },
+  // { value: 3, label: "إجابة نصية" },
 ];
 
 const customSelectStyles = {
@@ -63,6 +63,7 @@ const Questions = () => {
   const [questions, setquestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [openAccordion, setOpenAccordion] = useState(null);
+  const [validationError, setValidationError] = useState("");
 
 
   const cookies = new Cookies();
@@ -78,7 +79,7 @@ const Questions = () => {
         });
 
         setquestions(response.data);
-        console.log(response.data);
+        console.log("fetched questions", response.data);
       } catch (error) {
         console.log(error);
       }
@@ -151,6 +152,7 @@ const Questions = () => {
       }));
     }
   };
+  const navigate = useNavigate();
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -182,6 +184,20 @@ const Questions = () => {
           newQuestion.options.findIndex((opt) => opt.isCorrect)
         );
       }
+
+      // inside handleSubmit before sending request
+      if (newQuestion.type.value === 1 || newQuestion.type.value === 2) {
+        const correctIndex = newQuestion.options.findIndex(
+          (opt) => opt.isCorrect
+        );
+        if (correctIndex === -1) {
+          setValidationError("يجب اختيار إجابة صحيحة واحدة على الأقل");
+          setLoading(false);
+          return;
+        }
+      }
+      setValidationError("");
+
       await axios.post(`/api/Quiz/${quizId}/questions`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -224,6 +240,31 @@ const Questions = () => {
       dir="rtl"
       style={{ fontFamily: "Cairo, sans-serif" }}
     >
+      
+      <div className="w-[80%]">
+      <button
+          onClick={() => navigate("/teacher/quizzes")}
+          className="self-start flex items-center gap-1 text-cyan-400 hover:text-cyan-300 transition font-medium"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          <span>العودة للاختبارات</span>
+        </button>
+      </div>
+      
+
       {/* Modern Card Grid for fetched questions */}
       <h2 className="text-2xl font-bold mb-4">الأسئلة الحالية</h2>
       <div className="w-full max-w-2xl mb-8">
@@ -416,6 +457,9 @@ const Questions = () => {
               ))}
             </div>
           </div>
+        )}
+        {validationError && (
+          <p className="text-red-500 text-sm mb-2">{validationError}</p>
         )}
         <button
           type="submit"

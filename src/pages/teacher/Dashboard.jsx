@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import axios from "../../api/axios";
 import React, { useEffect, useRef } from "react";
 import { Cookies } from "react-cookie";
 import { Link } from "react-router-dom";
 import * as THREE from "three";
+import Loading from "../../Components/Loading";
 
 const TeacherDashboard = () => {
   const canvasRef = useRef(null);
@@ -17,9 +18,9 @@ const TeacherDashboard = () => {
   const token = cookies.get("token");
 
   //*************************************************** */
-  const fetchUser = () => {
-    return axios
-      .get("http://lms278.runasp.net/api/Account/GetCurrentUser", {
+  const fetchUser = async () => {
+    return await axios
+      .get("/api/Account/GetCurrentUser", {
         headers: {
           accept: "text/plain",
           Authorization: `Bearer ${token}`,
@@ -30,9 +31,9 @@ const TeacherDashboard = () => {
       });
   };
 
-  const fetchCourses = (teacherID) => {
-    return axios
-      .get(`http://lms278.runasp.net/api/Course/${teacherID}`, {
+  const fetchCourses =  async() => {
+    return await axios
+      .get(`/api/teacher/courses`, {
         headers: {
           accept: "/",
           Authorization: `Bearer ${token}`,
@@ -43,30 +44,24 @@ const TeacherDashboard = () => {
       });
   };
 
-  const { data: user } = useQuery({
+  const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ["user"],
     queryFn: fetchUser,
   });
 
-  const teacherID = user?.data?.teacherId;
-
-  const { data: courses } = useQuery({
-    queryKey: ["courses", teacherID],
-    queryFn: () => fetchCourses(teacherID),
-    enabled: !!teacherID, // only after the teacherID has been retrieved fetch the details
+  const { data: courses, isLoading: coursesLoading } = useQuery({
+    queryKey: ["courses"],
+    queryFn: () => fetchCourses(),
   });
 
-  const fetchAllData = () => {
-    return axios
-      .get(
-        `http://lms278.runasp.net/api/Teacher/getTeacherByid/${user.data.teacherId}`,
-        {
-          headers: {
-            accept: "text/plain",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
+  const fetchAllData = async () => {
+    return await axios
+      .get(`/api/Teacher/getTeacherByid`, {
+        headers: {
+          accept: "text/plain",
+          Authorization: `Bearer ${token}`,
+        },
+      })
       .catch((error) => {
         console.error("User data fetch error:", error);
       });
@@ -77,10 +72,28 @@ const TeacherDashboard = () => {
     queryFn: fetchAllData,
   });
 
+  const getTeacherReport = async () => {
+    return await axios
+      .get(`/api/reports/teacher`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .catch((error) => {
+        console.error("User data fetch error:", error);
+      });
+  };
+
+  const { data: report } = useQuery({
+    queryKey: ["report"],
+    queryFn: getTeacherReport,
+  });
+
   
-  console.log(allData);
-  console.log(user);
-  console.log(courses);
+  // console.log(allData);
+  // console.log(user);
+  // console.log(courses);
+  console.log(report);
 
   //*************************************************** */
 
@@ -191,6 +204,10 @@ const TeacherDashboard = () => {
     }
   }, []);
 
+  if (userLoading || coursesLoading) {
+    return <Loading />;
+  }
+
   return (
     <div
       className="text-gray-100 font-[Cairo] h-screen overflow-hidden w-full"
@@ -222,7 +239,7 @@ const TeacherDashboard = () => {
           </p>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-12">
+          {/* <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-12">
             <div className="glass-effect rounded-2xl p-6">
               <div className="flex items-center">
                 <div className="p-3 bg-green-500/20 rounded-lg">
@@ -244,7 +261,9 @@ const TeacherDashboard = () => {
                   <p className="text-sm text-gray-400">
                     إجمالي الأرباح (هذا الشهر)
                   </p>
-                  <p className="text-2xl font-black text-white">12,500 جنيه</p>
+                  <p className="text-2xl font-black text-white">
+                    {report?.data?.totals?.teacherEarnings} جنيه
+                  </p>
                 </div>
               </div>
             </div>
@@ -267,32 +286,47 @@ const TeacherDashboard = () => {
                 </div>
                 <div className="mr-4">
                   <p className="text-sm text-gray-400">إجمالي الطلاب</p>
-                  <p className="text-2xl font-black text-white">1,345 طالب</p>
+                  <p className="text-2xl font-black text-white">
+                    {report?.data?.totals?.totalSubscriptions} طالب
+                  </p>
                 </div>
               </div>
             </div>
+          </div> */}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-12">
             <div className="glass-effect rounded-2xl p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-yellow-500/20 rounded-lg">
-                  <svg
-                    className="w-8 h-8 text-yellow-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                    />
-                  </svg>
-                </div>
-                <div className="mr-4">
-                  <p className="text-sm text-gray-400">متوسط التقييم</p>
-                  <p className="text-2xl font-black text-white">4.8 / 5</p>
-                </div>
-              </div>
+              <p className="text-sm text-gray-400">الرصيد القابل للسحب</p>
+              <p className="text-3xl font-black text-green-400">
+                {report?.data?.totals?.teacherEarnings}{" "}
+                <span className="text-base">جنيه</span>
+              </p>
+            </div>
+
+            <div className="glass-effect rounded-2xl p-6">
+              <p className="text-sm text-gray-400">أرباح هذا الشهر</p>
+              <p className="text-3xl font-black text-white">
+                {
+                  report?.data?.monthlySeries[
+                    report?.data?.monthlySeries?.length - 1
+                  ]?.teacherEarnings
+                }{" "}
+                <span className="text-base">جنيه</span>
+              </p>
+            </div>
+
+            <div className="glass-effect rounded-2xl p-6">
+              <p className="text-sm text-gray-400">الاشتراكات النشطة</p>
+              <p className="text-3xl font-black text-white">
+                {report?.data?.totals?.totalSubscriptions}{" "}
+                <span className="text-base">طالب</span>
+              </p>
+            </div>
+
+            <div className="flex items-center justify-center">
+              <button className="w-full h-full p-6 rounded-2xl bg-cyan-500 text-black font-bold text-lg hover:bg-cyan-400 transition-colors">
+                طلب سحب الأرباح
+              </button>
             </div>
           </div>
 
@@ -301,14 +335,16 @@ const TeacherDashboard = () => {
             <div className="lg:col-span-3">
               <h2 className="text-2xl font-bold mb-6">إدارة الكورسات</h2>
               <div className="space-y-4">
-                {courses?.data?.map((course) => (
+                {courses?.data?.items.map((course) => (
                   <div
                     key={course.id}
                     className="glass-effect rounded-2xl p-4 flex items-center justify-between"
                   >
                     <div>
                       <h3 className="font-bold text-white">{course.title}</h3>
-                      <p className="text-xs text-gray-400">250 طالب مشترك</p>
+                      <p className="text-xs text-gray-400">
+                        {course.stats.studentsCount} طالب مشترك
+                      </p>
                     </div>
                     <Link
                       to={`/teacher/course/mange/${course.id}`}

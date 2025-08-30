@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as THREE from "three";
 
+import axios from "../../api/axios";
+import { Cookies } from "react-cookie";
+import { useQuery } from "@tanstack/react-query";
+import Loading from "../../Components/Loading";
+
 const MyTasks = () => {
   const [filter, setFilter] = useState("new");
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
@@ -60,8 +65,51 @@ const MyTasks = () => {
     },
   ]);
 
-  const filteredAssignments = assignments.filter(
-    (assignment) => filter === "all" || assignment.status === filter
+  const cookies = new Cookies();
+  const token = cookies.get("token");
+
+  const getAssignments = async () => {
+    return await axios.get(
+      `/api/Assignment/GetAssignmentsForStudent?category=1`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  };
+
+  const { data: userAssignments, isLoading } = useQuery({
+    queryKey: ["user-assignments"],
+    queryFn: getAssignments,
+  });
+
+  console.log(userAssignments);
+
+  const catConvert = (category) => {
+    if (category == 1) {
+      return "new";
+    } else if (category == 2) {
+      return "submitted";
+    } else if (category == 3) {
+      return "graded";
+    } else if (category == 4) {
+      return "missed";
+    }
+  };
+
+  const formatted = (newDate) => {
+    const date = new Date(newDate);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long", // or "short" or "2-digit"
+      day: "2-digit",
+    });
+  };
+
+  const filteredAssignments = userAssignments?.data?.filter(
+    (assignment) =>
+      filter === "all" || catConvert(assignment.assignmentCategory) === filter
   );
 
   const startAssignment = (assignment) => {
@@ -69,17 +117,29 @@ const MyTasks = () => {
     setShowAssignmentModal(true);
   };
 
-  const submitAssignment = () => {
+  const submitAssignment = async () => {
     if (currentAssignment) {
-      // In a real app, you would update the assignment status in the backend
-      const updatedAssignments = assignments.map((a) =>
-        a.id === currentAssignment.id ? { ...a, status: "submitted" } : a
-      );
-      setCurrentAssignment(null);
-    }
-    setShowAssignmentModal(false);
-    setTextAnswer("");
-    setFileUpload(null);
+      const formData = new FormData();
+      formData.append("AssignmentId", currentAssignment.id);
+      if (fileUpload) {
+        formData.append("Files", fileUpload);
+      }
+      formData.append("SubmissionComment", textAnswer);
+      await axios.post(`/api/SubmitedAssignment/AddSubmitedAssignment`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }).then((res) => {
+        console.log(res);
+        setShowAssignmentModal(false);
+        setTextAnswer("");
+        setFileUpload(null);
+        setCurrentAssignment(null);
+      }).catch((err) => {
+        console.log(err);
+      });
+    };
   };
 
   const handleFileUpload = (event) => {
@@ -219,7 +279,7 @@ const MyTasks = () => {
   };
 
   const getButtonForStatus = (assignment) => {
-    switch (assignment.status) {
+    switch (catConvert(assignment.assignmentCategory)) {
       case "new":
         return (
           <button
@@ -244,6 +304,10 @@ const MyTasks = () => {
     }
   };
 
+  if (isLoading) {
+    return <Loading />
+  }
+
   return (
     <div
       className="text-gray-100 min-h-screen overflow-hidden w-full"
@@ -261,17 +325,17 @@ const MyTasks = () => {
           <div className="bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-xl border border-white/5 rounded-2xl w-full max-w-2xl border-cyan-500/20 shadow-2xl shadow-cyan-500/10 flex flex-col max-h-[90vh]">
             <header className="p-4 border-b border-white/10 flex-shrink-0">
               <p className="text-sm font-bold text-cyan-300">
-                {currentAssignment?.course}
+                {currentAssignment?.courseName}
               </p>
-              <h2 className="text-2xl font-bold text-white">
-                {currentAssignment?.title}
-              </h2>
+              {/* <h2 className="text-2xl font-bold text-white">
+                {currentAssignment?.assignmentDescription}
+              </h2> */}
             </header>
 
             <div className="p-6 flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-black/20">
               <h3 className="font-bold mb-2">تعليمات المهمة:</h3>
               <p className="text-gray-300 mb-6">
-                {currentAssignment?.instructions}
+                {currentAssignment?.assignmentDescription}
               </p>
 
               <h3 className="font-bold mb-2">تسليم إجابتك:</h3>
@@ -308,7 +372,6 @@ const MyTasks = () => {
                             id="file_upload"
                             name="file_upload"
                             type="file"
-                            className="sr-only"
                             onChange={handleFileUpload}
                           />
                         </label>
@@ -391,7 +454,7 @@ const MyTasks = () => {
                   : "bg-white/10 text-white"
               }`}
             >
-              مهام جديدة (2)
+              مهام جديدة
             </button>
             <button
               onClick={() => setFilter("submitted")}
@@ -401,7 +464,7 @@ const MyTasks = () => {
                   : "bg-white/10 text-white"
               }`}
             >
-              بانتظار التقييم (1)
+              بانتظار التقييم
             </button>
             <button
               onClick={() => setFilter("graded")}
@@ -411,7 +474,7 @@ const MyTasks = () => {
                   : "bg-white/10 text-white"
               }`}
             >
-              مهام منجزة (1)
+              مهام منجزة
             </button>
             <button
               onClick={() => setFilter("missed")}
@@ -421,7 +484,7 @@ const MyTasks = () => {
                   : "bg-white/10 text-white"
               }`}
             >
-              مهام فائتة (1)
+              مهام فائتة
             </button>
             <button
               onClick={() => setFilter("all")}
@@ -437,27 +500,29 @@ const MyTasks = () => {
 
           {/* Assignments Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            {filteredAssignments.map((assignment) => (
+            {filteredAssignments?.map((assignment, index) => (
               <div
-                key={assignment.id}
+                key={index}
                 className={`bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-xl border border-white/5 rounded-2xl p-6 flex flex-col justify-between transform hover:-translate-y-2 transition-transform duration-300 ${
-                  assignment.status === "missed" ? "border-red-500/50" : ""
+                  catConvert(assignment.assignmentCategory) === "missed"
+                    ? "border-red-500/50"
+                    : ""
                 }`}
               >
                 <div>
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-sm font-bold text-cyan-300">
-                        {assignment.course}
+                        {assignment.courseName}
                       </p>
                       <h3 className="text-xl font-bold text-white mb-4">
-                        {assignment.title}
+                        {assignment.assignmentDescription}
                       </h3>
                     </div>
-                    {getStatusBadge(assignment.status)}
+                    {getStatusBadge(catConvert(assignment.assignmentCategory))}
                   </div>
 
-                  {assignment.status === "new" && (
+                  {catConvert(assignment.assignmentCategory) === "new" && (
                     <div className="text-sm text-yellow-400 flex items-center gap-2 mb-6">
                       <svg
                         className="w-5 h-5"
@@ -474,39 +539,54 @@ const MyTasks = () => {
                       </svg>
                       <span>
                         الموعد النهائي للتسليم:{" "}
-                        <span className="font-bold">{assignment.due}</span>
+                        <span className="font-bold">
+                          {formatted(assignment.dueDate)}
+                        </span>
                       </span>
                     </div>
                   )}
 
-                  {(assignment.status === "graded" ||
-                    assignment.status === "missed") && (
+                  {(catConvert(assignment.assignmentCategory) === "graded" ||
+                    catConvert(assignment.assignmentCategory) === "missed") && (
                     <div className="bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-xl border border-white/5 rounded-lg p-3 text-center mb-6">
                       <p className="text-sm text-gray-300">
-                        {assignment.status === "graded" ? "النتيجة" : "العقوبة"}
+                        {catConvert(assignment.assignmentCategory) === "graded"
+                          ? "النتيجة"
+                          : "العقوبة"}
                       </p>
-                      <p
+                      {/* <p
                         className={`text-2xl font-black ${
-                          assignment.status === "graded"
+                          catConvert(assignment.assignmentCategory) === "graded"
                             ? "text-green-400"
                             : "text-red-400"
                         }`}
                       >
                         {assignment.score}
-                      </p>
-                      {assignment.status === "graded" && assignment.points && (
+                      </p> */}
+                      {/* {catConvert(assignment.assignmentCategory) === "graded" && assignment.points && (
                         <p className="text-xs text-green-400">
                           +{assignment.points} نقطة
                         </p>
-                      )}
+                      )} */}
                     </div>
                   )}
 
-                  {assignment.status === "submitted" && (
+                  {catConvert(assignment.assignmentCategory) ===
+                    "submitted" && (
                     <div className="text-sm text-center text-gray-400 mb-6 py-8">
                       <p>تم تسليم المهمة بنجاح، في انتظار تقييم القائد.</p>
                     </div>
                   )}
+                </div>
+
+                <div className="mb-2">
+                  <a
+                    href={assignment.files}
+                    target="_blank"
+                    className="w-full text-center block p-3 rounded-lg bg-gray-700 text-white font-bold hover:bg-gray-600 transition-colors"
+                  >
+                    عرض الواجب
+                  </a>
                 </div>
 
                 {getButtonForStatus(assignment)}
@@ -514,7 +594,7 @@ const MyTasks = () => {
             ))}
 
             {/* No results message */}
-            {filteredAssignments.length === 0 && (
+            {filteredAssignments?.length === 0 && (
               <div className="md:col-span-2 xl:col-span-3 text-center py-16">
                 <svg
                   className="w-16 h-16 mx-auto text-gray-600 mb-4"

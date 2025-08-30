@@ -5,7 +5,6 @@ import * as THREE from "three";
 import { useQuery } from "@tanstack/react-query";
 import axios from "../../api/axios";
 import { Cookies } from "react-cookie";
-import TeacherAside from "../../Components/teacher/TeacherAside";
 
 const AddCourse = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -48,41 +47,6 @@ const AddCourse = () => {
       })
       .catch((error) => {
         console.error("User data fetch error:", error);
-
-        // If we get a 403 error, it might be a permission issue
-        if (error.response?.status === 403) {
-          console.log(
-            "403 Forbidden - trying to get user data from alternative endpoint..."
-          );
-
-          // Try alternative endpoint
-          return axios
-            .get("http://lms278.runasp.net/api/Account/GetUser", {
-              headers: {
-                accept: "text/plain",
-                Authorization: `Bearer ${token}`,
-              },
-            })
-            .catch((altError) => {
-              console.error("Alternative user endpoint also failed:", altError);
-
-              // If both fail, return a mock user object with basic info
-              console.log("Returning mock user data");
-              return {
-                data: {
-                  displayName: "Teacher",
-                  email: "teacher@example.com",
-                  role: "Teacher",
-                  teacherId: null,
-                  studentId: null,
-                  isMock: true, // Flag to indicate this is mock data
-                },
-              };
-            });
-        }
-
-        // For other errors, re-throw
-        throw error;
       });
   };
 
@@ -90,64 +54,6 @@ const AddCourse = () => {
   const uploadCourse = async () => {
     const cookies = new Cookies();
     const token = cookies.get("token");
-
-    // First, try to get teacherId from user data
-    let teacherId = dataUser?.data?.teacherId;
-
-    // If teacherId is null, try to get it from the token or make an additional API call
-    if (!teacherId) {
-      console.log(
-        "Teacher ID is null, attempting to get teacher information..."
-      );
-
-      try {
-        // Try to get teacher information from a different endpoint
-        const teacherResponse = await axios.get(
-          "http://lms278.runasp.net/api/Teacher/GetCurrentTeacher",
-          {
-            headers: {
-              accept: "text/plain",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (teacherResponse.data?.id) {
-          teacherId = teacherResponse.data.id;
-          console.log("Found teacher ID from GetCurrentTeacher:", teacherId);
-        } else {
-          // If that doesn't work, try to decode the JWT token to get user ID
-          const tokenParts = token.split(".");
-          if (tokenParts.length === 3) {
-            try {
-              const payload = JSON.parse(atob(tokenParts[1]));
-              teacherId = payload.nameid || payload.sub || payload.userId;
-              console.log("Found teacher ID from JWT token:", teacherId);
-            } catch (e) {
-              console.error("Failed to decode JWT token:", e);
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Failed to get teacher information:", error);
-
-        // As a last resort, try to use email as identifier (some APIs accept this)
-        if (dataUser?.data?.email) {
-          console.log(
-            "Trying to use email as teacher identifier:",
-            dataUser.data.email
-          );
-          teacherId = dataUser.data.email;
-        }
-      }
-    }
-
-    // If we still don't have teacherId, throw an error
-    if (!teacherId) {
-      throw new Error(
-        "Teacher ID not available. Please complete your teacher profile first."
-      );
-    }
 
     if (!title || !description || !studyYear) {
       throw new Error(
@@ -160,7 +66,6 @@ const AddCourse = () => {
     formData.append("Title", title);
     formData.append("Description", description);
     formData.append("Price", parseFloat(price));
-    formData.append("TeacherId", parseInt(teacherId));
     formData.append("StudyYear", parseInt(studyYear));
 
     // Only add image if it exists
@@ -168,24 +73,15 @@ const AddCourse = () => {
       formData.append("CourseImage", courseImage);
     }
 
-    console.log("Sending course data:", {
-      Title: title,
-      Description: description,
-      Price: parseFloat(price),
-      TeacherId: parseInt(teacherId),
-      StudyYear: parseInt(studyYear),
-      hasImage: !!courseImage,
-    });
-
     return axios
-      .post("http://lms278.runasp.net/api/Course", formData, {
+      .post("/api/teacher/courses", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         },
       })
       .then((response) => {
-        console.log("API Response:", response);
+        // console.log("API Response:", response);
         console.log("Response data:", response.data);
         return response;
       })
@@ -251,21 +147,9 @@ const AddCourse = () => {
   const { data: dataCourse, refetch: refetchCourse } = useQuery({
     queryKey: ["add-course"],
     queryFn: uploadCourse,
-    enabled: false, // Disable automatic execution, only run when manually triggered
-    // gcTime: 5000, //cache time && its default is 5 minutes
-    // staleTime: 30000, // this means the data will stay fresh for 30 seconds and will not fetching while i navigate to this page for 30 seconds and by that we can reduce the number of network requests && its default is 0
-    // refetchOnMount: false, //use to prevent refetch data when component mounts its default is true
-    // refetchOnMount: "always", // default value which is true is better option than this and true is the best option
-    // refetchOnWindowFocus: true, // The default value
-
-    // refetchInterval: 2000, //The query will automatically refetch every 2 seconds && it is very helpful if your query fetching data every specified numbers of seconds
-    // refetchIntervalInBackground: true, // to keep fetching data even when the browser is not in focus because automatic refetching is paused when the window loses focus
-
-    // enabled: false, //will not fetch data
+    enabled: false,
   });
 
-  // ALL useEffect hooks must be declared BEFORE any conditional returns
-  // Three.js setup
   useEffect(() => {
     if (!canvasRef.current) return;
 
@@ -398,18 +282,11 @@ const AddCourse = () => {
     e.preventDefault();
 
     try {
-      console.log("Submitting course...");
       const result = await refetchCourse(); // Use refetch instead of direct function call
       console.log("Course submission result:", result);
 
       if (result.data) {
         alert("Course created successfully!");
-        // Set a flag to indicate this course was just created
-        const courseId = result.data.data?.id || result.data.id;
-        if (courseId) {
-          sessionStorage.setItem(`course-${courseId}-created`, "true");
-        }
-        // Optionally redirect or clear form
 
         navigate(`/teacher/addchapter/${result.data.data.id}`);
       }
@@ -422,20 +299,6 @@ const AddCourse = () => {
   console.log(dataUser);
   console.log(dataCourse);
 
-  // Add detailed logging for debugging
-  console.log("User data details:", {
-    hasData: !!dataUser,
-    hasDataData: !!dataUser?.data,
-    userData: dataUser?.data,
-    role: dataUser?.data?.role,
-    teacherId: dataUser?.data?.teacherId,
-    studentId: dataUser?.data?.studentId,
-    email: dataUser?.data?.email,
-    displayName: dataUser?.data?.displayName,
-  });
-
-  // NOW we can have conditional returns after ALL hooks are declared
-  // Show loading state while fetching user data
   if (isLoadingUser || isFetchingUser) {
     return (
       <h2 className="text-white text-center mt-8">Loading user data...</h2>

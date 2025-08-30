@@ -14,6 +14,8 @@ import CardSlider from "../Components/CardSlider";
 import { Cookies } from "react-cookie";
 import { Link } from "react-router-dom";
 import { IoCall } from "react-icons/io5";
+import axios from "../api/axios";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Home() {
   const [activeFaq, setActiveFaq] = useState(null);
@@ -21,6 +23,28 @@ export default function Home() {
 
   const cookies = new Cookies();
   const token = cookies.get("token");
+
+  const getCourses = async () => {
+    return await axios.get(`/api/LandingPadge/GetTopCourses`).catch((error) => {
+      console.error("User data fetch error:", error);
+    });
+  };
+
+  const { data: courses } = useQuery({
+    queryKey: ["courses"],
+    queryFn: getCourses,
+  });
+
+  const getStudents = async () => {
+    return await axios.get(`/api/LandingPadge/TopStudents`).catch((error) => {
+      console.error("User data fetch error:", error);
+    });
+  };
+
+  const { data: students } = useQuery({
+    queryKey: ["students"],
+    queryFn: getStudents,
+  });
 
   // FAQ data
   const faqs = [
@@ -103,23 +127,25 @@ export default function Home() {
       {/* Header */}
       <header className="sticky top-0 z-50 flex items-center justify-between border border-white/5 bg-gradient-to-tr from-[rgba(20,20,40,0.4)] to-[rgba(10,10,20,0.5)] p-4 backdrop-blur-[12px]">
         <div className="text-3xl font-black [text-shadow:0_0_10px_rgba(0,191,255,0.6),_0_0_20px_rgba(0,191,255,0.4)]">
-          <Link to="/">المجرّة.</Link>
+          <Link to="/">المحاضرة.</Link>
         </div>
         <div className="flex items-center space-x-4 space-x-reverse">
           {!token && (
-            <Link
-              to="/login"
-              className="rounded-md px-5 py-2 text-sm font-bold text-white transition-all duration-300 hover:text-cyan-300"
-            >
-              تسجيل الدخول
-            </Link>
+            <>
+              <Link
+                to="/login"
+                className="rounded-md px-5 py-2 text-sm font-bold text-white transition-all duration-300 hover:text-cyan-300"
+              >
+                تسجيل الدخول
+              </Link>
+              <Link
+                to="/student-signup"
+                className="hover:shadow-[0 0 25px rgba(0, 191, 255, 0.7)] hidden animate-[pulse-primary] rounded-lg bg-[#00BFFF] px-[30px] py-3 text-sm font-bold text-black shadow-[0_0_15px_rgba(0,191,255,0.4)] transition-all duration-300 ease-in-out hover:-translate-y-[3px] hover:animate-none sm:block"
+              >
+                ابدأ الآن
+              </Link>
+            </>
           )}
-          <a
-            href="/students/allcourses"
-            className="hover:shadow-[0 0 25px rgba(0, 191, 255, 0.7)] hidden animate-[pulse-primary] rounded-lg bg-[#00BFFF] px-[30px] py-3 text-sm font-bold text-black shadow-[0_0_15px_rgba(0,191,255,0.4)] transition-all duration-300 ease-in-out hover:-translate-y-[3px] hover:animate-none sm:block"
-          >
-            ابدأ الآن
-          </a>
         </div>
       </header>
 
@@ -286,72 +312,27 @@ export default function Home() {
             موادك الدراسية.
           </p>
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            <div className="group overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-md">
-              <img
-                src="https://placehold.co/600x400/003366/00BFFF?text=الفيزياء+الكونية"
-                alt="صورة كورس الفيزياء"
-                className="h-56 w-full transform object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div className="p-6">
-                <h3 className="mb-2 text-2xl font-bold text-white">
-                  الفيزياء الكونية للمرحلة الثانوية
-                </h3>
-                <p className="mb-4 h-16 text-gray-400">
-                  من قوانين نيوتن إلى الجاذبية، استكشف القوى التي تحكم حركة
-                  الكواكب والأقمار الصناعية.
-                </p>
-                <a
-                  href="#"
-                  className="block w-full rounded-lg bg-cyan-500 px-6 py-3 text-center font-bold text-black transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-500/30"
-                >
-                  استكشف الكورس
-                </a>
+            {courses?.data.map((course) => (
+              <div className="group overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-md">
+                <img
+                  src={course.image}
+                  alt={course.title}
+                  className="h-56 w-full transform object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="p-6">
+                  <h3 className="mb-2 text-2xl font-bold text-white">
+                    {course.title}
+                  </h3>
+                  <p className="mb-4 text-gray-400">{course.description}</p>
+                  {/* <a
+                    href="#"
+                    className="block w-full rounded-lg bg-cyan-500 px-6 py-3 text-center font-bold text-black transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-500/30"
+                  >
+                    استكشف الكورس
+                  </a> */}
+                </div>
               </div>
-            </div>
-            <div className="group overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-md">
-              <img
-                src="https://placehold.co/600x400/004c4c/00BFFF?text=الكيمياء+الفلكية"
-                alt="صورة كورس الكيمياء"
-                className="h-56 w-full transform object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div className="p-6">
-                <h3 className="mb-2 text-2xl font-bold text-white">
-                  الكيمياء الفلكية وتفاعلات الطاقة
-                </h3>
-                <p className="mb-4 h-16 text-gray-400">
-                  حلل العناصر المكونة للنجوم واكتشف كيمياء الوقود الصاروخي
-                  وتفاعلات الاندماج النووي.
-                </p>
-                <a
-                  href="#"
-                  className="block w-full rounded-lg bg-cyan-500 px-6 py-3 text-center font-bold text-black transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-500/30"
-                >
-                  استكشف الكورس
-                </a>
-              </div>
-            </div>
-            <div className="group overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-md">
-              <img
-                src="https://placehold.co/600x400/2F004F/00BFFF?text=رياضيات+الفضاء"
-                alt="صورة كورس الرياضيات"
-                className="h-56 w-full transform object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div className="p-6">
-                <h3 className="mb-2 text-2xl font-bold text-white">
-                  رياضيات الفضاء المتقدمة
-                </h3>
-                <p className="mb-4 h-16 text-gray-400">
-                  تطبيقات التفاضل والتكامل وحساب المثلثات في حساب مدارات الكواكب
-                  وسرعة المقذوفات.
-                </p>
-                <a
-                  href="#"
-                  className="block w-full rounded-lg bg-cyan-500 px-6 py-3 text-center font-bold text-black transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-500/30"
-                >
-                  استكشف الكورس
-                </a>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -367,12 +348,12 @@ export default function Home() {
           </h2>
           <CardSlider />
           <div className="text-center">
-            <a
-              href="#"
+            <Link
+              to="/teacher-signup"
               className="rounded-lg border-2 border-cyan-500 bg-transparent px-8 py-4 text-lg font-bold text-cyan-500 transition-all duration-300 hover:bg-cyan-500 hover:text-black"
             >
               أنا مدرس وأريد الانضمام
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -386,46 +367,21 @@ export default function Home() {
           لوحة شرف روّاد الفضاء
         </h2>
         <div className="mx-auto max-w-4xl rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/40 to-slate-800/50 p-8 backdrop-blur-md">
-          <div className="mb-3 flex items-center justify-between rounded-lg bg-cyan-900/40 p-4 transition-all duration-300 hover:scale-105 hover:bg-cyan-900/60">
-            <div className="flex items-center">
-              <span className="mr-4 text-3xl font-bold text-yellow-400">
-                🥇
-              </span>
-              <span className="text-xl font-bold text-white">
-                عبدالله المنصوري
-              </span>
-            </div>
-            <span className="text-xl font-bold text-cyan-400">15,700 نقطة</span>
-          </div>
-          <div className="mb-3 flex items-center justify-between rounded-lg p-4 transition-all duration-300 hover:scale-105 hover:bg-cyan-900/50">
-            <div className="flex items-center">
-              <span className="mr-4 text-3xl font-bold text-gray-300">🥈</span>
-              <span className="text-xl font-bold text-white">
-                فاطمة الزهراء
+          {students?.data.map((student) => (
+            <div className="mb-3 flex items-center justify-between rounded-lg bg-cyan-900/40 p-4 transition-all duration-300 hover:scale-105 hover:bg-cyan-900/60">
+              <div className="flex items-center">
+                <span className="mr-4 text-3xl font-bold text-yellow-400">
+                  🥇
+                </span>
+                <span className="text-xl font-bold text-white">
+                  {student.firstName} {student.lastName}
+                </span>
+              </div>
+              <span className="text-xl font-bold text-cyan-400">
+                {student.score} نقطة
               </span>
             </div>
-            <span className="text-xl font-bold text-cyan-400">14,250 نقطة</span>
-          </div>
-          <div className="mb-3 flex items-center justify-between rounded-lg p-4 transition-all duration-300 hover:scale-105 hover:bg-cyan-900/50">
-            <div className="flex items-center">
-              <span className="mr-4 text-3xl font-bold text-yellow-600">
-                🥉
-              </span>
-              <span className="text-xl font-bold text-white">خالد الأحمدي</span>
-            </div>
-            <span className="text-xl font-bold text-cyan-400">12,900 نقطة</span>
-          </div>
-          <div className="flex items-center justify-between rounded-lg p-4 transition-all duration-300 hover:scale-105 hover:bg-cyan-900/50">
-            <div className="flex items-center">
-              <span className="mr-6 ml-1 text-xl font-bold text-gray-500">
-                4
-              </span>
-              <span className="text-xl font-bold text-white">
-                سارة القحطاني
-              </span>
-            </div>
-            <span className="text-xl font-bold text-cyan-400">11,500 نقطة</span>
-          </div>
+          ))}
         </div>
       </section>
 
@@ -540,7 +496,7 @@ export default function Home() {
       <footer className="mt-16 border-t border-gray-900 p-8 text-center flex justify-between">
         <div className="flex items-center gap-2">
           <p className="text-md">01094879104</p>
-          <IoCall className="text-cyan-400" size={20}/>
+          <IoCall className="text-cyan-400" size={20} />
         </div>
         <p className="text-md">
           &copy; 2025 منصة المجرّة. كل الأفكار محمية بقوانين المجرات الكونية.

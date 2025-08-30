@@ -1,4 +1,10 @@
-import React from 'react'
+
+import axios from "../../api/axios";
+import React, { useEffect, useState } from "react";
+import { Cookies } from "react-cookie";
+import { useNavigate } from "react-router-dom";
+import api from "../../api/axios";
+
 
 const Quizzes = () => {
 
@@ -15,13 +21,23 @@ const Quizzes = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+
+    const endExpiredQuizzes = async ()=>{
+      try {
+        const response = await api.post("/api/Quiz/endExpiredQuizzes")
+      } catch (error) {
+        console.log(error);
+        
+      }
+    }
+    endExpiredQuizzes()
+
+
     const fetchQuizzes = async () => {
       try {
-        const response = await axios.get(`/api/Quiz/getQuizForTeacher${id}`, {
+        const response = await axios.get(`/api/Quiz/getQuizForTeacher`, {
           withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+         
         });
         setQuizzes(response.data);
         console.log("quizzes", response.data);

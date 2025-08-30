@@ -1,13 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import axios from "../../api/axios";
 import React, { useState, useEffect, useRef } from "react";
 import { Cookies } from "react-cookie";
-import { Link } from "react-router-dom";
 import * as THREE from "three";
+import Loading from "../../Components/Loading";
 
 const AllCourses = () => {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [enrollmentStatus, setEnrollmentStatus] = useState({});
+  const [loadingStates, setLoadingStates] = useState({});
   const canvasRef = useRef(null);
   const mainContentRef = useRef(null);
   const sceneRef = useRef(null);
@@ -20,7 +22,7 @@ const AllCourses = () => {
 
   const fetchCourses = () => {
     return axios
-      .get("http://lms278.runasp.net/api/Course/GetAllCourses", {
+      .get("/api/AllowCourses/GetAllCoursesForMyStudyYear", {
         headers: {
           accept: "text/plain",
           Authorization: `Bearer ${token}`,
@@ -31,19 +33,131 @@ const AllCourses = () => {
       });
   };
 
-  const { data: allCourses } = useQuery({
+  const { data: allCourses, isLoading: coursesLoading } = useQuery({
     queryKey: ["courses"],
     queryFn: fetchCourses,
   });
 
+  const checkPay = async (courseId) => {
+    try {
+      const response = await axios.get(
+        `/api/StudentCourse/IsAllowed/${courseId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error checking payment status:", error);
+      return false;
+    }
+  };
+
+  // Check enrollment status for all courses when data loads
+  useEffect(() => {
+    if (allCourses?.data) {
+      const checkAllEnrollments = async () => {
+        const statusMap = {};
+        const loadingMap = {};
+
+        for (const course of allCourses.data) {
+          loadingMap[course.id] = true;
+          setLoadingStates(loadingMap);
+
+          try {
+            const isEnrolled = await checkPay(course.id);
+            statusMap[course.id] = isEnrolled;
+          } catch (error) {
+            console.error(
+              `Error checking enrollment for course ${course.id}:`,
+              error
+            );
+            statusMap[course.id] = false;
+          }
+
+          loadingMap[course.id] = false;
+          setLoadingStates({ ...loadingMap });
+        }
+
+        setEnrollmentStatus(statusMap);
+      };
+
+      checkAllEnrollments();
+    }
+  }, [allCourses?.data, token]);
+
+  const enrollCourse = async (courseId) => {
+    // Set loading state for this specific course
+    setLoadingStates((prev) => ({ ...prev, [courseId]: true }));
+
+    try {
+      const response = await axios.post(
+        `/api/StudentCourse/Enroll?courseId=${courseId}`,
+        courseId,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("Enrollment response:", response);
+
+      // If there's a payment URL, redirect to it
+      if (response.data?.url) {
+        window.location.href = response.data.url;
+      } else {
+        // If no payment URL, assume enrollment was successful
+        setEnrollmentStatus((prev) => ({ ...prev, [courseId]: true }));
+
+        // Refresh enrollment status for this course
+        try {
+          const updatedStatus = await checkPay(courseId);
+          setEnrollmentStatus((prev) => ({
+            ...prev,
+            [courseId]: updatedStatus,
+          }));
+        } catch (error) {
+          console.error("Error refreshing enrollment status:", error);
+        }
+
+        // Show success message
+        alert("تم الاشتراك في الكورس بنجاح!");
+      }
+    } catch (error) {
+      console.error("Enrollment error:", error);
+
+      // Handle different error scenarios
+      if (error.response?.status === 400) {
+        alert("خطأ: لا يمكن الاشتراك في هذا الكورس");
+      } else if (error.response?.status === 401) {
+        alert("خطأ: يرجى تسجيل الدخول مرة أخرى");
+      } else if (error.response?.status === 403) {
+        alert("خطأ: لا تملك صلاحية الاشتراك في هذا الكورس");
+      } else {
+        alert("حدث خطأ أثناء الاشتراك. يرجى المحاولة مرة أخرى.");
+      }
+    } finally {
+      // Clear loading state
+      setLoadingStates((prev) => ({ ...prev, [courseId]: false }));
+    }
+  };
+
+  // const { data: enroll } = useQuery({
+  //   queryKey: ["enroll-course"],
+  //   queryFn: enrollCourse,
+  // });
   console.log(allCourses?.data);
 
   const filteredCourses = allCourses?.data.filter(
     (course) =>
       // (filter === "all" || course.subject === filter) &&
-      (search === "" ||
-        course.title.includes(search) ||
-        course.teacher.firstName.includes(search))
+      search === "" ||
+      course.title.includes(search) 
+      // ||
+      // course.teacher.firstName.includes(search)
   );
 
   // Three.js setup
@@ -155,16 +269,9 @@ const AllCourses = () => {
     };
   }, []);
 
-  const filterButtons = [
-    { key: "all", label: "الكل" },
-    { key: "physics", label: "فيزياء" },
-    { key: "chemistry", label: "كيمياء" },
-    { key: "math", label: "رياضيات" },
-    { key: "biology", label: "أحياء" },
-    { key: "other", label: "أخرى" },
-  ];
-
-  console.log(filteredCourses);
+  if (coursesLoading) {
+    return <Loading />
+  }
 
   return (
     <div
@@ -220,7 +327,7 @@ const AllCourses = () => {
                 />
               </svg>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
+            {/* <div className="flex items-center gap-2 flex-wrap">
               {filterButtons.map((btn) => (
                 <button
                   key={btn.key}
@@ -234,7 +341,7 @@ const AllCourses = () => {
                   {btn.label}
                 </button>
               ))}
-            </div>
+            </div> */}
           </div>
 
           {/* Courses Grid */}
@@ -253,14 +360,52 @@ const AllCourses = () => {
                   <h3 className="text-xl font-bold text-white mb-2 group-hover:text-cyan-400 transition-colors">
                     {course.title}
                   </h3>
-                  <p className="text-sm text-gray-400 mb-4">{`مع ${`${course.teacher.firstName} ${course.teacher.lastName}`}`}</p>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-sm text-gray-400">
+                      {course.description}
+                    </p>
+                    <p className="text-sm text-gray-400">{course.price} L.E</p>
+                  </div>
                   <div className="flex-grow"></div>
-                  <Link
-                    to={`/students/course/data/${course.id}`}
-                    className="w-full mt-auto text-center block p-3 rounded-lg bg-purple-600 text-white font-bold hover:bg-purple-500 transition-colors transform hover:scale-105"
+                  <button
+                    onClick={() => enrollCourse(course.id)}
+                    disabled={
+                      loadingStates[course.id] || enrollmentStatus[course.id]
+                    }
+                    className={`w-full mt-auto text-center block p-3 rounded-lg font-bold transition-all transform hover:scale-105 ${
+                      enrollmentStatus[course.id]
+                        ? "bg-green-600 text-white cursor-not-allowed"
+                        : loadingStates[course.id]
+                        ? "bg-gray-600 text-gray-300 cursor-not-allowed"
+                        : "bg-purple-600 text-white hover:bg-purple-500"
+                    }`}
                   >
-                    عرض التفاصيل
-                  </Link>
+                    {loadingStates[course.id] ? (
+                      <div className="flex items-center justify-center space-x-2 space-x-reverse">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>جاري التحميل...</span>
+                      </div>
+                    ) : enrollmentStatus[course.id] ? (
+                      <div className="flex items-center justify-center space-x-2 space-x-reverse">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                        <span>تم الاشتراك</span>
+                      </div>
+                    ) : (
+                      "الاشتراك"
+                    )}
+                  </button>
                 </div>
               </div>
             ))}

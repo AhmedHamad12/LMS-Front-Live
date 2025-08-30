@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Cookies } from "react-cookie";
 import * as THREE from "three";
+import axios from "../../api/axios";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import Loading from "../../Components/Loading";
 
 export default function MyCourses() {
   const [filter, setFilter] = useState("all");
@@ -157,6 +162,32 @@ export default function MyCourses() {
     return course.status === filter;
   });
 
+  const cookies = new Cookies();
+  const token = cookies.get("token");
+
+  const fetchMyCourses = () => {
+    return axios
+      .get("/api/StudentCourse/MyCourses", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .catch((error) => {
+        console.error("User data fetch error:", error);
+      });
+  };
+
+  const { data: myCourses, isLoading } = useQuery({
+    queryKey: ["courses"],
+    queryFn: fetchMyCourses,
+  });
+
+  console.log(myCourses)
+
+  if (isLoading) {
+    return <Loading />
+  }
+
   return (
     <>
       <canvas
@@ -188,150 +219,147 @@ export default function MyCourses() {
           }
         `}</style>
 
-        <h1
-          className="mb-2 text-4xl font-black text-white title-glow"
-        >
+        <h1 className="mb-2 text-4xl font-black text-white title-glow">
           أسطول كورساتك
         </h1>
         <p className="mb-8 text-lg text-gray-400">
           جميع الرحلات المعرفية التي انطلقت بها في مجرّتنا.
         </p>
 
-          {/* Filter Buttons */}
-          <div className="mb-8 flex items-center gap-4">
-            <button
-              onClick={() => setFilter("all")}
-              className={`rounded-lg px-4 py-2 text-sm font-bold transition-colors ${
-                filter === "all"
-                  ? "bg-cyan-500 text-black"
-                  : "bg-white/10 text-white hover:bg-white/20"
-              }`}
-            >
-              الكل
-            </button>
-            <button
-              onClick={() => setFilter("in-progress")}
-              className={`rounded-lg px-4 py-2 text-sm font-bold transition-colors ${
-                filter === "in-progress"
-                  ? "bg-cyan-500 text-black"
-                  : "bg-white/10 text-white hover:bg-white/20"
-              }`}
-            >
-              قيد التقدم
-            </button>
-            <button
-              onClick={() => setFilter("completed")}
-              className={`rounded-lg px-4 py-2 text-sm font-bold transition-colors ${
-                filter === "completed"
-                  ? "bg-cyan-500 text-black"
-                  : "bg-white/10 text-white hover:bg-white/20"
-              }`}
-            >
-              مكتملة
-            </button>
-          </div>
+        {/* Filter Buttons */}
+        <div className="mb-8 flex items-center gap-4">
+          <button
+            onClick={() => setFilter("all")}
+            className={`rounded-lg px-4 py-2 text-sm font-bold transition-colors ${
+              filter === "all"
+                ? "bg-cyan-500 text-black"
+                : "bg-white/10 text-white hover:bg-white/20"
+            }`}
+          >
+            الكل
+          </button>
+          <button
+            onClick={() => setFilter("in-progress")}
+            className={`rounded-lg px-4 py-2 text-sm font-bold transition-colors ${
+              filter === "in-progress"
+                ? "bg-cyan-500 text-black"
+                : "bg-white/10 text-white hover:bg-white/20"
+            }`}
+          >
+            قيد التقدم
+          </button>
+          <button
+            onClick={() => setFilter("completed")}
+            className={`rounded-lg px-4 py-2 text-sm font-bold transition-colors ${
+              filter === "completed"
+                ? "bg-cyan-500 text-black"
+                : "bg-white/10 text-white hover:bg-white/20"
+            }`}
+          >
+            مكتملة
+          </button>
+        </div>
 
-          {/* Courses Grid */}
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
-            {filteredCourses.map((course) => (
-              <div
-                key={course.id}
-                className="group flex flex-col overflow-hidden rounded-2xl glass-effect transition-all duration-300 hover:border-cyan-400/30"
-              >
-                <div className="relative">
-                  <img
-                    src={course.image}
-                    alt={course.title}
-                    className="h-48 w-full object-cover"
-                  />
-                  {course.status === "completed" && (
-                    <>
-                      <div className="absolute inset-0 bg-green-900/40"></div>
-                      <div className="absolute top-4 right-4 flex items-center gap-1 rounded-full bg-green-500 px-3 py-1 text-xs font-bold text-white">
-                        <svg
-                          className="h-4 w-4"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clipRule="evenodd"
-                          ></path>
-                        </svg>
-                        مكتمل
-                      </div>
-                    </>
-                  )}
-                </div>
-                <div className="flex flex-grow flex-col p-6">
-                  <h3 className="mb-2 text-xl font-bold text-white">
-                    {course.title}
-                  </h3>
-                  <p className="mb-4 text-sm text-gray-400">{course.teacher}</p>
-
-                  {course.status === "in-progress" ? (
-                    <div className="mb-6 space-y-2 text-sm text-gray-300">
-                      <p>
-                        الأبواب المكتملة:{" "}
-                        <span className="font-bold text-cyan-400">
-                          {course.completedChapters} / {course.totalChapters}
-                        </span>
-                      </p>
-                      <p>
-                        المهمة التالية:{" "}
-                        <span className="font-bold text-white">
-                          {course.nextTask}
-                        </span>
-                      </p>
+        {/* Courses Grid */}
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
+          {myCourses?.data.map((course) => (
+            <div
+              key={course.id}
+              className="group flex flex-col overflow-hidden rounded-2xl glass-effect transition-all duration-300 hover:border-cyan-400/30"
+            >
+              <div className="relative">
+                <img
+                  src={course.courseImage}
+                  alt={course.title}
+                  className="h-48 w-full object-cover"
+                />
+                {/* {course.status === "completed" && (
+                  <>
+                    <div className="absolute inset-0 bg-green-900/40"></div>
+                    <div className="absolute top-4 right-4 flex items-center gap-1 rounded-full bg-green-500 px-3 py-1 text-xs font-bold text-white">
+                      <svg
+                        className="h-4 w-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                          clipRule="evenodd"
+                        ></path>
+                      </svg>
+                      مكتمل
                     </div>
-                  ) : (
-                    <div className="mb-6 space-y-2 text-sm text-green-300">
-                      <p>
-                        حالة المهمة:{" "}
-                        <span className="font-bold text-white">
-                          منجزة بالكامل
-                        </span>
-                      </p>
-                      <p>
-                        الأبواب المكتملة:{" "}
-                        <span className="font-bold text-white">
-                          {course.completedChapters} / {course.totalChapters}
-                        </span>
-                      </p>
-                    </div>
-                  )}
-
-                  <button
-                    className={`mt-auto w-full rounded-lg p-3 text-center font-bold transition-colors ${
-                      course.status === "completed"
-                        ? "bg-gray-700 text-white hover:bg-gray-600"
-                        : "bg-cyan-500 text-black hover:bg-cyan-400"
-                    }`}
-                  >
-                    {course.status === "completed"
-                      ? "عرض الشهادة"
-                      : "أكمل الرحلة"}
-                  </button>
-                </div>
+                  </>
+                )} */}
               </div>
-            ))}
-          </div>
+              <div className="flex flex-grow flex-col p-6">
+                <h3 className="mb-2 text-xl font-bold text-white">
+                  {course.title}
+                </h3>
+                <p className="mb-4 text-sm text-gray-400">{course.description}</p>
 
-          {/* Discover More */}
-          <div className="mt-16 text-center">
-            <h2 className="mb-4 text-2xl font-bold">
-              هل أنت مستعد لرحلة جديدة؟
-            </h2>
-            <p className="mx-auto mb-6 max-w-lg text-gray-400">
-              هناك دائمًا المزيد من الكواكب المعرفية في انتظار من يستكشفها.
-              انطلق في مغامرتك التالية.
-            </p>
-            <button className="inline-block rounded-lg bg-purple-600 px-8 py-3 font-bold text-white transition-colors hover:bg-purple-500">
-              اكتشف كورسات أخرى
-            </button>
-          </div>
-        </main>
-      </>
-    );
+                {/* {course.status === "in-progress" ? (
+                  <div className="mb-6 space-y-2 text-sm text-gray-300">
+                    <p>
+                      الأبواب المكتملة:{" "}
+                      <span className="font-bold text-cyan-400">
+                        {course.completedChapters} / {course.totalChapters}
+                      </span>
+                    </p>
+                    <p>
+                      المهمة التالية:{" "}
+                      <span className="font-bold text-white">
+                        {course.nextTask}
+                      </span>
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mb-6 space-y-2 text-sm text-green-300">
+                    <p>
+                      حالة المهمة:{" "}
+                      <span className="font-bold text-white">
+                        منجزة بالكامل
+                      </span>
+                    </p>
+                    <p>
+                      الأبواب المكتملة:{" "}
+                      <span className="font-bold text-white">
+                        {course.completedChapters} / {course.totalChapters}
+                      </span>
+                    </p>
+                  </div>
+                )} */}
+
+                <Link
+                  to={`/course/${course.id}`}
+                  className={`mt-auto w-full rounded-lg p-3 text-center font-bold transition-colors ${
+                    course.status === "completed"
+                      ? "bg-gray-700 text-white hover:bg-gray-600"
+                      : "bg-cyan-500 text-black hover:bg-cyan-400"
+                  }`}
+                >
+                  {course.status === "completed"
+                    ? "عرض الشهادة"
+                    : "أكمل الرحلة"}
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Discover More */}
+        <div className="mt-16 text-center">
+          <h2 className="mb-4 text-2xl font-bold">هل أنت مستعد لرحلة جديدة؟</h2>
+          <p className="mx-auto mb-6 max-w-lg text-gray-400">
+            هناك دائمًا المزيد من الكواكب المعرفية في انتظار من يستكشفها. انطلق
+            في مغامرتك التالية.
+          </p>
+          <Link to="/student/allcourses" className="inline-block rounded-lg bg-purple-600 px-8 py-3 font-bold text-white transition-colors hover:bg-purple-500">
+            اكتشف كورسات أخرى
+          </Link>
+        </div>
+      </main>
+    </>
+  );
 };

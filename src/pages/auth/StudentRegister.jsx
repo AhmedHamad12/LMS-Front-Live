@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from "../../api/axios";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Cookies } from "react-cookie";
@@ -24,10 +24,8 @@ function StudentRegister() {
 
     await axios
       .post(
-        "https://api.elmohdra.com/api/Account/Register/Student",
+        "/api/Account/Register/Student",
         { displayName: name, email, password, joinedAt },
-        { withCredentials: true },
-        { headers: { "Content-Type": "application/json" } }
       )
       .then((response) => {
         cookies.set("token", response.data.token);
@@ -48,9 +46,9 @@ function StudentRegister() {
         <div className="grid md:grid-cols-2 md:gap-8">
           <div className="rounded-2xl border border-white/5 bg-[#0a0a19]/50 p-8 shadow-2xl shadow-cyan-500/10 backdrop-blur-lg">
             <div className="mb-8 text-center">
-              <h1 className="text-3xl font-black text-white text-shadow-[0_0_10px_rgb(0_191_255_/_0.6)]">
-                إنشاء محطة جديدة
-              </h1>
+              <p className="text-3xl font-black text-white text-shadow-[0_0_10px_rgb(0_191_255_/_0.6)]">
+                إنشاء حساب جديد
+              </p>
               <p className="mt-2 text-gray-400">
                 انضم إلى المجرّة وابدأ رحلتك نحو التفوق
               </p>

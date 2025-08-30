@@ -1,5 +1,6 @@
 import "./index.css";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+
 import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -16,6 +17,7 @@ import BackgroundAnimation from "./Components/BackgroundAnimation";
 
 // Pages - Teacher
 import Teacher from "./pages/teacher/Teacher";
+
 import TeacherDashboard from "./pages/teacher/Dashboard";
 import TeacherStudents from "./pages/teacher/Students";
 import Earn from "./pages/teacher/Earn";
@@ -61,6 +63,7 @@ import Email from "./pages/auth/Reset password/Email";
 import OTP from "./pages/auth/Reset password/OTP";
 import ResetPassword from "./pages/auth/Reset password/ResetPassword";
 
+
 // Pages - Others
 import Home from "./pages/Home";
 import AIPage from "./pages/AIPage";
@@ -77,11 +80,13 @@ const AuthInitializer = () => {
   return null;
 };
 
+
 function App() {
   const queryClient = new QueryClient();
 
   return (
     <QueryClientProvider client={queryClient}>
+
       <AuthProvider>
         <AuthInitializer />
         <BackgroundAnimation />
@@ -165,6 +170,7 @@ function App() {
         <Toaster />
         <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
       </AuthProvider>
+
     </QueryClientProvider>
   );
 }

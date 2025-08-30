@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import axios from "../../api/axios";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +11,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 
 // TODO:Replace with actual auth
+
 
 const TARGET_TYPE_OPTIONS = [
   { label: "كورس", value: 1 },
@@ -67,11 +69,13 @@ const customSelectStyles = {
 };
 
 const CreateQuiz = () => {
+
   //TODO: id from cookies
 
   const cookies = new Cookies();
   const token = cookies.get("token");
   const id = cookies.get("teacherId");
+
 
   const [form, setForm] = useState({
     title: "",
@@ -97,9 +101,11 @@ const CreateQuiz = () => {
       console.log("id", id);
 
       try {
+
         const res = await axios.get(
           `/api/Quiz/target?targetType=${form.targetType.value}`
         );
+
         const options = Array.isArray(res.data)
           ? res.data.map((item) => ({
               value: item.id,
@@ -154,10 +160,13 @@ const CreateQuiz = () => {
       console.log("payload",payload);
 //TODO: return to dynamic
       const response = await toast.promise(
+
         axios.post(`/api/Quiz/CreateQuiz?CourseId=${form.targetId ? form.targetId.value : ""}`, payload, {
+
           withCredentials: true,
         
         }),
+
         {
           loading: "جاري إنشاء الاختبار...",
           success: "تم إنشاء الاختبار بنجاح!",

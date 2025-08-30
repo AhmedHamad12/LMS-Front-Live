@@ -3,6 +3,7 @@ import axios from "../../api/axios";
 import React, { useState, useEffect, useRef } from "react";
 import { Cookies } from "react-cookie";
 import * as THREE from "three";
+import Loading from "../../Components/Loading";
 
 const AllCourses = () => {
   const [filter, setFilter] = useState("all");
@@ -32,7 +33,7 @@ const AllCourses = () => {
       });
   };
 
-  const { data: allCourses } = useQuery({
+  const { data: allCourses, isLoading: coursesLoading } = useQuery({
     queryKey: ["courses"],
     queryFn: fetchCourses,
   });
@@ -268,16 +269,9 @@ const AllCourses = () => {
     };
   }, []);
 
-  const filterButtons = [
-    { key: "all", label: "الكل" },
-    { key: "physics", label: "فيزياء" },
-    { key: "chemistry", label: "كيمياء" },
-    { key: "math", label: "رياضيات" },
-    { key: "biology", label: "أحياء" },
-    { key: "other", label: "أخرى" },
-  ];
-
-  console.log(filteredCourses);
+  if (coursesLoading) {
+    return <Loading />
+  }
 
   return (
     <div
@@ -333,7 +327,7 @@ const AllCourses = () => {
                 />
               </svg>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
+            {/* <div className="flex items-center gap-2 flex-wrap">
               {filterButtons.map((btn) => (
                 <button
                   key={btn.key}
@@ -347,7 +341,7 @@ const AllCourses = () => {
                   {btn.label}
                 </button>
               ))}
-            </div>
+            </div> */}
           </div>
 
           {/* Courses Grid */}

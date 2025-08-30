@@ -1,6 +1,9 @@
 import React, { useEffect, useRef } from "react";
+import { Cookies } from "react-cookie";
 import { Link } from "react-router-dom";
 import * as THREE from "three";
+import axios from "../../api/axios";
+import { useQuery } from "@tanstack/react-query";
 
 const Earn = () => {
   const canvasRef = useRef(null);
@@ -9,6 +12,28 @@ const Earn = () => {
   const cameraRef = useRef(null);
   const rendererRef = useRef(null);
   const starsRef = useRef({ far: null, mid: null, close: null });
+
+  const cookies = new Cookies();
+  const token = cookies.get("token");
+
+  const getTeacherReport = async () => {
+    return await axios
+      .get(`/api/reports/teacher`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .catch((error) => {
+        console.error("User data fetch error:", error);
+      });
+  };
+
+  const { data: report } = useQuery({
+    queryKey: ["report"],
+    queryFn: getTeacherReport,
+  });
+
+  console.log(report);
 
   // Three.js setup
   useEffect(() => {
@@ -153,7 +178,6 @@ const Earn = () => {
       />
 
       <div className="flex h-screen">
-
         {/* Main Content */}
         <main
           ref={mainContentRef}
@@ -195,21 +219,28 @@ const Earn = () => {
             <div className="glass-effect rounded-2xl p-6">
               <p className="text-sm text-gray-400">الرصيد القابل للسحب</p>
               <p className="text-3xl font-black text-green-400">
-                18,750 <span className="text-base">جنيه</span>
+                {report?.data?.totals?.teacherEarnings}{" "}
+                <span className="text-base">جنيه</span>
               </p>
             </div>
 
             <div className="glass-effect rounded-2xl p-6">
               <p className="text-sm text-gray-400">أرباح هذا الشهر</p>
               <p className="text-3xl font-black text-white">
-                12,500 <span className="text-base">جنيه</span>
+                {
+                  report?.data?.monthlySeries[
+                    report?.data?.monthlySeries?.length - 1
+                  ]?.teacherEarnings
+                }{" "}
+                <span className="text-base">جنيه</span>
               </p>
             </div>
 
             <div className="glass-effect rounded-2xl p-6">
               <p className="text-sm text-gray-400">الاشتراكات النشطة</p>
               <p className="text-3xl font-black text-white">
-                350 <span className="text-base">طالب</span>
+                {report?.data?.totals?.totalSubscriptions}{" "}
+                <span className="text-base">طالب</span>
               </p>
             </div>
 
@@ -221,8 +252,7 @@ const Earn = () => {
           </div>
 
           {/* Transaction History and Reports */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Transaction History */}
+          {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <h2 className="text-2xl font-bold mb-6">سجل المعاملات الأخير</h2>
               <div className="glass-effect rounded-2xl p-4">
@@ -256,7 +286,6 @@ const Earn = () => {
               </div>
             </div>
 
-            {/* Reports */}
             <div>
               <h2 className="text-2xl font-bold mb-6">تقارير الأرباح</h2>
               <div className="glass-effect rounded-2xl p-6 space-y-4">
@@ -299,7 +328,7 @@ const Earn = () => {
                 </button>
               </div>
             </div>
-          </div>
+          </div> */}
         </main>
       </div>
     </div>

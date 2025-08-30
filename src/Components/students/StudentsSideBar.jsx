@@ -16,16 +16,17 @@ function StudentsSideBar() {
 
 
   return (
-    <aside className="w-20 lg:w-64 glass-effect p-2 lg:p-6 flex flex-col justify-between transition-all duration-300 flex-shrink-0 h-screen fixed top-0 right-0 z-50">
+    <aside className="w-20 lg:w-64 glass-effect p-2 lg:px-6 flex flex-col justify-between transition-all duration-300 flex-shrink-0 h-screen fixed top-0 right-0 z-50">
       <div>
-        <div className="text-3xl font-black text-center mb-12 text-white">
-          <Link
+        <div className="mb-2 text-white">
+          <img src="/logo.png" alt="logo" className="w-40 mx-auto" />
+          {/* <Link
             to="/"
             className="hover:text-cyan-400 transition-colors title-glow"
           >
             <span className="hidden lg:inline">المجرّة.</span>
             <span className="lg:hidden">🚀</span>
-          </Link>
+          </Link> */}
         </div>
         <nav className="space-y-4">
           {[
@@ -112,9 +113,14 @@ function StudentsSideBar() {
         </nav>
       </div>
       {/* <div className="hidden lg:block "> */}
-        <div className="text-center text-gray-400 text-sm">
-          <button className="bg-red-500 text-white px-4 py-2 rounded-md  w-[100%] cursor-pointer hover:bg-red-700" onClick={handleLogout}>Logout</button>
-        </div>
+      <div className="text-center text-gray-400 text-sm">
+        <button
+          className="bg-red-500 text-white px-4 py-2 rounded-md  w-[100%] cursor-pointer hover:bg-red-700"
+          onClick={handleLogout}
+        >
+          Logout
+        </button>
+      </div>
       {/* </div> */}
     </aside>
   );

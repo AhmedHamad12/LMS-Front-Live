@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "../../api/axios";
 import { Cookies } from "react-cookie";
 import UnauthorizedPage from "../../Components/UnAuthorized";
+import Loading from "../../Components/Loading";
 
 function Students() {
   const cookies = new Cookies();
@@ -22,7 +23,7 @@ function Students() {
       });
   };
 
-  const { data: user } = useQuery({
+  const { data: user, isLoading } = useQuery({
     queryKey: ["user"],
     queryFn: fetchUser,
   });
@@ -39,7 +40,7 @@ function Students() {
           </div>
         </div>
       ) : (
-        <UnauthorizedPage />
+        !isLoading && <UnauthorizedPage />
       )}
     </>
   );

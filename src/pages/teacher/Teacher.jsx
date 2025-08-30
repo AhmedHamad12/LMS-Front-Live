@@ -5,6 +5,7 @@ import axios from "../../api/axios";
 import { Cookies } from "react-cookie";
 import { useQuery } from "@tanstack/react-query";
 import UnauthorizedPage from "../../Components/UnAuthorized";
+import Loading from "../../Components/Loading";
 
 export default function Teacher() {
   const cookies = new Cookies();
@@ -23,7 +24,7 @@ export default function Teacher() {
       });
   };
 
-  const { data: user } = useQuery({
+  const { data: user, isLoading } = useQuery({
     queryKey: ["user"],
     queryFn: fetchUser,
   });
@@ -40,7 +41,7 @@ export default function Teacher() {
           </div>
         </div>
       ) : (
-        <UnauthorizedPage />
+        !isLoading && <UnauthorizedPage />
       )}
     </>
   );

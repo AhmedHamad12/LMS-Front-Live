@@ -4,6 +4,7 @@ import * as THREE from "three";
 import axios from "../../api/axios";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import Loading from "../../Components/Loading";
 
 export default function MyCourses() {
   const [filter, setFilter] = useState("all");
@@ -176,12 +177,16 @@ export default function MyCourses() {
       });
   };
 
-  const { data: myCourses } = useQuery({
+  const { data: myCourses, isLoading } = useQuery({
     queryKey: ["courses"],
     queryFn: fetchMyCourses,
   });
 
   console.log(myCourses)
+
+  if (isLoading) {
+    return <Loading />
+  }
 
   return (
     <>

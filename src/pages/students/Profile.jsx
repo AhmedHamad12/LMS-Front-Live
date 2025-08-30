@@ -3,6 +3,7 @@ import axios from "../../api/axios";
 import React, { useEffect, useRef, useState } from "react";
 import { Cookies } from "react-cookie";
 import * as THREE from "three";
+import Loading from "../../Components/Loading";
 
 export default function Profile() {
   const canvasRef = useRef(null);
@@ -173,7 +174,7 @@ export default function Profile() {
       });
   };
 
-  const { data: user } = useQuery({
+  const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ["user"],
     queryFn: fetchUser,
   });
@@ -191,7 +192,7 @@ export default function Profile() {
       });
   };
 
-  const { data: allData } = useQuery({
+  const { data: allData, isLoading: dataLoading } = useQuery({
     queryKey: ["all-data"],
     queryFn: fetchAllData,
   });
@@ -204,7 +205,7 @@ export default function Profile() {
     });
   };
 
-  const { data: userScore } = useQuery({
+  const { data: userScore, isLoading: scoreLoading } = useQuery({
     queryKey: ["user-score"],
     queryFn: getUserScore,
   });
@@ -222,12 +223,16 @@ export default function Profile() {
     });
   };
 
-  const { data: notifications } = useQuery({
+  const { data: notifications, isLoading: notificationLoading } = useQuery({
     queryKey: ["notifications"],
     queryFn: getNotifications,
   });
 
   console.log(notifications)
+
+  if (userLoading || dataLoading || scoreLoading || notificationLoading) {
+    return <Loading />
+  }
 
   return (
     <>

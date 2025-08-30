@@ -4,6 +4,7 @@ import * as THREE from "three";
 import axios from "../../api/axios";
 import { Cookies } from "react-cookie";
 import { useQuery } from "@tanstack/react-query";
+import Loading from "../../Components/Loading";
 
 const MyTasks = () => {
   const [filter, setFilter] = useState("new");
@@ -78,7 +79,7 @@ const MyTasks = () => {
     );
   };
 
-  const { data: userAssignments } = useQuery({
+  const { data: userAssignments, isLoading } = useQuery({
     queryKey: ["user-assignments"],
     queryFn: getAssignments,
   });
@@ -118,7 +119,6 @@ const MyTasks = () => {
 
   const submitAssignment = async () => {
     if (currentAssignment) {
-      console.log(currentAssignment);
       const formData = new FormData();
       formData.append("AssignmentId", currentAssignment.id);
       if (fileUpload) {
@@ -128,6 +128,7 @@ const MyTasks = () => {
       await axios.post(`/api/SubmitedAssignment/AddSubmitedAssignment`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
         },
       }).then((res) => {
         console.log(res);
@@ -303,6 +304,10 @@ const MyTasks = () => {
     }
   };
 
+  if (isLoading) {
+    return <Loading />
+  }
+
   return (
     <div
       className="text-gray-100 min-h-screen overflow-hidden w-full"
@@ -367,7 +372,6 @@ const MyTasks = () => {
                             id="file_upload"
                             name="file_upload"
                             type="file"
-                            className="sr-only"
                             onChange={handleFileUpload}
                           />
                         </label>

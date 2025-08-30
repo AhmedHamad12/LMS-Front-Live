@@ -324,12 +324,12 @@ export default function Home() {
                     {course.title}
                   </h3>
                   <p className="mb-4 text-gray-400">{course.description}</p>
-                  <a
+                  {/* <a
                     href="#"
                     className="block w-full rounded-lg bg-cyan-500 px-6 py-3 text-center font-bold text-black transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-500/30"
                   >
                     استكشف الكورس
-                  </a>
+                  </a> */}
                 </div>
               </div>
             ))}
@@ -348,12 +348,12 @@ export default function Home() {
           </h2>
           <CardSlider />
           <div className="text-center">
-            <a
-              href="#"
+            <Link
+              to="/teacher-signup"
               className="rounded-lg border-2 border-cyan-500 bg-transparent px-8 py-4 text-lg font-bold text-cyan-500 transition-all duration-300 hover:bg-cyan-500 hover:text-black"
             >
               أنا مدرس وأريد الانضمام
-            </a>
+            </Link>
           </div>
         </div>
       </section>

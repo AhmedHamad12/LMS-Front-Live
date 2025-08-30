@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Cookies } from "react-cookie";
 import { Link } from "react-router-dom";
 import * as THREE from "three";
+import axios from "../../api/axios";
+import { useQuery } from "@tanstack/react-query";
+import Loading from "../../Components/Loading";
 
 const TeacherStudents = () => {
   const [filter, setFilter] = useState("all");
@@ -15,56 +19,83 @@ const TeacherStudents = () => {
   const starsRef = useRef({ far: null, mid: null, close: null });
   const clockRef = useRef(new THREE.Clock());
 
-  const students = [
-    {
-      id: 1,
-      name: "خالد علي",
-      avatar: "https://placehold.co/60x60/ffffff/000000?text=خ",
-      joined: "2024-05-10",
-      courses: ["الفيزياء الكونية", "الفيزياء الحديثة"],
-      rank: 128,
-      performance: "struggling",
-    },
-    {
-      id: 2,
-      name: "سارة القحطاني",
-      avatar: "https://placehold.co/60x60/ffffff/000000?text=س",
-      joined: "2024-03-22",
-      courses: ["الفيزياء الكونية"],
-      rank: 4,
-      performance: "excellent",
-    },
-    {
-      id: 3,
-      name: "يوسف الأحمد",
-      avatar: "https://placehold.co/60x60/ffffff/000000?text=ي",
-      joined: "2024-06-01",
-      courses: ["الفيزياء الحديثة"],
-      rank: 25,
-      performance: "good",
-    },
-    {
-      id: 4,
-      name: "مريم ياسر",
-      avatar: "https://placehold.co/60x60/ffffff/000000?text=م",
-      joined: "2024-02-15",
-      courses: ["الفيزياء الكونية"],
-      rank: 89,
-      performance: "average",
-    },
-  ];
+  const cookies = new Cookies();
+  const token = cookies.get("token");
 
-  const filteredStudents = students.filter(
+  const getStudents = async () => {
+    return await axios
+      .get(`/api/Teacher/getTeacherStudents`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .catch((error) => {
+        console.error("User data fetch error:", error);
+      });
+  };
+
+  const { data: students, isLoading: studentLoading } = useQuery({
+    queryKey: ["students"],
+    queryFn: getStudents,
+  });
+
+  console.log(students);
+
+  const filteredStudents = students?.data.filter(
     (student) =>
-      (filter === "all" || student.courses.includes(filter)) &&
-      (search === "" ||
-        student.name.toLowerCase().includes(search.toLowerCase()))
+      search === "" || student.firstName.includes(search)
   );
 
-  const openChallengeModal = (student) => {
-    setStudentForChallenge(student);
-    setShowChallengeModal(true);
-  };
+  // const students = [
+  //   {
+  //     id: 1,
+  //     name: "خالد علي",
+  //     avatar: "https://placehold.co/60x60/ffffff/000000?text=خ",
+  //     joined: "2024-05-10",
+  //     courses: ["الفيزياء الكونية", "الفيزياء الحديثة"],
+  //     rank: 128,
+  //     performance: "struggling",
+  //   },
+  //   {
+  //     id: 2,
+  //     name: "سارة القحطاني",
+  //     avatar: "https://placehold.co/60x60/ffffff/000000?text=س",
+  //     joined: "2024-03-22",
+  //     courses: ["الفيزياء الكونية"],
+  //     rank: 4,
+  //     performance: "excellent",
+  //   },
+  //   {
+  //     id: 3,
+  //     name: "يوسف الأحمد",
+  //     avatar: "https://placehold.co/60x60/ffffff/000000?text=ي",
+  //     joined: "2024-06-01",
+  //     courses: ["الفيزياء الحديثة"],
+  //     rank: 25,
+  //     performance: "good",
+  //   },
+  //   {
+  //     id: 4,
+  //     name: "مريم ياسر",
+  //     avatar: "https://placehold.co/60x60/ffffff/000000?text=م",
+  //     joined: "2024-02-15",
+  //     courses: ["الفيزياء الكونية"],
+  //     rank: 89,
+  //     performance: "average",
+  //   },
+  // ];
+
+  // const filteredStudents = students.filter(
+  //   (student) =>
+  //     (filter === "all" || student.courses.includes(filter)) &&
+  //     (search === "" ||
+  //       student.name.toLowerCase().includes(search.toLowerCase()))
+  // );
+
+  // const openChallengeModal = (student) => {
+  //   setStudentForChallenge(student);
+  //   setShowChallengeModal(true);
+  // };
 
   // Three.js setup
   useEffect(() => {
@@ -168,6 +199,10 @@ const TeacherStudents = () => {
     }
   }, []);
 
+  if (studentLoading) {
+    return <Loading />;
+  }
+
   return (
     <div
       className="text-gray-100 font-[Cairo] h-screen overflow-hidden w-full"
@@ -178,73 +213,7 @@ const TeacherStudents = () => {
         className="fixed top-0 left-0 w-full h-full -z-10"
       />
 
-      {/* Challenge Modal */}
-      {showChallengeModal && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 opacity-100 transition-opacity">
-          <div
-            className="glass-effect border border-yellow-500/20 rounded-2xl w-full max-w-lg shadow-2xl shadow-yellow-500/10 flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <header className="p-4 border-b border-white/10 flex-shrink-0">
-              <h2 className="text-2xl font-bold text-white">تعيين تحدي خاص</h2>
-              <p className="text-sm text-yellow-300">
-                للطالب: {studentForChallenge?.name}
-              </p>
-            </header>
-            <div className="p-6 flex-grow space-y-4">
-              <div>
-                <label
-                  htmlFor="challenge_question"
-                  className="block text-sm font-medium text-gray-300 mb-1"
-                >
-                  نص السؤال
-                </label>
-                <textarea
-                  id="challenge_question"
-                  rows="4"
-                  className="w-full p-2 rounded-lg bg-black/20 border border-white/10 text-white focus:bg-black/40 focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(0,191,255,0.3)] outline-none transition-all duration-300"
-                  placeholder="اكتب سؤالاً صعبًا لتحفيز الطالب..."
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="challenge_points"
-                  className="block text-sm font-medium text-gray-300 mb-1"
-                >
-                  النقاط المكتسبة عند الإجابة الصحيحة
-                </label>
-                <input
-                  type="number"
-                  id="challenge_points"
-                  defaultValue="100"
-                  max="200"
-                  className="w-full p-2 rounded-lg bg-black/20 border border-white/10 text-white focus:bg-black/40 focus:border-cyan-500 focus:shadow-[0_0_15px_rgba(0,191,255,0.3)] outline-none transition-all duration-300"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  الحد الأقصى للنقاط هو 200 نقطة.
-                </p>
-              </div>
-            </div>
-            <footer className="p-4 border-t border-white/10 flex-shrink-0 flex justify-end gap-4">
-              <button
-                onClick={() => setShowChallengeModal(false)}
-                className="px-5 py-2 rounded-lg bg-white/10 text-gray-300 hover:bg-white/20 transition-colors text-sm font-bold"
-              >
-                إلغاء
-              </button>
-              <button
-                onClick={() => setShowChallengeModal(false)}
-                className="px-6 py-2 rounded-lg bg-yellow-400 text-black hover:bg-yellow-300 transition-colors shadow-lg shadow-yellow-500/20 text-sm font-bold"
-              >
-                إرسال التحدي
-              </button>
-            </footer>
-          </div>
-        </div>
-      )}
-
       <div className="flex h-screen">
-
         {/* Main Content */}
         <main
           ref={mainContentRef}
@@ -288,46 +257,11 @@ const TeacherStudents = () => {
                 />
               </svg>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm text-gray-400 ml-2">
-                فلترة حسب الكورس:
-              </span>
-              <button
-                onClick={() => setFilter("all")}
-                className={`px-3 py-2 rounded-lg font-bold text-xs transition-colors ${
-                  filter === "all"
-                    ? "bg-cyan-500 text-black"
-                    : "bg-white/10 text-white"
-                }`}
-              >
-                الكل
-              </button>
-              <button
-                onClick={() => setFilter("الفيزياء الكونية")}
-                className={`px-3 py-2 rounded-lg font-bold text-xs transition-colors ${
-                  filter === "الفيزياء الكونية"
-                    ? "bg-cyan-500 text-black"
-                    : "bg-white/10 text-white"
-                }`}
-              >
-                الفيزياء الكونية
-              </button>
-              <button
-                onClick={() => setFilter("الفيزياء الحديثة")}
-                className={`px-3 py-2 rounded-lg font-bold text-xs transition-colors ${
-                  filter === "الفيزياء الحديثة"
-                    ? "bg-cyan-500 text-black"
-                    : "bg-white/10 text-white"
-                }`}
-              >
-                الفيزياء الحديثة
-              </button>
-            </div>
           </div>
 
           {/* Students Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            {filteredStudents.map((student) => (
+            {filteredStudents?.map((student) => (
               <div
                 key={student.id}
                 className={`glass-effect rounded-2xl p-6 text-center transform hover:-translate-y-2 transition-transform duration-300 ${
@@ -338,7 +272,7 @@ const TeacherStudents = () => {
               >
                 <div className="relative inline-block">
                   <img
-                    src={student.avatar}
+                    src="/avatar.jpg"
                     className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-cyan-400/30"
                     alt={student.name}
                   />
@@ -346,36 +280,23 @@ const TeacherStudents = () => {
                     #{student.rank}
                   </span>
                 </div>
-                <h3 className="text-xl font-bold text-white">{student.name}</h3>
+                <h3 className="text-xl font-bold text-white mb-2">
+                  {student.firstName} {student.lastName}
+                </h3>
                 <p className="text-sm text-gray-400 mb-4">
-                  انضم في: {student.joined}
+                  رقم ولى الامر: {student.parentPhone}
                 </p>
-                <div className="text-xs text-center text-cyan-300 mb-6">
-                  مشترك في{" "}
-                  <span className="font-bold">{student.courses.length}</span>{" "}
-                  كورسات
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Link
-                    to="#"
-                    className="w-full text-center block p-3 rounded-lg bg-white/10 text-white font-bold hover:bg-white/20 transition-colors text-sm"
-                  >
-                    عرض الملف
-                  </Link>
-                  {student.performance === "struggling" && (
-                    <button
-                      onClick={() => openChallengeModal(student)}
-                      className="w-full text-center block p-3 rounded-lg bg-yellow-500/20 text-yellow-300 font-bold hover:bg-yellow-500/30 transition-colors text-sm"
-                    >
-                      تعيين تحدي خاص
-                    </button>
-                  )}
-                </div>
+                <p className="text-sm text-gray-400 mb-4">
+                  رقم الطالب: {student.phone}
+                </p>
+                <p className="text-sm text-gray-400 mb-4">
+                  السنة الدراسية: {student.studentYears}
+                </p>
               </div>
             ))}
 
             {/* No results message */}
-            {filteredStudents.length === 0 && (
+            {filteredStudents?.length === 0 && (
               <div className="md:col-span-2 xl:col-span-3 text-center py-16">
                 <svg
                   className="w-16 h-16 mx-auto text-gray-600 mb-4"

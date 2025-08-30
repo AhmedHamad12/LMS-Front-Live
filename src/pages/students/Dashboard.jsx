@@ -5,6 +5,7 @@ import { Cookies } from "react-cookie";
 import { useQuery } from "@tanstack/react-query";
 import BackgroundAnimation from "../../Components/BackgroundAnimation";
 import * as THREE from "three";
+import Loading from "../../Components/Loading";
 
 export default function Dashboard() {
   const [userPoints, setUserPoints] = useState(150);
@@ -262,7 +263,7 @@ export default function Dashboard() {
     );
   };
 
-  const { data: userAssignments } = useQuery({
+  const { data: userAssignments, isLoading: assignmentLoading } = useQuery({
     queryKey: ["user-assignments"],
     queryFn: getAssignments,
   });
@@ -290,7 +291,7 @@ export default function Dashboard() {
     });
   };
 
-  const { data: enrollCourses } = useQuery({
+  const { data: enrollCourses, isLoading: coursesLoading } = useQuery({
     queryKey: ["enroll-courses-data"],
     queryFn: getEnrollCoursesData,
   });
@@ -309,6 +310,10 @@ export default function Dashboard() {
     });
   };
   console.log(formatted); // e.g., "August 12, 2025"
+
+  if (coursesLoading || assignmentLoading) {
+    return <Loading />
+  }
 
   return (
     <div

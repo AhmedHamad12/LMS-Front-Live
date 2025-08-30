@@ -43,9 +43,9 @@ export default function Login() {
         <div className="w-full max-w-md">
           <div className="rounded-2xl border border-white/5 bg-[#0a0a19]/50 p-8 shadow-2xl shadow-cyan-500/10 backdrop-blur-lg">
             <div className="mb-8 text-center">
-              <h1 className="text-4xl font-black text-white text-shadow-[0_0_10px_rgb(0_191_255_/_0.6)]">
-                المجرّة.
-              </h1>
+              <p className="text-4xl font-black text-white text-shadow-[0_0_10px_rgb(0_191_255_/_0.6)]">
+                المحاضرة.
+              </p>
               <p className="mt-2 text-gray-400">
                 بوابة الدخول إلى محطة المعرفة
               </p>
@@ -61,7 +61,7 @@ export default function Login() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@domain.com"
+                    placeholder="البريد الإلكتروني"
                     required
                     className="w-full rounded-lg border border-white/10 bg-black/20 p-3 placeholder-gray-500 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none"
                   />
@@ -117,10 +117,10 @@ export default function Login() {
 
               <div className="mt-6">
                 <Link
-                  to="/signup"
+                  to="/student-signup"
                   className="inline-flex w-full cursor-pointer justify-center rounded-lg border border-gray-700 bg-white/5 px-4 py-3 text-sm font-medium text-white shadow-sm hover:bg-white/10"
                 >
-                  أنشئ محطة جديدة
+                  أنشئ حساب جديد
                 </Link>
               </div>
             </div>

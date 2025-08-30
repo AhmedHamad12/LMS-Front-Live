@@ -3,12 +3,13 @@ import * as THREE from "three";
 import axios from "../../api/axios";
 import { Cookies } from "react-cookie";
 import { useQuery } from "@tanstack/react-query";
+import Loading from "../../Components/Loading";
 
 const Rewards = () => {
   const [filter, setFilter] = useState("all_time");
-  const canvasRef = useRef(null);
-  const sceneRef = useRef(null);
-  const mainContentRef = useRef(null);
+  // const canvasRef = useRef(null);
+  // const sceneRef = useRef(null);
+  // const mainContentRef = useRef(null);
 
   const leaderboards = {
     all_time: [
@@ -151,7 +152,7 @@ const Rewards = () => {
     });
   };
 
-  const { data: topStudents } = useQuery({
+  const { data: topStudents, isLoading: topLoading } = useQuery({
     queryKey: ["top-students"],
     queryFn: getTopStudent,
   });
@@ -169,7 +170,7 @@ const Rewards = () => {
       });
   };
 
-  const { data: user } = useQuery({
+  const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ["user"],
     queryFn: fetchUser,
   });
@@ -182,7 +183,7 @@ const Rewards = () => {
     });
   };
 
-  const { data: userScore } = useQuery({
+  const { data: userScore, isLoading: scoreLoading } = useQuery({
     queryKey: ["user-score"],
     queryFn: getUserScore,
   });
@@ -193,97 +194,120 @@ const Rewards = () => {
   const topThree = topStudents?.data.slice(0, 3);
   const rest = currentLeaderboard.slice(3);
 
-  useEffect(() => {
-    // Three.js setup
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
-    );
-    camera.position.z = 5;
-
-    const renderer = new THREE.WebGLRenderer({
-      canvas: canvasRef.current,
-    });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-
-    const createStarfield = (count, size, color) => {
-      const geometry = new THREE.BufferGeometry();
-      const positions = new Float32Array(count * 3);
-      for (let i = 0; i < count; i++) {
-        positions[i * 3 + 0] = (Math.random() - 0.5) * 200;
-        positions[i * 3 + 1] = (Math.random() - 0.5) * 200;
-        positions[i * 3 + 2] = (Math.random() - 0.5) * 200;
-      }
-      geometry.setAttribute(
-        "position",
-        new THREE.BufferAttribute(positions, 3)
-      );
-      const material = new THREE.PointsMaterial({
-        size: size,
-        color: color,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        transparent: true,
-        opacity: 0.7,
-      });
-      const starfield = new THREE.Points(geometry, material);
-      scene.add(starfield);
-      return starfield;
-    };
-
-    const starsFar = createStarfield(8000, 0.05, 0x888888);
-    const starsMid = createStarfield(5000, 0.1, 0xbbbbbb);
-    const starsClose = createStarfield(1500, 0.15, 0xffffff);
-
-    const clock = new THREE.Clock();
-
-    const animate = () => {
-      const elapsedTime = clock.getElapsedTime();
-      starsFar.rotation.y = elapsedTime * 0.01;
-      starsMid.rotation.y = elapsedTime * 0.02;
-      starsClose.rotation.y = elapsedTime * 0.03;
-
-      renderer.render(scene, camera);
-      requestAnimationFrame(animate);
-    };
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(window.devicePixelRatio);
-    };
-
-    const handleScroll = () => {
-      if (!mainContentRef.current) return;
-      const scrollY = mainContentRef.current.scrollTop;
-      const docHeight =
-        mainContentRef.current.scrollHeight -
-        mainContentRef.current.clientHeight;
-      const scrollPercent = docHeight > 0 ? scrollY / docHeight : 0;
-
-      camera.position.z = 5 - scrollPercent * 10;
-    };
-
-    window.addEventListener("resize", handleResize);
-    if (mainContentRef.current) {
-      mainContentRef.current.addEventListener("scroll", handleScroll);
-    }
-
-    sceneRef.current = { scene, camera, renderer };
-    animate();
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      if (mainContentRef.current) {
-        mainContentRef.current.removeEventListener("scroll", handleScroll);
-      }
-    };
-  }, []);
+  const canvasRef = useRef(null);
+    const mainContentRef = useRef(null);
+    const sceneRef = useRef(null);
+    const cameraRef = useRef(null);
+    const rendererRef = useRef(null);
+    const starsRef = useRef({ far: null, mid: null, close: null });
+  
+      useEffect(() => {
+        if (!canvasRef.current) return;
+    
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(
+          75,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          1000
+        );
+        camera.position.z = 5;
+    
+        const renderer = new THREE.WebGLRenderer({
+          canvas: canvasRef.current,
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+    
+        sceneRef.current = scene;
+        cameraRef.current = camera;
+        rendererRef.current = renderer;
+    
+        // Create starfield
+        const createStarfield = (count, size, color) => {
+          const geometry = new THREE.BufferGeometry();
+          const positions = new Float32Array(count * 3);
+          for (let i = 0; i < count; i++) {
+            positions[i * 3 + 0] = (Math.random() - 0.5) * 200;
+            positions[i * 3 + 1] = (Math.random() - 0.5) * 200;
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 200;
+          }
+          geometry.setAttribute(
+            "position",
+            new THREE.BufferAttribute(positions, 3)
+          );
+          const material = new THREE.PointsMaterial({
+            size: size,
+            color: color,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            transparent: true,
+            opacity: 0.7,
+          });
+          const starfield = new THREE.Points(geometry, material);
+          scene.add(starfield);
+          return starfield;
+        };
+    
+        starsRef.current.far = createStarfield(8000, 0.05, 0x888888);
+        starsRef.current.mid = createStarfield(5000, 0.1, 0xbbbbbb);
+        starsRef.current.close = createStarfield(1500, 0.15, 0xffffff);
+    
+        // Animation loop
+        const clock = new THREE.Clock();
+        const animate = () => {
+          const elapsedTime = clock.getElapsedTime();
+          if (starsRef.current.far)
+            starsRef.current.far.rotation.y = elapsedTime * 0.01;
+          if (starsRef.current.mid)
+            starsRef.current.mid.rotation.y = elapsedTime * 0.02;
+          if (starsRef.current.close)
+            starsRef.current.close.rotation.y = elapsedTime * 0.03;
+    
+          renderer.render(scene, camera);
+          requestAnimationFrame(animate);
+        };
+    
+        animate();
+    
+        // Handle window resize
+        const handleResize = () => {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          renderer.setPixelRatio(window.devicePixelRatio);
+        };
+    
+        window.addEventListener("resize", handleResize);
+    
+        return () => {
+          window.removeEventListener("resize", handleResize);
+        };
+      }, []);
+    
+      // Scroll-based animation
+      useEffect(() => {
+        const handleScroll = () => {
+          if (!mainContentRef.current || !cameraRef.current) return;
+          const scrollY = mainContentRef.current.scrollTop;
+          const docHeight =
+            mainContentRef.current.scrollHeight -
+            mainContentRef.current.clientHeight;
+          const scrollPercent = docHeight > 0 ? scrollY / docHeight : 0;
+    
+          cameraRef.current.position.z = 5 - scrollPercent * 10;
+        };
+    
+        if (mainContentRef.current) {
+          mainContentRef.current.addEventListener("scroll", handleScroll);
+        }
+    
+        return () => {
+          if (mainContentRef.current) {
+            mainContentRef.current.removeEventListener("scroll", handleScroll);
+          }
+        };
+      }, []);
 
   const NavItem = ({ href, title, icon, isActive = false }) => (
     <a
@@ -380,6 +404,10 @@ const Rewards = () => {
       </div>
     );
   };
+
+  if (topLoading || userLoading || scoreLoading) {
+    return <Loading />
+  }
 
   return (
     <div

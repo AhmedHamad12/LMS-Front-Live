@@ -61,14 +61,8 @@ export default function TeacherAside() {
   return (
     <aside className="w-20 lg:w-64 glass-effect p-2 lg:p-6 flex flex-col justify-between transition-all duration-300 flex-shrink-0 h-screen z-50">
       <div>
-        <div className="text-3xl font-black text-center mb-12 text-white">
-          <Link
-            to="/home"
-            className="hover:text-cyan-400 transition-colors title-glow"
-          >
-            <span className="hidden lg:inline">المجرّة.</span>
-            <span className="lg:hidden">🚀</span>
-          </Link>
+        <div className="text-2xl font-black text-center mb-6 text-white">
+          <img src="/logo.png" alt="logo" className="w-44 mx-auto" />
         </div>
         <nav className="space-y-4">
           {[
@@ -87,17 +81,17 @@ export default function TeacherAside() {
               title: "اضافة امتحان",
               icon: "M9 2a1 1 0 011-1h4a1 1 0 011 1h2a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2h2zm1 4h4m-4 4h4m-4 4h4m-5-4l-1 1-2-2m3 4l-1 1-2-2",
             },
-            
+
             {
               to: "/teacher/teacherstudents",
               title: "الطلاب",
               icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z",
             },
-            {
-              to: "/teacher/earn",
-              title: "الأرباح",
-              icon: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6",
-            },
+            // {
+            //   to: "/teacher/earn",
+            //   title: "الأرباح",
+            //   icon: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6",
+            // },
           ].map((item, index) => {
             const isActive = location.pathname === item.to;
             return (
@@ -165,7 +159,10 @@ export default function TeacherAside() {
             className="absolute bottom-full mb-2 w-full glass-effect rounded-lg overflow-hidden"
             onClick={() => setProfileOpen(false)}
           >
-            <button className="block px-4 py-3 text-right text-sm text-red-400 hover:bg-red-500/20 w-full cursor-pointer" onClick={handleLogout}>
+            <button
+              className="block px-4 py-3 text-right text-sm text-red-400 hover:bg-red-500/20 w-full cursor-pointer"
+              onClick={handleLogout}
+            >
               تسجيل الخروج
             </button>
           </div>

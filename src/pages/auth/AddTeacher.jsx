@@ -67,9 +67,9 @@ export default function AddTeacher() {
               }
             `}</style>
             <div className="mb-8 text-center">
-              <h1 className="text-3xl font-black text-white text-shadow-[0_0_10px_rgb(0_191_255_/_0.6)]">
+              <p className="text-3xl font-black text-white text-shadow-[0_0_10px_rgb(0_191_255_/_0.6)]">
                 انضم إلى كوكبة المدرسين
-              </h1>
+              </p>
               <p className="mt-2 text-gray-400">
                 كن قائدًا للمعرفة في مجرّتنا التعليمية
               </p>

@@ -64,7 +64,7 @@ import ResetPassword from "./pages/auth/Reset password/ResetPassword";
 // Pages - Others
 import Home from "./pages/Home";
 import AIPage from "./pages/AIPage";
-import NotFoundPage from "./Components/NotFound";
+import NotFoundPage from "./Components/NotFound.jsx";
 
 // Wire auth context with axios
 const AuthInitializer = () => {
@@ -77,8 +77,7 @@ const AuthInitializer = () => {
   return null;
 };
 
-function App() {      
-  
+function App() {
   const queryClient = new QueryClient();
 
   return (
@@ -94,20 +93,23 @@ function App() {
 
             {/* Teacher */}
             <Route path="/teacher" element={<Teacher />}>
-               <Route path="addlesson/:courseId/:unitId" element={<AddLesson />} />
-            <Route path={`addchapter/:courseId`} element={<AddChapter />} />
-            <Route path="addcourse" element={<AddCourse />} />
-            <Route path="dashboard" element={<TeacherDashboard />} />
-            <Route path="teacherstudents" element={<TeacherStudents />} />
-            <Route
-              path="course/mange/:courseId"
-              element={<CourseManagement />}
-            />
-            <Route path="earn" element={<Earn />} />
-            <Route
-              path="add/assignment/:courseId/:chapterId/:lessonId"
-              element={<AddAssignment />}
-            />
+              <Route
+                path="addlesson/:courseId/:unitId"
+                element={<AddLesson />}
+              />
+              <Route path={`addchapter/:courseId`} element={<AddChapter />} />
+              <Route path="addcourse" element={<AddCourse />} />
+              <Route path="dashboard" element={<TeacherDashboard />} />
+              <Route path="teacherstudents" element={<TeacherStudents />} />
+              <Route
+                path="course/mange/:courseId"
+                element={<CourseManagement />}
+              />
+              <Route path="earn" element={<Earn />} />
+              <Route
+                path="add/assignment/:courseId/:chapterId/:lessonId"
+                element={<AddAssignment />}
+              />
               <Route path="quizzes" element={<Quizzes />} />
               <Route path="quizzes/create" element={<CreateQuiz />} />
               <Route path="quizzes/:quizId/questions" element={<Questions />} />
@@ -127,18 +129,18 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Students */}
-             <Route path="course/:courseId" element={<Course />} />
-          <Route path="/student" element={<Students />}>
-            <Route path="allcourses" element={<AllCourses />} />
-            <Route path="course/data/:courseId" element={<CourseData />} />
-            <Route path="mytasks" element={<MyTasks />} />
-            <Route path="myexams" element={<MyExams />} />
-            <Route path="rewards" element={<Rewards />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="mycourses" element={<MyCourses />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="prize" element={<Prize />} />
-          </Route>
+            <Route path="course/:courseId" element={<Course />} />
+            <Route path="/student" element={<Students />}>
+              <Route path="allcourses" element={<AllCourses />} />
+              <Route path="course/data/:courseId" element={<CourseData />} />
+              <Route path="mytasks" element={<MyTasks />} />
+              <Route path="myexams" element={<MyExams />} />
+              <Route path="rewards" element={<Rewards />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="mycourses" element={<MyCourses />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="prize" element={<Prize />} />
+            </Route>
 
             {/* Auth */}
             <Route path="/login" element={<Login />} />
@@ -155,6 +157,7 @@ function App() {
               <Route path="courses" element={<Courses />} />
               <Route path="reports" element={<Reports />} />
             </Route>
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
 
           <UnauthorizedOverlay />

@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from "../../api/axios";
 import React, { useState } from "react";
 import { Cookies } from "react-cookie";
 import { Link, useNavigate } from "react-router";
@@ -16,7 +16,7 @@ export default function Login() {
 
     await axios
       .post(
-        "https://api.elmohdra.com/api/Account/Login",
+        "/api/Account/Login",
         { email, password },
         {
           headers: {
@@ -26,7 +26,13 @@ export default function Login() {
       )
       .then((response) => {
         cookies.set("token", response.data.token);
-        navigate("/");
+        cookies.set("name",response.data.displayName)
+        cookies.set("email",JSON.stringify(response.data.email))
+        cookies.set("role",response.data.role)
+        cookies.set("teacherId",response.data.teacherId)
+
+        
+        navigate(`/${response.data.role}/dashboard`);
         console.log(response);
       })
       .catch((error) => {

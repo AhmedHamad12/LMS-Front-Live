@@ -10,9 +10,10 @@ import {
   Plus,
 } from "lucide-react";
 // import { Link } from "react-router";
-import CardSlider from "../components/CardSlider";
+import CardSlider from "../Components/CardSlider";
 import { Cookies } from "react-cookie";
 import { Link } from "react-router-dom";
+import { IoCall } from "react-icons/io5";
 
 export default function Home() {
   const [activeFaq, setActiveFaq] = useState(null);
@@ -91,10 +92,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div
-      className="min-h-screen  text-white"
-      style={{ direction: "rtl" }}
-    >
+    <div className="min-h-screen  text-white" style={{ direction: "rtl" }}>
       {/* Animated Background Canvas */}
       <canvas
         ref={canvasRef}
@@ -539,7 +537,11 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="mt-16 border-t border-gray-900 p-8 text-center">
+      <footer className="mt-16 border-t border-gray-900 p-8 text-center flex justify-between">
+        <div className="flex items-center gap-2">
+          <p className="text-md">01094879104</p>
+          <IoCall className="text-cyan-400" size={20}/>
+        </div>
         <p className="text-md">
           &copy; 2025 منصة المجرّة. كل الأفكار محمية بقوانين المجرات الكونية.
         </p>

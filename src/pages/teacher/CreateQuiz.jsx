@@ -13,9 +13,8 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 
 const TARGET_TYPE_OPTIONS = [
   { label: "كورس", value: 1 },
-  { label: "فصل", value: 2 },
-  { label: "سنة", value: 3 },
-  { label: "وحدة", value: 4 },
+  { label: "درس", value: 2 },
+  { label: "وحدة", value: 3 },
 ];
 
 const customSelectStyles = {
@@ -140,7 +139,7 @@ const CreateQuiz = () => {
         title: form.title,
         teacherId: id,
         targetType: form.targetType.value,
-        targetId: form.targetId ? form.targetId.value : "",
+        // targetId: form.targetId ? form.targetId.value : "",
         //  form.targetId ? form.targetId.value : "",//TODO: fix for endpoint , or just use 16 //TODO: return to dynamix
         timeLimitMinutes: Number(form.timeLimitMinutes),
         passScore: Number(form.passScore),
@@ -256,110 +255,58 @@ const CreateQuiz = () => {
 {/* Start Date Picker */}
 <div>
   <label className="block text-gray-300 my-3">تاريخ بدء الاختبار *</label>
-  <LocalizationProvider dateAdapter={AdapterDayjs}>
-    <DateTimePicker
-      value={form.startExam ? dayjs(form.startExam) : null}
-      onChange={newValue =>
-        setForm({
-          ...form,
-          startExam: newValue ? newValue.toISOString() : '',
-        })
-      }
-      slotProps={{
-        textField: {
-          fullWidth: true,
-          required: true,
-          variant: 'outlined',
-          placeholder: 'اختر تاريخ البدء',
-          InputProps: {
-            className:
-              'w-full text-white rounded-lg p-3 bg-slate-900/60 border border-cyan-400/20 focus:border-cyan-400 outline-none',
-          },
-          inputProps: {
-            style: {
-              color: 'white',
-            },
-          },
-          sx: {
-            '& .MuiOutlinedInput-root': {
-              backgroundColor: '#0f172a',
-              borderRadius: 2,
-              color: 'white',
-              fontFamily: 'Cairo, sans-serif',
-            },
-            '& .MuiOutlinedInput-input': {
-              color: 'white',
-            },
-            '& .MuiOutlinedInput-input::placeholder': {
-              color: 'white',
-              opacity: 1,
-            },
-            '& .MuiOutlinedInput-notchedOutline': {
-              borderColor: '#0891b2',
-            },
-            '& .Mui-focused .MuiOutlinedInput-notchedOutline': {
-              borderColor: '#22d3ee',
-            },
-          },
-        },
-      }}
-      ampm={false}
-      disablePast
-    />
-  </LocalizationProvider>
+  <input
+    type="datetime-local"
+    name="startExam"
+    value={form.startExam ? form.startExam.slice(0, 16) : ""}
+    onChange={(e) =>
+      setForm({
+        ...form,
+        startExam: e.target.value ? new Date(e.target.value).toISOString() : "",
+      })
+    }
+    required
+    className="w-full p-3 rounded-lg text-lg bg-slate-900/60 border border-cyan-400/20 text-white
+               focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30
+               transition-all
+               [&::-webkit-calendar-picker-indicator]:filter
+               [&::-webkit-calendar-picker-indicator]:invert
+               [&::-webkit-calendar-picker-indicator]:brightness-0
+               [&::-webkit-calendar-picker-indicator]:saturate-100
+               [&::-webkit-calendar-picker-indicator]:hue-rotate-[180deg]
+               [&::-webkit-calendar-picker-indicator]:brightness-[1.2]
+               [&::-webkit-calendar-picker-indicator]:contrast-[1.2]"
+  />
 </div>
 
+{/* End Date Picker */}
+<div>
+  <label className="block text-gray-300 my-3">تاريخ نهاية الاختبار *</label>
+  <input
+    type="datetime-local"
+    name="endExam"
+    value={form.endExam ? form.endExam.slice(0, 16) : ""}
+    onChange={(e) =>
+      setForm({
+        ...form,
+        endExam: e.target.value ? new Date(e.target.value).toISOString() : "",
+      })
+    }
+    required
+    min={form.startExam ? form.startExam.slice(0, 16) : undefined}
+    className="w-full p-3 rounded-lg text-lg bg-slate-900/60 border border-cyan-400/20 text-white
+               focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30
+               transition-all
+               [&::-webkit-calendar-picker-indicator]:filter
+               [&::-webkit-calendar-picker-indicator]:invert
+               [&::-webkit-calendar-picker-indicator]:brightness-0
+               [&::-webkit-calendar-picker-indicator]:saturate-100
+               [&::-webkit-calendar-picker-indicator]:hue-rotate-[180deg]
+               [&::-webkit-calendar-picker-indicator]:brightness-[1.2]
+               [&::-webkit-calendar-picker-indicator]:contrast-[1.2]"
+  />
+</div>
 
-            {/* End Date Picker */}
-            <div>
-              <label className="block m text-gray-300 my-3">تاريخ نهاية الاختبار *</label>
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <DateTimePicker
-                  value={form.endExam ? dayjs(form.endExam) : null}
-                  onChange={newValue =>
-                    setForm({
-                      ...form,
-                      endExam: newValue ? newValue.toISOString() : '',
-                    })
-                  }
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      required: true,
-                      variant: 'outlined',
-                      placeholder: 'اختر تاريخ النهاية',
-                      InputProps: {
-                        className: 'w-full rounded-lg p-3 bg-slate-900/60 text-white border border-cyan-400/20 focus:border-cyan-400 outline-none',
-                      },
-                      inputProps: {
-                        style: { color: 'white', '::placeholder': { color: 'white', opacity: 1 } },
-                      },
-                      sx: {
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: '#0f172a',
-                          borderRadius: 2,
-                          color: 'white',
-                          fontFamily: 'Cairo, sans-serif',
-                        },
-                        '& .MuiInputBase-input::placeholder': {
-                          color: 'white',
-                          opacity: 1,
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#0891b2',
-                        },
-                        '& .Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#22d3ee',
-                        },
-                      },
-                    },
-                  }}
-                  ampm={false}
-                  disablePast
-                  minDateTime={form.startExam ? dayjs(form.startExam) : undefined}
-                />
-              </LocalizationProvider>
-            </div>
 
 
 

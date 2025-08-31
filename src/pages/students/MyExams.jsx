@@ -30,6 +30,7 @@ const MyExams = () => {
         id: exam.id,
         course: exam.courseName,
         title: exam.title,
+        statusNum: exam.status, // keep original number for sorting
         status:
           exam.status === 0
             ? "new"
@@ -39,7 +40,7 @@ const MyExams = () => {
         questions: exam.questions,
         time: exam.time,
         points: exam.score,
-        deadline: new Date(exam.deadline).toLocaleTimeString("ar-EG", {
+        deadline: new Date(exam.deadline).toLocaleString("ar-EG", {
           year: "numeric",
           month: "short",
           day: "numeric",
@@ -48,7 +49,7 @@ const MyExams = () => {
         }),
         rank: exam.rank,
       }));
-      formattedExams.sort((a,b)=>a.status-b.status)
+      formattedExams.sort((a,b)=>a.statusNum-b.statusNum)
       setExams(formattedExams);
     } catch (error) {
       console.log(error);

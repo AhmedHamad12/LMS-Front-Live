@@ -3,7 +3,7 @@ import { Cookies } from "react-cookie";
 import * as THREE from "three";
 import axios from "../../api/axios";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Loading from "../../Components/Loading";
 
 export default function MyCourses() {
@@ -15,6 +15,7 @@ export default function MyCourses() {
   const rendererRef = useRef(null);
   const starsRef = useRef({ far: null, mid: null, close: null });
   const clockRef = useRef(new THREE.Clock());
+  const navigate = useNavigate();
 
   // Three.js initialization
   useEffect(() => {
@@ -124,44 +125,6 @@ export default function MyCourses() {
     }
   }, []);
 
-  const courses = [
-    {
-      id: 1,
-      title: "الفيزياء الكونية للمرحلة الثانوية",
-      teacher: "أ. خالد صقر",
-      image: "https://placehold.co/600x400/003366/00BFFF?text=الفيزياء+الكونية",
-      status: "in-progress",
-      completedChapters: 1,
-      totalChapters: 4,
-      nextTask: "الدرس الثالث - توصيل المقاومات",
-    },
-    {
-      id: 2,
-      title: "رياضيات الفضاء المتقدمة",
-      teacher: "أ. منى علي",
-      image: "https://placehold.co/600x400/2F004F/00BFFF?text=رياضيات+الفضاء",
-      status: "in-progress",
-      completedChapters: 2,
-      totalChapters: 5,
-      nextTask: "الدرس الأول - تطبيقات التكامل",
-    },
-    {
-      id: 3,
-      title: "الكيمياء الفلكية",
-      teacher: "أ. أحمد السيد",
-      image: "https://placehold.co/600x400/004c4c/00BFFF?text=الكيمياء+الفلكية",
-      status: "completed",
-      completedChapters: 4,
-      totalChapters: 4,
-      nextTask: null,
-    },
-  ];
-
-  const filteredCourses = courses.filter((course) => {
-    if (filter === "all") return true;
-    return course.status === filter;
-  });
-
   const cookies = new Cookies();
   const token = cookies.get("token");
 
@@ -182,10 +145,64 @@ export default function MyCourses() {
     queryFn: fetchMyCourses,
   });
 
-  console.log(myCourses)
+  // Filter courses based on progress
+  const getFilteredCourses = () => {
+    if (!myCourses?.data) return [];
+
+    return myCourses.data.filter((course) => {
+      const progress = course.progress || 0;
+      
+      switch (filter) {
+        case "completed":
+          return progress >= 100; // 100% completed
+        case "in-progress":
+          return progress > 0 && progress < 100; // Started but not finished
+        case "all":
+        default:
+          return true; // Show all courses
+      }
+    });
+  };
+
+  // Get course status based on progress
+  const getCourseStatus = (progress) => {
+    if (progress >= 100) return "completed";
+    if (progress > 0) return "in-progress";
+    return "not-started";
+  };
+
+  // Get course button text based on status
+  const getButtonText = (progress) => {
+    if (progress >= 100) return "عرض الشهادة";
+    if (progress > 0) return "أكمل الرحلة";
+    return "ابدأ الرحلة";
+  };
+
+  // Get course button styling based on status
+  const getButtonStyle = (progress) => {
+    if (progress >= 100) {
+      return "bg-green-600 text-white hover:bg-green-500";
+    }
+    return "bg-cyan-500 text-black hover:bg-cyan-400";
+  };
+
+  // Get counts for filter buttons
+  const getCounts = () => {
+    if (!myCourses?.data) return { all: 0, inProgress: 0, completed: 0 };
+
+    const courses = myCourses.data;
+    return {
+      all: courses.length,
+      inProgress: courses.filter(c => (c.progress || 0) > 0 && (c.progress || 0) < 100).length,
+      completed: courses.filter(c => (c.progress || 0) >= 100).length,
+    };
+  };
+
+  const filteredCourses = getFilteredCourses();
+  const counts = getCounts();
 
   if (isLoading) {
-    return <Loading />
+    return <Loading />;
   }
 
   return (
@@ -226,7 +243,7 @@ export default function MyCourses() {
           جميع الرحلات المعرفية التي انطلقت بها في مجرّتنا.
         </p>
 
-        {/* Filter Buttons */}
+        {/* Filter Buttons with counts */}
         <div className="mb-8 flex items-center gap-4">
           <button
             onClick={() => setFilter("all")}
@@ -236,7 +253,7 @@ export default function MyCourses() {
                 : "bg-white/10 text-white hover:bg-white/20"
             }`}
           >
-            الكل
+            الكل ({counts.all})
           </button>
           <button
             onClick={() => setFilter("in-progress")}
@@ -246,7 +263,7 @@ export default function MyCourses() {
                 : "bg-white/10 text-white hover:bg-white/20"
             }`}
           >
-            قيد التقدم
+            قيد التقدم ({counts.inProgress})
           </button>
           <button
             onClick={() => setFilter("completed")}
@@ -256,97 +273,175 @@ export default function MyCourses() {
                 : "bg-white/10 text-white hover:bg-white/20"
             }`}
           >
-            مكتملة
+            مكتملة ({counts.completed})
           </button>
         </div>
 
         {/* Courses Grid */}
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
-          {myCourses?.data.map((course) => (
-            <div
-              key={course.id}
-              className="group flex flex-col overflow-hidden rounded-2xl glass-effect transition-all duration-300 hover:border-cyan-400/30"
-            >
-              <div className="relative">
-                <img
-                  src={course.courseImage}
-                  alt={course.title}
-                  className="h-48 w-full object-cover"
-                />
-                {/* {course.status === "completed" && (
-                  <>
-                    <div className="absolute inset-0 bg-green-900/40"></div>
-                    <div className="absolute top-4 right-4 flex items-center gap-1 rounded-full bg-green-500 px-3 py-1 text-xs font-bold text-white">
-                      <svg
-                        className="h-4 w-4"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                          clipRule="evenodd"
-                        ></path>
-                      </svg>
-                      مكتمل
-                    </div>
-                  </>
-                )} */}
-              </div>
-              <div className="flex flex-grow flex-col p-6">
-                <h3 className="mb-2 text-xl font-bold text-white">
-                  {course.title}
-                </h3>
-                <p className="mb-4 text-sm text-gray-400">{course.description}</p>
-
-                {/* {course.status === "in-progress" ? (
-                  <div className="mb-6 space-y-2 text-sm text-gray-300">
-                    <p>
-                      الأبواب المكتملة:{" "}
-                      <span className="font-bold text-cyan-400">
-                        {course.completedChapters} / {course.totalChapters}
-                      </span>
-                    </p>
-                    <p>
-                      المهمة التالية:{" "}
-                      <span className="font-bold text-white">
-                        {course.nextTask}
-                      </span>
-                    </p>
-                  </div>
-                ) : (
-                  <div className="mb-6 space-y-2 text-sm text-green-300">
-                    <p>
-                      حالة المهمة:{" "}
-                      <span className="font-bold text-white">
-                        منجزة بالكامل
-                      </span>
-                    </p>
-                    <p>
-                      الأبواب المكتملة:{" "}
-                      <span className="font-bold text-white">
-                        {course.completedChapters} / {course.totalChapters}
-                      </span>
-                    </p>
-                  </div>
-                )} */}
-
-                <Link
-                  to={`/course/${course.id}`}
-                  className={`mt-auto w-full rounded-lg p-3 text-center font-bold transition-colors ${
-                    course.status === "completed"
-                      ? "bg-gray-700 text-white hover:bg-gray-600"
-                      : "bg-cyan-500 text-black hover:bg-cyan-400"
-                  }`}
-                >
-                  {course.status === "completed"
-                    ? "عرض الشهادة"
-                    : "أكمل الرحلة"}
-                </Link>
+          {filteredCourses.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <div className="text-gray-400 text-lg">
+                {filter === "completed" && "لا توجد كورسات مكتملة"}
+                {filter === "in-progress" && "لا توجد كورسات قيد التقدم"}
+                {filter === "all" && "لا توجد كورسات"}
               </div>
             </div>
-          ))}
+          ) : (
+            filteredCourses.map((course) => {
+              const courseProgress = course.progress || 0;
+              const courseStatus = getCourseStatus(courseProgress);
+              
+              return (
+                <div
+                  key={course.id}
+                  className="group flex flex-col overflow-hidden rounded-2xl glass-effect transition-all duration-300 hover:border-cyan-400/30"
+                >
+                  <div className="relative">
+                    <img
+                      src={course.courseImage}
+                      alt={course.title}
+                      className="h-48 w-full object-cover"
+                    />
+                    
+                    {/* Progress overlay for completed courses */}
+                    {courseStatus === "completed" && (
+                      <>
+                        <div className="absolute inset-0 bg-green-900/40"></div>
+                        <div className="absolute top-4 right-4 flex items-center gap-1 rounded-full bg-green-500 px-3 py-1 text-xs font-bold text-white">
+                          <svg
+                            className="h-4 w-4"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                              clipRule="evenodd"
+                            ></path>
+                          </svg>
+                          مكتمل
+                        </div>
+                      </>
+                    )}
+
+                    {/* Progress overlay for in-progress courses */}
+                    {courseStatus === "in-progress" && (
+                      <div className="absolute top-4 right-4 flex items-center gap-1 rounded-full bg-cyan-500 px-3 py-1 text-xs font-bold text-black">
+                        <svg
+                          className="h-4 w-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-11a1 1 0 112 0v2h2a1 1 0 110 2h-2v2a1 1 0 11-2 0v-2H7a1 1 0 110-2h2V7z"
+                            clipRule="evenodd"
+                          ></path>
+                        </svg>
+                        {Math.round(courseProgress)}%
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex flex-grow flex-col p-6">
+                    <h3 className="mb-2 text-xl font-bold text-white">
+                      {course.title}
+                    </h3>
+                    <p className="mb-4 text-sm text-gray-400">{course.description}</p>
+
+                    {/* Progress information */}
+                    <div className="mb-6 space-y-2 text-sm">
+                      {courseStatus === "completed" ? (
+                        <div className="text-green-300">
+                          <p>
+                            حالة المهمة:{" "}
+                            <span className="font-bold text-white">
+                              منجزة بالكامل
+                            </span>
+                          </p>
+                          <p>
+                            التقدم:{" "}
+                            <span className="font-bold text-white">
+                              {Math.round(courseProgress)}%
+                            </span>
+                          </p>
+                        </div>
+                      ) : courseStatus === "in-progress" ? (
+                        <div className="text-cyan-300">
+                          <p>
+                            التقدم:{" "}
+                            <span className="font-bold text-white">
+                              {Math.round(courseProgress)}%
+                            </span>
+                          </p>
+                          <p>
+                            حالة المهمة:{" "}
+                            <span className="font-bold text-white">
+                              قيد التقدم
+                            </span>
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="text-gray-400">
+                          <p>
+                            حالة المهمة:{" "}
+                            <span className="font-bold text-white">
+                              لم تبدأ بعد
+                            </span>
+                          </p>
+                          <p>
+                            التقدم:{" "}
+                            <span className="font-bold text-white">
+                              0%
+                            </span>
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Progress bar */}
+                      <div className="w-full bg-gray-700 rounded-full h-2 mt-3">
+                        <div
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            courseStatus === "completed"
+                              ? "bg-green-500"
+                              : courseStatus === "in-progress"
+                              ? "bg-cyan-500"
+                              : "bg-gray-600"
+                          }`}
+                          style={{ width: `${Math.min(courseProgress, 100)}%`}}
+                        ></div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => navigate("/course", {state: {courseId: course.id}})}
+                      className={`mt-auto w-full rounded-lg p-3 text-center font-bold transition-colors ${getButtonStyle(courseProgress)}`}
+                    >
+                      {getButtonText(courseProgress)}
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
+
+        {/* Show message when no courses match filter */}
+        {filteredCourses.length === 0 && myCourses?.data?.length > 0 && (
+          <div className="mt-12 text-center">
+            <div className="text-gray-400 text-lg mb-4">
+              {filter === "completed" && "لا توجد كورسات مكتملة حالياً"}
+              {filter === "in-progress" && "لا توجد كورسات قيد التقدم حالياً"}
+            </div>
+            <button
+              onClick={() => setFilter("all")}
+              className="text-cyan-400 hover:text-cyan-300 underline"
+            >
+              عرض جميع الكورسات
+            </button>
+          </div>
+        )}
 
         {/* Discover More */}
         <div className="mt-16 text-center">
@@ -355,11 +450,16 @@ export default function MyCourses() {
             هناك دائمًا المزيد من الكواكب المعرفية في انتظار من يستكشفها. انطلق
             في مغامرتك التالية.
           </p>
-          <Link to="/student/allcourses" className="inline-block rounded-lg bg-purple-600 px-8 py-3 font-bold text-white transition-colors hover:bg-purple-500">
+          <Link 
+            to="/student/allcourses" 
+            className="inline-block rounded-lg bg-purple-600 px-8 py-3 font-bold text-white transition-colors hover:bg-purple-500"
+          >
             اكتشف كورسات أخرى
           </Link>
         </div>
       </main>
     </>
   );
-};
+
+
+}

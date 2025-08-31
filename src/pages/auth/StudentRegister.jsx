@@ -8,6 +8,7 @@ function StudentRegister() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const cookies = new Cookies();
@@ -18,27 +19,29 @@ function StudentRegister() {
       alert("كلمات المرور غير متطابقة");
       return;
     }
+    setLoading(true);
 
     const today = new Date();
     const joinedAt = today.toLocaleDateString("en-CA");
 
     await axios
-      .post(
-        "/api/Account/Register/Student",
-        { displayName: name, email, password, joinedAt },
-      )
+      .post("/api/Account/Register/Student", {
+        displayName: name,
+        email,
+        password,
+        joinedAt,
+      })
       .then((response) => {
         cookies.set("token", response.data.token);
         navigate("/add-student");
-        console.log(response);
       })
       .catch((error) => {
         console.error(error);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   };
-
-  // console.log(Date().toString())
-  // console.log(Date().toString().split("T")[0])
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-black text-white">
@@ -108,9 +111,11 @@ function StudentRegister() {
               <div>
                 <button
                   type="submit"
-                  className="flex w-full cursor-pointer justify-center rounded-lg border border-transparent bg-[#00BFFF] px-4 py-3 text-sm font-bold text-black shadow-sm shadow-[rgba(0,191,255,0.4)] transition-all duration-300 ease-in-out hover:translate-y-[2px] hover:shadow-[0_0_25px_rgb(0_191_255_/_0.7)]"
+                  disabled={loading}
+                  className={`flex w-full cursor-pointer justify-center rounded-lg border border-transparent bg-[#00BFFF] px-4 py-3 text-sm font-bold text-black shadow-sm shadow-[rgba(0,191,255,0.4)] transition-all duration-300 ease-in-out hover:translate-y-[2px] hover:shadow-[0_0_25px_rgb(0_191_255_/_0.7)] ${loading ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
                 >
-                  إنشاء الحساب
+                  {loading ? "جارى التحميل..." : "إنشاء الحساب"}
                 </button>
               </div>
             </form>

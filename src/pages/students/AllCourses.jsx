@@ -10,6 +10,7 @@ const AllCourses = () => {
   const [search, setSearch] = useState("");
   const [enrollmentStatus, setEnrollmentStatus] = useState({});
   const [loadingStates, setLoadingStates] = useState({});
+  const [coupon, setCoupon] = useState("");
   const canvasRef = useRef(null);
   const mainContentRef = useRef(null);
   const sceneRef = useRef(null);
@@ -95,7 +96,7 @@ const AllCourses = () => {
     try {
       const response = await axios.post(
         `/api/StudentCourse/Enroll?courseId=${courseId}`,
-        courseId,
+        { courseId, couponCode: coupon },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -103,9 +104,7 @@ const AllCourses = () => {
         }
       );
 
-      console.log("Enrollment response:", response);
 
-      // If there's a payment URL, redirect to it
       if (response.data?.url) {
         window.location.href = response.data.url;
       } else {
@@ -145,19 +144,12 @@ const AllCourses = () => {
     }
   };
 
-  // const { data: enroll } = useQuery({
-  //   queryKey: ["enroll-course"],
-  //   queryFn: enrollCourse,
-  // });
-  console.log(allCourses?.data);
-
   const filteredCourses = allCourses?.data.filter(
     (course) =>
       // (filter === "all" || course.subject === filter) &&
-      search === "" ||
-      course.title.includes(search) 
-      // ||
-      // course.teacher.firstName.includes(search)
+      search === "" || course.title.includes(search)
+    // ||
+    // course.teacher.firstName.includes(search)
   );
 
   // Three.js setup
@@ -270,7 +262,7 @@ const AllCourses = () => {
   }, []);
 
   if (coursesLoading) {
-    return <Loading />
+    return <Loading />;
   }
 
   return (
@@ -366,6 +358,13 @@ const AllCourses = () => {
                     </p>
                     <p className="text-sm text-gray-400">{course.price} L.E</p>
                   </div>
+                  <input
+                    type="text"
+                    value={coupon}
+                    onChange={(e) => setCoupon(e.target.value)}
+                    placeholder="كود الخصم (اختيارى)"
+                    className="w-full mb-3 rounded-lg border border-white/10 bg-black/20 p-3 placeholder-gray-500 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none"
+                  />
                   <div className="flex-grow"></div>
                   <button
                     onClick={() => enrollCourse(course.id)}

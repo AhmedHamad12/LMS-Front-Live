@@ -97,14 +97,14 @@ const CreateQuiz = () => {
 
       try {
         const res = await axios.get(
-          `/api/Quiz/target?targetType=${form.targetType.value}`
+          `/api/Quiz/my-targets?targetType=${form.targetType.value}`
         );
-        const options = Array.isArray(res.data)
-          ? res.data.map((item) => ({
-              value: item.id,
-              label: item.title,
-            }))
-          : [];
+        const options = res.data.items.map((item)=>(
+          {
+            value:item.id,
+            label:item.name
+          }
+        ))
         setTargetOptions(options);
         console.log("target type data ", res.data);
       } catch {
@@ -121,6 +121,8 @@ const CreateQuiz = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    
+    
   };
 
   const handleSelectChange = (selected, { name }) => {

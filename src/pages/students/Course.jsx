@@ -26,6 +26,7 @@ export default function Course() {
   const lastSentRef = useRef({ ms: 0, sec: 0, pct: 0 });
   const maxPosRef = useRef(0);
   const currentLessonIdRef = useRef(null);
+  const startTimeRef = useRef(0); // Add this to store the start time
 
   const SEND_EVERY_MS = 15000;
   const SEND_DELTA_SEC = 10;
@@ -100,7 +101,7 @@ export default function Course() {
 
     try {
       const res = await apiGet(`/api/StudentCourse/${courseId}/full`);
-
+      console.log(res)
       setEnrollCourses(res);
       setCircleProgress(Math.floor(+res?.courseProgress));
 
@@ -245,7 +246,7 @@ export default function Course() {
     }
   };
 
-  const openLesson = async (lessonId, videoId) => {
+  const openLesson = async (lessonId, videoId, lastPositionSeconds = 0) => {
     setGateMessage("...checking gate");
     setPlayerUrl("");
     setShowProgress(false);
@@ -255,9 +256,13 @@ export default function Course() {
     lastSentRef.current = { ms: 0, sec: 0, pct: 0 };
     maxPosRef.current = 0;
     currentLessonIdRef.current = lessonId;
+    
+    // Store the start time for later use
+    startTimeRef.current = lastPositionSeconds || 0;
 
     try {
       const gate = await apiGet(`/api/Lesson/${lessonId}/gate`);
+      console.log(gate);
 
       if (gate.locked) {
         setGateMessage(
@@ -267,10 +272,28 @@ export default function Course() {
         return;
       }
 
+      // Get the latest progress data from the server
+      let serverStartTime = startTimeRef.current;
+      try {
+        const progressData = await apiGet(`/api/lesson/${lessonId}/progress/me`);
+        serverStartTime = progressData?.lastPositionSeconds || startTimeRef.current;
+        console.log(`Starting video at position: ${serverStartTime}s`);
+        
+        // Update local progress state
+        const serverPercent = progressData?.percent || 0;
+        setLessonProgress((prev) => ({
+          ...prev,
+          [lessonId]: serverPercent,
+        }));
+      } catch (e) {
+        console.log("Could not fetch progress data, using provided lastPositionSeconds");
+      }
+
       setGateMessage("");
-      setPlayerUrl(
-        `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&responsive=true&preload=true`
-      );
+      
+      // Set the player URL with the correct start time
+      const playerUrl = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?start=${Math.floor(serverStartTime)}&autoplay=false&responsive=true&preload=true`;
+      setPlayerUrl(playerUrl);
       setShowProgress(true);
 
       // Initialize player when iframe loads
@@ -280,24 +303,20 @@ export default function Course() {
           playerInstanceRef.current = player;
 
           player.on("ready", () => {
-            player.getDuration((v) => (durationRef.current = v || 0));
+            console.log("Player ready");
+            
+            player.getDuration((duration) => {
+              durationRef.current = duration || 0;
+              console.log(`Video duration: ${duration}s`);
+            });
 
-            // Resume from last position
-            apiGet(`/api/lesson/${lessonId}/progress/me`)
-              .then((p) => {
-                const last = p?.lastPositionSeconds || 0;
-                if (last > 5) player.setCurrentTime(last);
+            // Set the current time to the desired position
+            if (serverStartTime > 5) {
+              console.log(`Setting current time to: ${serverStartTime}s`);
+              player.setCurrentTime(serverStartTime);
+            }
 
-                // Update local progress with server data
-                const serverPercent = p?.percent || 0;
-                setLessonProgress((prev) => ({
-                  ...prev,
-                  [lessonId]: serverPercent,
-                }));
-              })
-              .catch(() => {});
-
-            sendProgress("opened", 0);
+            sendProgress("opened", serverStartTime);
           });
 
           player.on("timeupdate", (d) => {
@@ -310,9 +329,11 @@ export default function Course() {
           player.on("play", () =>
             player.getCurrentTime((t) => maybeSend("play", t || 0))
           );
+          
           player.on("pause", () =>
             player.getCurrentTime((t) => maybeSend("pause", t || 0))
           );
+          
           player.on("ended", () => {
             const finalProgress = 100;
             // Update local state immediately when video ends
@@ -479,7 +500,13 @@ export default function Course() {
                           className={`py-4 px-4 border-b-[0.1px] border-gray-600 flex items-center gap-4 cursor-pointer hover:bg-white/5 ${
                             unit.id === isActive ? "bg-white/5" : ""
                           }`}
-                          onClick={() => openLesson(unit.id, unit.vimeoId)}
+                          onClick={() =>
+                            openLesson(
+                              unit?.id,
+                              unit?.vimeoId,
+                              unit?.progress?.lastPositionSeconds
+                            )
+                          }
                         >
                           <input
                             type="checkbox"

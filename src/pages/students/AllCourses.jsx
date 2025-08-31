@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Cookies } from "react-cookie";
 import * as THREE from "three";
 import Loading from "../../Components/Loading";
+import toast from "react-hot-toast";
 
 const AllCourses = () => {
   const [filter, setFilter] = useState("all");
@@ -104,26 +105,8 @@ const AllCourses = () => {
         }
       );
 
-
       if (response.data?.url) {
         window.location.href = response.data.url;
-      } else {
-        // If no payment URL, assume enrollment was successful
-        setEnrollmentStatus((prev) => ({ ...prev, [courseId]: true }));
-
-        // Refresh enrollment status for this course
-        try {
-          const updatedStatus = await checkPay(courseId);
-          setEnrollmentStatus((prev) => ({
-            ...prev,
-            [courseId]: updatedStatus,
-          }));
-        } catch (error) {
-          console.error("Error refreshing enrollment status:", error);
-        }
-
-        // Show success message
-        alert("تم الاشتراك في الكورس بنجاح!");
       }
     } catch (error) {
       console.error("Enrollment error:", error);
@@ -319,6 +302,15 @@ const AllCourses = () => {
                 />
               </svg>
             </div>
+            <div>
+              <input
+                type="text"
+                value={coupon}
+                onChange={(e) => setCoupon(e.target.value)}
+                placeholder="كود الخصم (اختيارى)"
+                className="w-full rounded-lg border border-white/10 bg-black/20 p-3 placeholder-gray-500 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none"
+              />
+            </div>
             {/* <div className="flex items-center gap-2 flex-wrap">
               {filterButtons.map((btn) => (
                 <button
@@ -338,9 +330,9 @@ const AllCourses = () => {
 
           {/* Courses Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            {filteredCourses?.map((course, index) => (
+            {filteredCourses?.map((course) => (
               <div
-                key={index}
+                key={course.id}
                 className="bg-gradient-to-b from-slate-900/40 to-slate-800/50 backdrop-blur-2xl border border-white/5 rounded-2xl overflow-hidden group flex flex-col transform hover:-translate-y-2 transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,191,255,0.2)]"
               >
                 <img
@@ -358,19 +350,10 @@ const AllCourses = () => {
                     </p>
                     <p className="text-sm text-gray-400">{course.price} L.E</p>
                   </div>
-                  <input
-                    type="text"
-                    value={coupon}
-                    onChange={(e) => setCoupon(e.target.value)}
-                    placeholder="كود الخصم (اختيارى)"
-                    className="w-full mb-3 rounded-lg border border-white/10 bg-black/20 p-3 placeholder-gray-500 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none"
-                  />
                   <div className="flex-grow"></div>
                   <button
                     onClick={() => enrollCourse(course.id)}
-                    disabled={
-                      loadingStates[course.id] || enrollmentStatus[course.id]
-                    }
+                    disabled={loadingStates[course.id]}
                     className={`w-full mt-auto text-center block p-3 rounded-lg font-bold transition-all transform hover:scale-105 ${
                       enrollmentStatus[course.id]
                         ? "bg-green-600 text-white cursor-not-allowed"

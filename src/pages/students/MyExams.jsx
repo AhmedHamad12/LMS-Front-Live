@@ -48,6 +48,7 @@ const MyExams = () => {
         }),
         rank: exam.rank,
       }));
+      formattedExams.sort((a,b)=>a.status-b.status)
       setExams(formattedExams);
     } catch (error) {
       console.log(error);

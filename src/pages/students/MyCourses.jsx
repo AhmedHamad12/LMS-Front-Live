@@ -289,7 +289,7 @@ export default function MyCourses() {
             </div>
           ) : (
             filteredCourses.map((course) => {
-              const courseProgress = course.progress || 0;
+              const courseProgress = course.progress.percent || 0;
               const courseStatus = getCourseStatus(courseProgress);
               
               return (

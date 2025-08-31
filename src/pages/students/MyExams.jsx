@@ -22,6 +22,40 @@ const MyExams = () => {
   const [timeLeft, setTimeLeft] = useState(null); // seconds
   const timerRef = useRef(null);
 
+  const fetchExams = async () => {
+    try {
+      setloading(true);
+      const response = await api.get("/api/Quiz/getQuizForStudent");
+      const formattedExams = response.data.map((exam) => ({
+        id: exam.id,
+        course: exam.courseName,
+        title: exam.title,
+        status:
+          exam.status === 0
+            ? "new"
+            : exam.status === 1
+            ? "processing"
+            : "missed",
+        questions: exam.questions,
+        time: exam.time,
+        points: exam.score,
+        deadline: new Date(exam.deadline).toLocaleTimeString("ar-EG", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        rank: exam.rank,
+      }));
+      setExams(formattedExams);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setloading(false);
+    }
+  };
+
   useEffect(() => {
     const endExpiredQuizzes = async () => {
       try {
@@ -32,39 +66,7 @@ const MyExams = () => {
     };
     endExpiredQuizzes();
 
-    const fetchExams = async () => {
-      try {
-        setloading(true);
-        const response = await api.get("/api/Quiz/getQuizForStudent");
-        const formattedExams = response.data.map((exam) => ({
-          id: exam.id,
-          course: exam.courseName,
-          title: exam.title,
-          status:
-            exam.status === 0
-              ? "new"
-              : exam.status === 1
-              ? "processing"
-              : "missed",
-          questions: exam.questions,
-          time: exam.time,
-          points: exam.score,
-          deadline: new Date(exam.deadline).toLocaleTimeString("ar-EG", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          rank: exam.rank,
-        }));
-        setExams(formattedExams);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setloading(false);
-      }
-    };
+
     fetchExams();
   }, []);
 
@@ -178,6 +180,8 @@ const MyExams = () => {
     try {
       await api.post("/api/Quiz/submit-answer", formattedAnswers);
       await api.post(`/api/Quiz/attempts/${attemptId}/finish`);
+
+      fetchExams()
       toast.success("تم إرسال الإجابات وإنهاء المحاولة بنجاح!");
     } catch (error) {
       toast.error("حدث خطأ أثناء إرسال الامتحان");

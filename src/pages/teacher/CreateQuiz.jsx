@@ -264,7 +264,7 @@ const CreateQuiz = () => {
     onChange={(e) =>
       setForm({
         ...form,
-        startExam: e.target.value ? new Date(e.target.value).toISOString() : "",
+        startExam: e.target.value,
       })
     }
     required
@@ -291,7 +291,7 @@ const CreateQuiz = () => {
     onChange={(e) =>
       setForm({
         ...form,
-        endExam: e.target.value ? new Date(e.target.value).toISOString() : "",
+        endExam: e.target.value,
       })
     }
     required

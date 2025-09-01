@@ -95,6 +95,28 @@ const TeacherDashboard = () => {
     refetchOnWindowFocus: false,
   });
 
+  const getSubmittedAssignments = async () => {
+    return await axios
+      .get(`/api/SubmitedAssignment/endExpiredAssignments`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .catch((error) => {
+        console.error("User data fetch error:", error);
+      });
+  };
+
+  // const { data: submittedAssignments } = useQuery({
+  //   queryKey: ["assignments"],
+  //   queryFn: getSubmittedAssignments,
+  //   refetchOnWindowFocus: false,
+  // });
+
+  useEffect(() => {
+    getSubmittedAssignments();
+  }, [])
+
   useEffect(() => {
     if (!canvasRef.current) return;
 

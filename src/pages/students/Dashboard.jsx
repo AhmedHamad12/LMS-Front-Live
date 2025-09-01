@@ -172,9 +172,12 @@ export default function Dashboard() {
     );
   };
 
+  const userId = userScore?.data.id;
+
   const { data: notifications } = useQuery({
-    queryKey: ["notifications", userScore?.data?.id],
-    queryFn: () => getNotifications(userScore?.data?.id),
+    queryKey: ["notifications", userId],
+    queryFn: () => getNotifications(userId),
+    enabled: !!userId,
   });
 
   const getEnrollCoursesData = async () => {

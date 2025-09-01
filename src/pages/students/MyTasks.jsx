@@ -5,6 +5,7 @@ import axios from "../../api/axios";
 import { Cookies } from "react-cookie";
 import { useQuery } from "@tanstack/react-query";
 import Loading from "../../Components/Loading";
+import toast from "react-hot-toast";
 
 const MyTasks = () => {
   const [filter, setFilter] = useState("new");
@@ -70,7 +71,7 @@ const MyTasks = () => {
 
   const getAssignments = async () => {
     return await axios.get(
-      `/api/Assignment/GetAssignmentsForStudent?category=1`,
+      `/api/Assignment/GetAssignmentsForStudent`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -79,19 +80,19 @@ const MyTasks = () => {
     );
   };
 
-  const { data: userAssignments, isLoading } = useQuery({
+  const { data: userAssignments, isLoading, refetch } = useQuery({
     queryKey: ["user-assignments"],
     queryFn: getAssignments,
   });
 
-  const catConvert = (category) => {
-    if (category == 1) {
+  const catConvert = (submitedStatus) => {
+    if (submitedStatus == 1) {
       return "new";
-    } else if (category == 2) {
+    } else if (submitedStatus == 2) {
       return "submitted";
-    } else if (category == 3) {
+    } else if (submitedStatus == 3) {
       return "graded";
-    } else if (category == 4) {
+    } else if (submitedStatus == 4) {
       return "missed";
     }
   };
@@ -107,7 +108,7 @@ const MyTasks = () => {
 
   const filteredAssignments = userAssignments?.data?.filter(
     (assignment) =>
-      filter === "all" || catConvert(assignment.assignmentCategory) === filter
+      filter === "all" || catConvert(assignment.submitedStatus) === filter
   );
 
   const startAssignment = (assignment) => {
@@ -116,6 +117,9 @@ const MyTasks = () => {
   };
 
   const submitAssignment = async () => {
+    if (!textAnswer || !fileUpload) {
+      return toast.error("ادخل البيانات كاملة!")
+    }
     if (currentAssignment) {
       const formData = new FormData();
       formData.append("AssignmentId", currentAssignment.id);
@@ -129,10 +133,12 @@ const MyTasks = () => {
           "Content-Type": "multipart/form-data",
         },
       }).then((res) => {
+        toast.success("تم التسليم")
         setShowAssignmentModal(false);
         setTextAnswer("");
         setFileUpload(null);
         setCurrentAssignment(null);
+        refetch();
       }).catch((err) => {
         console.log(err);
       });
@@ -276,7 +282,7 @@ const MyTasks = () => {
   };
 
   const getButtonForStatus = (assignment) => {
-    switch (catConvert(assignment.assignmentCategory)) {
+    switch (catConvert(assignment.submitedStatus)) {
       case "new":
         return (
           <button

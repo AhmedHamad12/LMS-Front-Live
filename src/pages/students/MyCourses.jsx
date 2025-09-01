@@ -145,6 +145,8 @@ export default function MyCourses() {
     queryFn: fetchMyCourses,
   });
 
+  console.log(myCourses)
+
   // Filter courses based on progress
   const getFilteredCourses = () => {
     if (!myCourses?.data) return [];
@@ -289,7 +291,7 @@ export default function MyCourses() {
             </div>
           ) : (
             filteredCourses.map((course) => {
-              const courseProgress = course.progress.percent || 0;
+              const courseProgress = course?.progress || 0;
               const courseStatus = getCourseStatus(courseProgress);
               
               return (

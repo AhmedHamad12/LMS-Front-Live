@@ -30,12 +30,14 @@ const MyExams = () => {
         id: exam.id,
         course: exam.courseName,
         title: exam.title,
-        statusNum: exam.status, // keep original number for sorting
+        statusNum: exam.QuizAttemptStatus, // keep original number for sorting
         status:
-          exam.status === 0
+          exam.QuizAttemptStatus === 1
             ? "new"
-            : exam.status === 1
+            : exam.QuizAttemptStatus === 2
             ? "processing"
+            : exam.QuizAttemptStatus === 3
+            ? "graded"
             : "missed",
         questions: exam.questions,
         time: exam.time,
@@ -286,7 +288,7 @@ const MyExams = () => {
           onClick={() => prepareExam(exam)}
           className="w-full text-center block p-3 rounded-lg bg-cyan-500 text-black font-bold hover:bg-cyan-400 transition-colors"
         >
-          ابدأ المحاكاة
+          ابدأ الامتحان
         </button>
       )}
       {exam.status === "graded" && (

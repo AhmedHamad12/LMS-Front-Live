@@ -1,32 +1,26 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import * as THREE from "three";
 
 import { useQuery } from "@tanstack/react-query";
 import axios from "../../api/axios";
 import { Cookies } from "react-cookie";
+import toast from "react-hot-toast";
 
 const AddChapter = () => {
-  const { courseId } = useParams();
-  console.log(courseId)
+
+  const location = useLocation();
+  const courseId = location.state?.courseId;
+
 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [activeLesson, setActiveLesson] = useState({
-    id: 1,
-    title: "الدرس الأول: التيار الكهربي",
-  });
-  const [chapters, setChapters] = useState([
-    {
-      id: 1,
-      title: "الباب الأول: الكهربية التياريه",
-      lessons: [{ id: 1, title: "الدرس الأول: التيار الكهربي" }],
-    },
-  ]);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [courseUnitImage, setCourseUnitImage] = useState(null);
   const [durationInMinutes, setDurationInMinutes] = useState(60);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
 
   const canvasRef = useRef(null);
   const mainContentRef = useRef(null);
@@ -34,22 +28,6 @@ const AddChapter = () => {
   const rendererRef = useRef(null);
   const cameraRef = useRef(null);
   const starFieldsRef = useRef([]);
-
-  // const fetchData = () => {
-  //   const cookies = new Cookies();
-  //   const token = cookies.get("token");
-
-  //   return axios
-  //     .get("/api/Account/GetCurrentUser", {
-  //       headers: {
-  //         accept: "text/plain",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     })
-  //     .catch((error) => {
-  //       console.error("User data fetch error:", error);
-  //     });
-  // };
 
   const uploadChapter = async () => {
     const cookies = new Cookies();
@@ -81,7 +59,7 @@ const AddChapter = () => {
       })
       .then((response) => {
         // console.log("API Response:", response);
-        console.log("Response data:", response.data);
+        
         return response;
       })
       .catch((error) => {
@@ -107,29 +85,7 @@ const AddChapter = () => {
   };
   const navigate = useNavigate();
 
-  // // // Move useQuery hooks inside component
-  // // const { isLoading: isLoadingUser, data: dataUser, isError: isErrorUser, error: errorUser, isFetching: isFetchingUser, refetch: refetchUser } = useQuery({
-  // //   queryKey: ["user-data"],
-  // //   queryFn: fetchData,
-  // //   retry: (failureCount, error) => {
-  // //     // Retry up to 3 times, but only for 403 errors
-  // //     if (error.response?.status === 403 && failureCount < 3) {
-  // //       console.log(`Retrying user data fetch (attempt ${failureCount + 1}/3) due to 403 error...`);
-  // //       return true;
-  // //     }
-  // //     return false;
-  // //   },
-  // //   retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-  // // });
-
-  const {
-    isLoading: isLoadingCourse,
-    data: dataCourse,
-    isError: isErrorCourse,
-    error: errorCourse,
-    isFetching: isFetchingCourse,
-    refetch: refetchCourse,
-  } = useQuery({
+  const { data: dataCourse } = useQuery({
     queryKey: ["add-course"],
     queryFn: uploadChapter,
   });
@@ -265,34 +221,24 @@ const AddChapter = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
       const result = await uploadChapter();
-      console.log("Course unit submission result:", result);
+
 
       if (result.data) {
-        alert("Course unit created successfully!");
-
-        navigate(`/teacher/addlesson/${courseId}/${result.data.id}`);
+        setResult(result)
+        toast.success("تم اضافة الفصل بنجاح!");
       }
     } catch (error) {
       console.error("Course unit submission error:", error);
-      alert(`Error creating course unit: ${error.message}`);
+      toast.error(`Error creating course unit: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // console.log(dataUser);
-  console.log(dataCourse);
-
-  // if (isLoadingUser || isFetchingUser) {
-  //   return <h2 className="text-white text-center mt-8">Loading user data...</h2>;
-  // }
-
-  // if (isErrorUser) {
-  //   const is403Error = errorUser?.response?.status === 403;
-  //   const errorMessage = is403Error
-  //     ? "لا يمكن الوصول لبيانات المستخدم. قد تكون هناك مشكلة في الصلاحيات أو الجلسة منتهية."
-  //     : `Error loading user data: ${errorUser.message}`;
 
   return (
     <div className="min-h-screen text-gray-100 overflow-hidden relative">
@@ -321,9 +267,12 @@ const AddChapter = () => {
             </div>
             <button
               type="submit"
-              className="px-6 py-3 rounded-lg bg-green-500 text-white font-bold hover:bg-green-400 transition-colors shadow-lg hover:shadow-green-500/25"
+              disabled={loading}
+              className={`px-6 py-3 rounded-lg bg-green-500 text-white font-bold hover:bg-green-400 transition-colors shadow-lg hover:shadow-green-500/25 ${
+                loading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
-              إضافة الفصل
+              {loading ? "جارى التحميل..." : "إضافة الفصل"}
             </button>
           </header>
 
@@ -381,7 +330,9 @@ const AddChapter = () => {
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => setCourseUnitImage(e.target.files[0])}
+                          onChange={(e) =>
+                            setCourseUnitImage(e.target.files[0])
+                          }
                         />
                       </label>
                     </div>
@@ -411,263 +362,24 @@ const AddChapter = () => {
 
             {/* Course Structure */}
             <div className="lg:col-span-1 space-y-4">
-              <h2 className="text-2xl font-bold text-white">إضافة فصل جديد</h2>
-              <div className="bg-[rgba(10,10,25,0.5)] backdrop-blur-xl border border-gray-800/50 rounded-2xl p-4 space-y-3 shadow-xl">
-                <p className="bg-gray-800/50  border border-gray-800/50 rounded-2xl p-4">
-                  من خلال هذه الصفحة، يمكنك إضافة فصول جديدة للكورس الخاص بك. كل
-                  فصل يحتوي على مجموعة من الدروس والمحتوى التعليمي. قم بإدخال
-                  عنوان الفصل ووصفه ومدة الدراسة المطلوبة، ويمكنك أيضاً إرفاق
-                  صورة توضيحية للفصل.
-                </p>
-              </div>
+              {result && (
+                <button
+                  onClick={() =>
+                    navigate(`/teacher/addlesson`, {
+                      state: { courseId: courseId, chapterId: result?.data?.id },
+                    })
+                  }
+                  className={`flex cursor-pointer justify-center rounded-lg border border-transparent bg-[#00BFFF] px-4 py-3 text-sm font-bold text-black shadow-sm shadow-[rgba(0,191,255,0.4)] transition-all duration-300 ease-in-out hover:translate-y-[2px] hover:shadow-[0_0_25px_rgb(0_191_255_/_0.7)]`}
+                >
+                  إضافة باب جديد +
+                </button>
+              )}
             </div>
           </div>
         </form>
       </div>
     </div>
   );
-
-  // return (
-  //   <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
-  //     <div className="bg-[rgba(10,10,25,0.5)] backdrop-blur-xl border border-gray-800/50 rounded-2xl p-8 shadow-xl max-w-md mx-4">
-  //       <div className="text-center">
-  //         <div className="text-6xl mb-4">⚠️</div>
-  //         <h2 className="text-2xl font-bold text-white mb-4">
-  //           {is403Error ? "مشكلة في الصلاحيات" : "خطأ في تحميل البيانات"}
-  //         </h2>
-  //         <p className="text-gray-400 mb-6">
-  //           {errorMessage}
-  //         </p>
-  //         <div className="space-y-3">
-  //           <Link
-  //             to="/login"
-  //             className="inline-block px-6 py-3 bg-cyan-500 text-white font-bold rounded-lg hover:bg-cyan-400 transition-colors"
-  //           >
-  //             إعادة تسجيل الدخول
-  //           </Link>
-  //           <button
-  //             onClick={() => refetchUser()}
-  //             className="block w-full px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-500 transition-colors"
-  //           >
-  //             إعادة المحاولة
-  //           </button>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
 };
-
-// if (dataUser?.data?.isMock) {
-//   return (
-//     <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
-//       <div className="bg-[rgba(10,10,25,0.5)] backdrop-blur-xl border border-gray-800/50 rounded-2xl p-8 shadow-xl max-w-md mx-4">
-//         <div className="text-center">
-//           <div className="text-6xl mb-4">⚠️</div>
-//           <h2 className="text-2xl font-bold text-white mb-4">مشكلة في الوصول لبيانات المستخدم</h2>
-//           <p className="text-gray-400 mb-6">
-//             لا يمكن الوصول لبيانات المستخدم. قد تكون هناك مشكلة في الصلاحيات أو الجلسة منتهية.
-//           </p>
-//           <div className="space-y-3">
-//             <Link
-//               to="/login"
-//               className="inline-block px-6 py-3 bg-cyan-500 text-white font-bold rounded-lg hover:bg-cyan-400 transition-colors"
-//             >
-//               إعادة تسجيل الدخول
-//             </Link>
-//             <button
-//               onClick={() => refetchUser()}
-//               className="block w-full px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-500 transition-colors"
-//             >
-//               إعادة المحاولة
-//             </button>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-// Show warning if teacher profile is incomplete
-// if (dataUser?.data?.role === "Teacher" && !dataUser?.data?.teacherId) {
-//   return (
-//     <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
-//       <div className="bg-[rgba(10,10,25,0.5)] backdrop-blur-xl border border-gray-800/50 rounded-2xl p-8 shadow-xl max-w-md mx-4">
-//         <div className="text-center">
-//           <div className="text-6xl mb-4">⚠️</div>
-//           <h2 className="text-2xl font-bold text-white mb-4">ملف المدرس غير مكتمل</h2>
-//           <p className="text-gray-400 mb-6">
-//             يبدو أن ملف المدرس الخاص بك غير مكتمل. يجب عليك إكمال ملف المدرس قبل إنشاء الفصول.
-//           </p>
-//           <div className="space-y-3">
-//             <Link
-//               to="/add-teacher"
-//               className="inline-block px-6 py-3 bg-cyan-500 text-white font-bold rounded-lg hover:bg-cyan-400 transition-colors"
-//             >
-//               إكمال ملف المدرس
-//             </Link>
-//             <button
-//               onClick={() => refetchUser()}
-//               className="block w-full px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-500 transition-colors"
-//             >
-//               إعادة تحميل البيانات
-//             </button>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-// Show loading state while fetching course data
-// if (isLoadingCourse || isFetchingCourse) {
-//   return <h2 className="text-white text-center mt-8">Loading course data...</h2>;
-// }
-
-// Show error state if course data fetch fails
-// if (isErrorCourse) {
-//   const is403Error = errorCourse?.response?.status === 403;
-//   const is404Error = errorCourse?.response?.status === 404;
-
-//   let errorMessage;
-//   if (is403Error) {
-//     errorMessage = "لا يمكن الوصول للكورس. قد تكون هناك مشكلة في الصلاحيات أو الكورس لم يتم ربطه بالمدرس بعد.";
-//   } else if (is404Error) {
-//     errorMessage = "الكورس غير موجود أو تم حذفه. يرجى التحقق من معرف الكورس.";
-//   } else {
-//     errorMessage = `Error loading course data: ${errorCourse.message}`;
-//   }
-
-//   return (
-//     <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
-//       <div className="bg-[rgba(10,10,25,0.5)] backdrop-blur-xl border border-gray-800/50 rounded-2xl p-8 shadow-xl max-w-md mx-4">
-//         <div className="text-center">
-//           <div className="text-6xl mb-4">⚠️</div>
-//           <h2 className="text-2xl font-bold text-white mb-4">
-//             {is403Error ? "مشكلة في الصلاحيات" : is404Error ? "الكورس غير موجود" : "خطأ في تحميل البيانات"}
-//           </h2>
-//           <p className="text-gray-400 mb-6">
-//             {errorMessage}
-//           </p>
-//           <div className="space-y-3">
-//             <Link
-//               to="/teacher/courses"
-//               className="inline-block px-6 py-3 bg-cyan-500 text-white font-bold rounded-lg hover:bg-cyan-400 transition-colors"
-//             >
-//               العودة للكورسات
-//             </Link>
-//             <button
-//               onClick={() => refetchCourse()}
-//               className="block w-full px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-500 transition-colors"
-//             >
-//               إعادة المحاولة
-//             </button>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-// Show warning if using mock course data
-// if (dataCourse?.data?.isMock) {
-//   return (
-//     <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
-//       <div className="bg-[rgba(10,10,25,0.5)] backdrop-blur-xl border border-gray-800/50 rounded-2xl p-8 shadow-xl max-w-md mx-4">
-//         <div className="text-center">
-//           <div className="text-6xl mb-4">⚠️</div>
-//           <h2 className="text-2xl font-bold text-white mb-4">مشكلة في الوصول للكورس</h2>
-//           <p className="text-gray-400 mb-6">
-//             لا يمكن الوصول لبيانات الكورس. قد تكون هناك مشكلة في الصلاحيات أو الكورس غير موجود.
-//           </p>
-//           <div className="space-y-3">
-//             <Link
-//               to="/teacher/courses"
-//               className="inline-block px-6 py-3 bg-cyan-500 text-white font-bold rounded-lg hover:bg-cyan-400 transition-colors"
-//             >
-//               العودة للكورسات
-//             </Link>
-//             <button
-//               onClick={() => refetchCourse()}
-//               className="block w-full px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-500 transition-colors"
-//             >
-//               إعادة المحاولة
-//             </button>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-// // Show message if course was just created and might need time to be accessible
-// const isRecentlyCreated = sessionStorage.getItem(`course-${courseId}-created`);
-// if (isRecentlyCreated && isErrorCourse && errorCourse?.response?.status === 403) {
-//   return (
-//     <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
-//       <div className="bg-[rgba(10,10,25,0.5)] backdrop-blur-xl border border-gray-800/50 rounded-2xl p-8 shadow-xl max-w-md mx-4">
-//         <div className="text-center">
-//           <div className="text-6xl mb-4">⏳</div>
-//           <h2 className="text-2xl font-bold text-white mb-4">الكورس قيد المعالجة</h2>
-//           <p className="text-gray-400 mb-6">
-//             تم إنشاء الكورس بنجاح! يرجى الانتظار قليلاً حتى يتم ربط الكورس بحسابك.
-//           </p>
-//           <div className="space-y-3">
-//             <button
-//               onClick={() => {
-//                 sessionStorage.removeItem(`course-${courseId}-created`);
-//                 refetchCourse();
-//               }}
-//               className="inline-block px-6 py-3 bg-cyan-500 text-white font-bold rounded-lg hover:bg-cyan-400 transition-colors"
-//             >
-//               إعادة المحاولة
-//             </button>
-//             <Link
-//               to="/teacher/courses"
-//               className="block w-full px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-500 transition-colors"
-//             >
-//               العودة للكورسات
-//             </Link>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-// const updateChapterTitle = (chapterId, newTitle) => {
-//   setChapters(chapters.map(chapter =>
-//     chapter.id === chapterId
-//       ? { ...chapter, title: newTitle }
-//       : chapter
-//   ));
-// };
-
-// const updateLessonTitle = (newTitle) => {
-//   setActiveLesson({ ...activeLesson, title: newTitle });
-// };
-
-// const addNewChapter = () => {
-//   const newChapter = {
-//     id: chapters.length + 1,
-//     title: 'باب جديد',
-//     lessons: []
-//   };
-//   setChapters([...chapters, newChapter]);
-// };
-
-// const addNewLesson = (chapterId) => {
-//   setChapters(chapters.map(chapter =>
-//     chapter.id === chapterId
-//       ? {
-//         ...chapter,
-//         lessons: [...chapter.lessons, {
-//           id: Date.now(),
-//           title: 'درس جديد'
-//         }]
-//       }
-//       : chapter
-//   ));
-// };
 
 export default AddChapter;

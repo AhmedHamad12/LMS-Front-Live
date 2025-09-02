@@ -1,18 +1,21 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import * as THREE from "three";
 import * as tus from "tus-js-client";
 import axios from "../../api/axios";
 import { Cookies } from "react-cookie";
+import toast from "react-hot-toast";
 
 const AddLesson = () => {
-  const { courseId, unitId } = useParams();
+
+  const location = useLocation();
+  const courseId = location.state?.courseId;
+  const unitId = location.state?.chapterId;
+  console.log(courseId, unitId)
+
+
   const navigate = useNavigate();
-
-  console.log(courseId, unitId);
-
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-
   const canvasRef = useRef(null);
   const mainContentRef = useRef(null);
   const sceneRef = useRef(null);
@@ -20,67 +23,19 @@ const AddLesson = () => {
   const cameraRef = useRef(null);
   const starFieldsRef = useRef([]);
 
-  // https://www.npmjs.com/package/tus-js-client
-
-  // https://github.com/kqito/use-tus
-
   const cookies = new Cookies();
   const jwt = cookies.get("token");
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [lessonImage, setLessonImage] = useState(null);
-  // const [videoFile, setVideoFile] = useState(null);
   const [pdfFile, setPdfFile] = useState(null);
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [isFreePreview, setIsFreePreview] = useState(false);
-  // const [videoData, setVideoData] = useState(null);
-  // const [loading, setLoading] = useState(false);
-
-  // const addLesson = async () => {
-  //   console.log(videoData?.videoId);
-
-  //   const formData = new FormData();
-
-  //   if (thumbnailFile) formData.append("ThumbnailFile", thumbnailFile);
-  //   formData.append("Title", title);
-  //   formData.append("Content", content);
-  //   formData.append("VideoId", videoData?.videoId);
-  //   formData.append("VideoFile", videoFile);
-  //   formData.append("LessonImage", lessonImage);
-  //   formData.append("PdfFile", pdfFile);
-  //   formData.append("CourseUnitId", chapterId);
-  //   formData.append("CourseId", courseId);
-  //   formData.append("IsFreePreview", isFreePreview);
-  //   try {
-  //     setLoading(true);
-  //     const data = await axios.post("/api/Lesson", formData, {
-  //       headers: {
-  //         "Content-Type": "multipart/form-data",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     });
-  //     console.log("Lesson added successfully:", data);
-  //   } catch (error) {
-  //     console.error("Error uploading lesson:", error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // const preSign = async () => {
-  //   await axios.post("/api/Lesson/video/presign", title, {
-  //     headers: {
-  //       Authorization: `Bearer ${token}`,
-  //     }
-  //   }).then(res => { setVideoData(res.data); console.log(res.data)}).catch(e => console.log(e))
-  // }
-
   const apiBase = "http://lms278.runasp.net";
   const [progress, setProgress] = useState(0);
   const [stats, setStats] = useState("—");
   const [stateText, setStateText] = useState("جاهز");
-  // const [logs, setLogs] = useState([]);
   const [result, setResult] = useState("");
   let currentUpload = useRef(null);
   let startedAt = useRef(null);
@@ -142,12 +97,13 @@ const AddLesson = () => {
     return r.json();
   };
 
-  const createLesson = async ({ videoId }) => {
+  const createLesson = async ({ videoId, Video }) => {
     const formData = new FormData();
 
     if (thumbnailFile) formData.append("ThumbnailFile", thumbnailFile);
     formData.append("Title", title);
     formData.append("Content", content);
+    formData.append("VideoFile", Video);
     formData.append("VideoId", videoId);
     formData.append("LessonImage", lessonImage);
     formData.append("PdfFile", pdfFile);
@@ -155,31 +111,6 @@ const AddLesson = () => {
     formData.append("CourseId", courseId);
     formData.append("IsFreePreview", isFreePreview);
 
-    // const fd = new FormData();
-    // fd.append("Title", title);
-    // fd.append("Content", content);
-    // fd.append("LessonImage", lessonImage);
-    // fd.append("PdfFile", pdfFile);
-    // fd.append("CourseUnitId", +unitId);
-    // fd.append("CourseId", +courseId);
-    // fd.append("IsFreePreview", isFreePreview);
-    // fd.append("VideoId", videoId);
-    // if (thumbnailFile) fd.append("ThumbnailFile", thumbnailFile);
-    console.log(formData);
-    console.log(title);
-
-    // const r = await fetch(`${apiBase}/api/Lesson`, {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "multipart/form-data",
-    //     Authorization: `Bearer ${jwt}`,
-    //   },
-    //   body: formData,
-    // });
-    // console.log(r);
-    // const t = await r.text();
-    // if (!r.ok) throw new Error(`create lesson failed: ${t}`);
-    // return t;
     const response = await axios
       .post("/api/Lesson", formData, {
         headers: {
@@ -187,8 +118,8 @@ const AddLesson = () => {
           Authorization: `Bearer ${jwt}`,
         },
       })
-      .then((res) => console.log(res.data))
-      .catch((e) => console.log(e));
+      .then((res) => console.log("success"))
+      .catch((e) => console.log("error"));
     return response?.data;
   };
 
@@ -221,7 +152,7 @@ const AddLesson = () => {
           if (!cache.uploadUrl) {
             cache.uploadUrl = absolute;
             putCache(k, cache);
-            console.log(`Saved session URL`);
+            // console.log(`Saved session URL`);
           }
         }
       },
@@ -239,25 +170,29 @@ const AddLesson = () => {
             this.start();
             return;
           } catch (e) {
-            console.log("re-sign failed: " + e.message);
+            // console.log("re-sign failed: " + e.message);
           }
         }
         setStateText("فشل الرفع");
-        console.log("Upload error: " + err);
+        // console.log("Upload error: " + err);
       },
       async onSuccess() {
         setStateText("تم الرفع ✔ — إنشاء الدرس…");
         try {
-          const text = await createLesson({ videoId: info.videoId });
+          const text = await createLesson({ videoId: info.videoId, video: file });
           setResult(text);
           setStateText("تم إنشاء الدرس ✅");
+          toast.success("تم إنشاء الدرس");
           delCache(fileKey(file));
           setTitle("");
           setContent("");
           setLessonImage(null);
+          setPdfFile(null);
+          setThumbnailFile(null);
+          setIsFreePreview(false);
         } catch (e) {
           setStateText("الرفع تم — فشل إنشاء الدرس");
-          console.log(e.message);
+          // console.log(e.message);
         }
       },
       onProgress(u, t) {
@@ -312,7 +247,7 @@ const AddLesson = () => {
         setStateText("تحضير جلسة جديدة (presign)…");
         const info = await presign(title || file.name);
         putCache(k, { videoId: info.videoId, libraryId: info.libraryId });
-        console.log(`videoId=${info.videoId}`);
+        // console.log(`videoId=${info.videoId}`);
         startTus(file, info, null);
       }
     } catch (e) {
@@ -728,329 +663,3 @@ const AddLesson = () => {
 };
 
 export default AddLesson;
-
-// import React, { useState, useRef } from "react";
-// import { Cookies } from "react-cookie";
-// import * as tus from "tus-js-client";
-
-// export default function AddLesson() {
-//   const [apiBase, setApiBase] = useState("http://lms278.runasp.net");
-//   // const [jwt, setJwt] = useState("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...");
-//   const [title, setTitle] = useState("mohamedhany");
-//   const [courseId, setCourseId] = useState(16);
-//   const [unitId, setUnitId] = useState(9);
-
-//   const cookies = new Cookies();
-//   const jwt = cookies.get("token");
-
-//   const [progress, setProgress] = useState(0);
-//   const [stats, setStats] = useState("—");
-//   const [stateText, setStateText] = useState("جاهز");
-//   const [logs, setLogs] = useState([]);
-//   const [result, setResult] = useState("");
-//   let currentUpload = useRef(null);
-//   let startedAt = useRef(null);
-//   const fileRef = useRef(null);
-
-//   const log = (m) => setLogs((prev) => [...prev, m]);
-
-//   const fmtBytes = (n) => {
-//     const u = ["B", "KB", "MB", "GB", "TB"];
-//     let i = 0;
-//     while (n >= 1024 && i < u.length - 1) {
-//       n /= 1024;
-//       i++;
-//     }
-//     return `${n.toFixed(2)} ${u[i]}`;
-//   };
-
-//   const eta = (uploaded, total, started) => {
-//     const secs = (Date.now() - started) / 1000;
-//     if (secs <= 0 || uploaded <= 0) return "—";
-//     const rate = uploaded / secs;
-//     const remain = (total - uploaded) / rate;
-//     const m = Math.floor(remain / 60),
-//       s = Math.floor(remain % 60);
-//     return `${m}m ${s}s`;
-//   };
-
-//   const fileKey = (f) => `bny:file:${f.name}:${f.size}:${f.lastModified}`;
-//   const getCache = (k) => {
-//     const x = localStorage.getItem(k);
-//     return x ? JSON.parse(x) : null;
-//   };
-//   const putCache = (k, v) => localStorage.setItem(k, JSON.stringify(v));
-//   const delCache = (k) => localStorage.removeItem(k);
-
-//   const presign = async (title) => {
-//     const r = await fetch(`${apiBase}/api/Lesson/video/presign`, {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//         Authorization: `Bearer ${jwt}`,
-//       },
-//       body: JSON.stringify(title || "Untitled"),
-//     });
-//     if (!r.ok) throw new Error(`presign failed: ${await r.text()}`);
-//     return r.json();
-//   };
-
-//   const resign = async (videoId) => {
-//     const r = await fetch(`${apiBase}/api/Lesson/video/resign`, {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//         Authorization: `Bearer ${jwt}`,
-//       },
-//       body: JSON.stringify({ videoId }),
-//     });
-//     if (!r.ok) throw new Error(`resign failed: ${await r.text()}`);
-//     return r.json();
-//   };
-
-//   const createLesson = async ({ title, courseId, unitId, videoId }) => {
-//     const fd = new FormData();
-//     fd.append("Title", title || "Untitled");
-//     fd.append("Content", "uploaded via tester");
-//     fd.append("CourseId", String(courseId));
-//     fd.append("CourseUnitId", String(unitId));
-//     fd.append("IsFreePreview", "true");
-//     fd.append("VideoId", videoId);
-//     const r = await fetch(`${apiBase}/api/Lesson`, {
-//       method: "POST",
-//       headers: { Authorization: `Bearer ${jwt}` },
-//       body: fd,
-//     });
-//     const t = await r.text();
-//     if (!r.ok) throw new Error(`create lesson failed: ${t}`);
-//     return t;
-//   };
-
-//   const startTus = (file, info, uploadUrl) => {
-//     startedAt.current = Date.now();
-//     const upload = new tus.Upload(file, {
-//       endpoint: "https://video.bunnycdn.com/tusupload",
-//       chunkSize: 5 * 1024 * 1024,
-//       metadata: {
-//         filename: file.name,
-//         filetype: file.type || "application/octet-stream",
-//       },
-//       headers: {
-//         AuthorizationSignature: info.authorizationSignature,
-//         AuthorizationExpire: info.authorizationExpire,
-//         VideoId: info.videoId,
-//         LibraryId: info.libraryId,
-//       },
-//       onAfterResponse(req, res) {
-//         const loc = res.getHeader("Location") || res.getHeader("location");
-//         if (loc) {
-//           const absolute = loc.startsWith("http")
-//             ? loc
-//             : `https://video.bunnycdn.com${loc}`;
-//           const k = fileKey(file);
-//           const cache = getCache(k) || {
-//             videoId: info.videoId,
-//             libraryId: info.libraryId,
-//           };
-//           if (!cache.uploadUrl) {
-//             cache.uploadUrl = absolute;
-//             putCache(k, cache);
-//             log(`Saved session URL`);
-//           }
-//         }
-//       },
-//       async onError(err) {
-//         if (
-//           String(err).includes("403") ||
-//           String(err).toLowerCase().includes("expire")
-//         ) {
-//           try {
-//             const re = await resign(info.videoId);
-//             this.options.headers.AuthorizationSignature =
-//               re.authorizationSignature;
-//             this.options.headers.AuthorizationExpire = re.authorizationExpire;
-//             setStateText("جددنا التفويض — بنستأنف…");
-//             this.start();
-//             return;
-//           } catch (e) {
-//             log("re-sign failed: " + e.message);
-//           }
-//         }
-//         setStateText("فشل الرفع");
-//         log("Upload error: " + err);
-//       },
-//       async onSuccess() {
-//         setStateText("تم الرفع ✔ — إنشاء الدرس…");
-//         try {
-//           const text = await createLesson({
-//             title,
-//             courseId,
-//             unitId,
-//             videoId: info.videoId,
-//           });
-//           setResult(text);
-//           setStateText("تم إنشاء الدرس ✅");
-//           delCache(fileKey(file));
-//         } catch (e) {
-//           setStateText("الرفع تم — فشل إنشاء الدرس");
-//           log(e.message);
-//         }
-//       },
-//       onProgress(u, t) {
-//         const p = ((u / t) * 100).toFixed(2);
-//         setProgress(p);
-//         setStateText(`يرفع… ${p}%`);
-//         const spd = u / ((Date.now() - startedAt.current) / 1000);
-//         setStats(
-//           `${fmtBytes(u)} / ${fmtBytes(t)}  —  ${fmtBytes(spd)}/s  —  ETA ${eta(
-//             u,
-//             t,
-//             startedAt.current
-//           )}`
-//         );
-//       },
-//     });
-
-//     currentUpload.current = upload;
-
-//     if (uploadUrl) {
-//       upload.resumeFromPreviousUpload({ url: uploadUrl });
-//       setStateText("استئناف…");
-//       upload.start();
-//     } else {
-//       upload.findPreviousUploads().then((list) => {
-//         if (list.length) {
-//           upload.resumeFromPreviousUpload(list[0]);
-//           setStateText("استئناف تلقائي…");
-//         } else setStateText("بدء الرفع…");
-//         upload.start();
-//       });
-//     }
-//   };
-
-//   const handleUpload = async () => {
-//     const file = fileRef.current.files[0];
-//     if (!file) {
-//       alert("اختَر ملف فيديو");
-//       return;
-//     }
-//     setResult("");
-//     const k = fileKey(file);
-//     let cache = getCache(k);
-
-//     try {
-//       if (cache?.videoId) {
-//         setStateText("استئناف — تجديد التفويض…");
-//         const info = await resign(cache.videoId);
-//         startTus(file, info, cache.uploadUrl || null);
-//       } else {
-//         setStateText("تحضير جلسة جديدة (presign)…");
-//         const info = await presign(title || file.name);
-//         putCache(k, { videoId: info.videoId, libraryId: info.libraryId });
-//         log(`videoId=${info.videoId}`);
-//         startTus(file, info, null);
-//       }
-//     } catch (e) {
-//       setStateText("فشل التحضير");
-//       log(e.message);
-//     }
-//   };
-
-//   const handleCancel = () => {
-//     if (currentUpload.current) {
-//       currentUpload.current.abort();
-//       setStateText("تم الإيقاف");
-//     }
-//   };
-
-//   return (
-//     <div className="p-6 font-sans">
-//       <h2 className="text-xl font-bold mb-4">
-//         رفع/استئناف فيديو لـ Bunny بزر واحد
-//       </h2>
-
-//       {/* API Base */}
-//       {/* <label className="block mb-1">API Base</label>
-//       <input
-//         className="border px-2 py-1 w-96"
-//         value={apiBase}
-//         onChange={(e) => setApiBase(e.target.value)}
-//       /> */}
-
-//       {/* JWT */}
-//       {/* <label className="block mt-4 mb-1">JWT (Teacher)</label>
-//       <input
-//         className="border px-2 py-1 w-96"
-//         value={jwt}
-//         onChange={(e) => setJwt(e.target.value)}
-//       /> */}
-
-//       {/* Lesson Title */}
-//       <label className="block mt-4 mb-1">Lesson Title</label>
-//       <input
-//         className="border px-2 py-1 w-96"
-//         value={title}
-//         onChange={(e) => setTitle(e.target.value)}
-//       />
-
-//       {/* Course/Unit */}
-//       <label className="block mt-4 mb-1">CourseId / CourseUnitId</label>
-//       <div className="flex items-center gap-2">
-//         <input
-//           type="number"
-//           className="border px-2 py-1 w-24"
-//           value={courseId}
-//           onChange={(e) => setCourseId(Number(e.target.value))}
-//         />
-//         /
-//         <input
-//           type="number"
-//           className="border px-2 py-1 w-24"
-//           value={unitId}
-//           onChange={(e) => setUnitId(Number(e.target.value))}
-//         />
-//       </div>
-
-//       {/* File */}
-//       <label className="block mt-4 mb-1">اختر الفيديو</label>
-//       <input ref={fileRef} type="file" accept="video/*" />
-
-//       {/* Buttons */}
-//       <div className="mt-4 flex gap-2">
-//         <button
-//           className="bg-blue-500 text-white px-4 py-2 rounded"
-//           onClick={handleUpload}
-//         >
-//           Upload / Resume
-//         </button>
-//         <button
-//           className="bg-red-500 text-white px-4 py-2 rounded"
-//           onClick={handleCancel}
-//         >
-//           Cancel
-//         </button>
-//       </div>
-
-//       {/* Progress */}
-//       <div className="mt-4">
-//         <progress className="w-96 h-4" max="100" value={progress}></progress>
-//         <div className="mt-1 text-sm">{stats}</div>
-//         <div className="mt-1">{stateText}</div>
-//       </div>
-
-//       {/* Result */}
-//       <h3 className="mt-6 font-bold">نتيجة إنشاء الدرس</h3>
-//       <div className="bg-gray-100 p-2 rounded whitespace-pre-wrap">
-//         {result}
-//       </div>
-
-//       {/* Log */}
-//       <h3 className="mt-6 font-bold">Log</h3>
-//       <div className="bg-gray-50 p-2 rounded max-w-3xl font-mono">
-//         {logs.map((l, i) => (
-//           <div key={i}>{l}</div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }

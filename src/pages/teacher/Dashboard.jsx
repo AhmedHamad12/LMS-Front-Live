@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "../../api/axios";
 import React, { useEffect, useRef } from "react";
 import { Cookies } from "react-cookie";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import * as THREE from "three";
 import Loading from "../../Components/Loading";
 
@@ -16,6 +16,8 @@ const TeacherDashboard = () => {
 
   const cookies = new Cookies();
   const token = cookies.get("token");
+
+  const navigate = useNavigate();
 
   //*************************************************** */
   const fetchUser = async () => {
@@ -47,11 +49,13 @@ const TeacherDashboard = () => {
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ["user"],
     queryFn: fetchUser,
+    refetchOnWindowFocus: false,
   });
 
   const { data: courses, isLoading: coursesLoading } = useQuery({
     queryKey: ["courses"],
     queryFn: () => fetchCourses(),
+    refetchOnWindowFocus: false,
   });
 
   const fetchAllData = async () => {
@@ -70,6 +74,7 @@ const TeacherDashboard = () => {
   const { data: allData } = useQuery({
     queryKey: ["all-data"],
     queryFn: fetchAllData,
+    refetchOnWindowFocus: false,
   });
 
   const getTeacherReport = async () => {
@@ -87,21 +92,36 @@ const TeacherDashboard = () => {
   const { data: report } = useQuery({
     queryKey: ["report"],
     queryFn: getTeacherReport,
+    refetchOnWindowFocus: false,
   });
 
-  
-  // console.log(allData);
-  // console.log(user);
-  // console.log(courses);
-  console.log(report);
 
-  //*************************************************** */
+  const getSubmittedAssignments = async () => {
+    return await axios
+      .get(`/api/SubmitedAssignment/endExpiredAssignments`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .catch((error) => {
+        console.error("User data fetch error:", error);
+      });
+  };
 
-  // Three.js initialization
+
+  // const { data: submittedAssignments } = useQuery({
+  //   queryKey: ["assignments"],
+  //   queryFn: getSubmittedAssignments,
+  //   refetchOnWindowFocus: false,
+  // });
+
+  useEffect(() => {
+    getSubmittedAssignments();
+  }, [])
+
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    // Scene setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
       75,
@@ -298,7 +318,7 @@ const TeacherDashboard = () => {
             <div className="glass-effect rounded-2xl p-6">
               <p className="text-sm text-gray-400">الرصيد القابل للسحب</p>
               <p className="text-3xl font-black text-green-400">
-                {report?.data?.totals?.teacherEarnings}{" "}
+                {report?.data?.totals?.teacherEarnings || 0}{" "}
                 <span className="text-base">جنيه</span>
               </p>
             </div>
@@ -309,7 +329,7 @@ const TeacherDashboard = () => {
                 {
                   report?.data?.monthlySeries[
                     report?.data?.monthlySeries?.length - 1
-                  ]?.teacherEarnings
+                  ]?.teacherEarnings || 0
                 }{" "}
                 <span className="text-base">جنيه</span>
               </p>
@@ -318,7 +338,7 @@ const TeacherDashboard = () => {
             <div className="glass-effect rounded-2xl p-6">
               <p className="text-sm text-gray-400">الاشتراكات النشطة</p>
               <p className="text-3xl font-black text-white">
-                {report?.data?.totals?.totalSubscriptions}{" "}
+                {report?.data?.totals?.totalSubscriptions || 0}{" "}
                 <span className="text-base">طالب</span>
               </p>
             </div>
@@ -346,12 +366,12 @@ const TeacherDashboard = () => {
                         {course.stats.studentsCount} طالب مشترك
                       </p>
                     </div>
-                    <Link
-                      to={`/teacher/course/mange/${course.id}`}
+                    <button
+                      onClick={() => {navigate(`/teacher/course/mange`, {state: {courseId: course.id}})}}
                       className="px-4 py-2 text-sm rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
                     >
                       إدارة
-                    </Link>
+                    </button>
                   </div>
                 ))}
                 <Link

@@ -12,115 +12,6 @@ export default function Dashboard() {
   const [openCourse, setOpenCourse] = useState(1);
   const [timeRemaining, setTimeRemaining] = useState("12:34:56");
 
-  // Simulate countdown timer
-  // useEffect(() => {
-  //   const timer = setInterval(() => {
-  //     const now = new Date();
-  //     const target = new Date(
-  //       now.getTime() + 12 * 60 * 60 * 1000 + 34 * 60 * 1000 + 56 * 1000
-  //     );
-  //     const diff = target - now;
-
-  //     if (diff > 0) {
-  //       const hours = Math.floor(diff / (1000 * 60 * 60));
-  //       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  //       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-  //       setTimeRemaining(
-  //         `${hours.toString().padStart(2, "0")}:${minutes
-  //           .toString()
-  //           .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
-  //       );
-  //     }
-  //   }, 1000);
-
-  //   return () => clearInterval(timer);
-  // }, []);
-
-  // // Background canvas effect
-  // useEffect(() => {
-  //   const canvas = document.getElementById("bg-canvas");
-  //   if (!canvas) return; // Exit if canvas is not found
-
-  //   const ctx = canvas.getContext("2d");
-  //   if (!ctx) return; // Exit if context is not available
-
-  //   const resizeCanvas = () => {
-  //     canvas.width = window.innerWidth;
-  //     canvas.height = window.innerHeight;
-  //   };
-
-  //   resizeCanvas();
-  //   window.addEventListener("resize", resizeCanvas);
-
-  //   const particles = [];
-  //   const particleCount = 100;
-
-  //   // Create particles
-  //   for (let i = 0; i < particleCount; i++) {
-  //     particles.push({
-  //       x: Math.random() * canvas.width,
-  //       y: Math.random() * canvas.height,
-  //       vx: (Math.random() - 0.5) * 0.5,
-  //       vy: (Math.random() - 0.5) * 0.5,
-  //       size: Math.random() * 2 + 1,
-  //       opacity: Math.random() * 0.8 + 0.2,
-  //     });
-  //   }
-
-  //   const animate = () => {
-  //     // Check if context is still available
-  //     if (!ctx) return;
-
-  //     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  //     // Create gradient background
-  //     const gradient = ctx.createLinearGradient(
-  //       0,
-  //       0,
-  //       canvas.width,
-  //       canvas.height
-  //     );
-  //     gradient.addColorStop(0, "#000011");
-  //     gradient.addColorStop(0.5, "#000033");
-  //     gradient.addColorStop(1, "#000000");
-
-  //     ctx.fillStyle = gradient;
-  //     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  //     // Update and draw particles
-  //     particles.forEach((particle) => {
-  //       particle.x += particle.vx;
-  //       particle.y += particle.vy;
-
-  //       if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
-  //       if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
-
-  //       ctx.beginPath();
-  //       ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-  //       ctx.fillStyle = `rgba(0, 191, 255, ${particle.opacity})`;
-  //       ctx.fill();
-  //     });
-
-  //     requestAnimationFrame(animate);
-  //   };
-
-  //   animate();
-
-  //   return () => {
-  //     window.removeEventListener("resize", resizeCanvas);
-  //   };
-  // }, []);
-
-  // const handleAnswerClick = (answer) => {
-  //   if (answer === "الأمبير") {
-  //     setUserPoints((prev) => prev + 25);
-  //     alert("إجابة صحيحة! لقد حصلت على 25 نقطة إضافية!");
-  //   } else {
-  //     alert("إجابة خاطئة. حاول مرة أخرى!");
-  //   }
-  // };
-
-
   const canvasRef = useRef(null);
   const mainContentRef = useRef(null);
   const sceneRef = useRef(null);
@@ -250,6 +141,7 @@ export default function Dashboard() {
   const { data: userScore } = useQuery({
     queryKey: ["user-score"],
     queryFn: getUserScore,
+    refetchOnWindowFocus: false
   });
 
   const getAssignments = async () => {
@@ -266,21 +158,28 @@ export default function Dashboard() {
   const { data: userAssignments, isLoading: assignmentLoading } = useQuery({
     queryKey: ["user-assignments"],
     queryFn: getAssignments,
+    refetchOnWindowFocus: false
   });
 
-  console.log(userAssignments);
 
-  const getNotifications = async () => {
-    return await axios.get(`/api/Notification/student/${userScore?.data.id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  const getNotifications = async (id) => {
+    return await axios.get(
+      `/api/Notification/student/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
   };
 
+  const userId = userScore?.data.id;
+
   const { data: notifications } = useQuery({
-    queryKey: ["notifications"],
-    queryFn: getNotifications,
+    queryKey: ["notifications", userId],
+    queryFn: () => getNotifications(userId),
+    enabled: !!userId,
   });
 
   const getEnrollCoursesData = async () => {
@@ -296,9 +195,6 @@ export default function Dashboard() {
     queryFn: getEnrollCoursesData,
   });
 
-  console.log(userScore);
-  console.log(notifications);
-  console.log(enrollCourses);
 
   // const date = new Date();
   const formatted = (newDate) => {
@@ -309,7 +205,7 @@ export default function Dashboard() {
       day: "2-digit",
     });
   };
-  console.log(formatted); // e.g., "August 12, 2025"
+
 
   if (coursesLoading || assignmentLoading) {
     return <Loading />
@@ -365,7 +261,7 @@ export default function Dashboard() {
                 مهماتك الحالية (الكورسات)
               </h2>
               {enrollCourses?.data.map((course, index) => (
-                <div className="overflow-hidden rounded-2xl glass-effect my-2">
+                <div key={course.id} className="overflow-hidden rounded-2xl glass-effect my-2">
                   <button
                     onClick={() =>
                       setOpenCourse(openCourse === index ? null : index)
@@ -399,7 +295,7 @@ export default function Dashboard() {
                   {openCourse === index && (
                     <div className="animate-in slide-in-from-top-2 space-y-4 border-t border-white/10 px-4 sm:px-6 pb-4 sm:pb-6 duration-300">
                       {course.units.map((unit) => (
-                        <div>
+                        <div key={unit.id}>
                           <p className="font-bold text-white">{unit.title}</p>
                           <p className="text-sm text-green-400">
                             {unit.description}
@@ -459,7 +355,7 @@ export default function Dashboard() {
                 مهام ذات أولوية
               </h2>
               {userAssignments?.data?.map((item) => (
-                <div className="space-y-3 rounded-2xl border mb-2 border-white/5 bg-gradient-to-br from-blue-900/40 to-gray-900/50 p-4 backdrop-blur-md">
+                <div key={item.id} className="space-y-3 rounded-2xl border mb-2 border-white/5 bg-gradient-to-br from-blue-900/40 to-gray-900/50 p-4 backdrop-blur-md">
                   <a
                     href={item.files}
                     className="block rounded-lg bg-yellow-500/10 p-3 transition-colors hover:bg-yellow-500/20"
@@ -538,7 +434,7 @@ export default function Dashboard() {
                     </div>
                   </div> */}
                   {notifications?.data.map((item) => (
-                    <div className="flex items-start">
+                    <div key={item.id} className="flex items-start">
                       <div className="h-fit rounded-full bg-purple-500/20 p-2">
                         <svg
                           className="h-5 w-5 text-purple-400"

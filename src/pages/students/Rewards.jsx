@@ -188,7 +188,6 @@ const Rewards = () => {
     queryFn: getUserScore,
   });
 
-  console.log(topStudents);
 
   const currentLeaderboard = leaderboards[filter] || [];
   const topThree = topStudents?.data.slice(0, 3);
@@ -464,7 +463,7 @@ const Rewards = () => {
               isActive={filter === "all_time"}
               onClick={() => setFilter("all_time")}
             />
-            <FilterButton
+            {/* <FilterButton
               filterKey="this_month"
               label="أبطال الشهر"
               isActive={filter === "this_month"}
@@ -475,7 +474,7 @@ const Rewards = () => {
               label="أفضل هذا الأسبوع"
               isActive={filter === "this_week"}
               onClick={() => setFilter("this_week")}
-            />
+            /> */}
           </div>
 
           {/* Top 3 Podium */}

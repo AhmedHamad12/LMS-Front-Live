@@ -68,6 +68,8 @@ import ResetPassword from "./pages/auth/Reset password/ResetPassword";
 import Home from "./pages/Home";
 import AIPage from "./pages/AIPage";
 import NotFoundPage from "./Components/NotFound.jsx";
+import LessonData from "./pages/teacher/LessonData.jsx";
+import UpdateLesson from "./pages/teacher/UpdateLesson.jsx";
 
 // Wire auth context with axios
 const AuthInitializer = () => {
@@ -99,20 +101,22 @@ function App() {
             {/* Teacher */}
             <Route path="/teacher" element={<Teacher />}>
               <Route
-                path="addlesson/:courseId/:unitId"
+                path="addlesson"
                 element={<AddLesson />}
               />
-              <Route path={`addchapter/:courseId`} element={<AddChapter />} />
+              <Route path="addchapter" element={<AddChapter />} />
               <Route path="addcourse" element={<AddCourse />} />
+              <Route path="lesson" element={<LessonData />} />
+              <Route path="updateLesson" element={<UpdateLesson />} />
               <Route path="dashboard" element={<TeacherDashboard />} />
               <Route path="teacherstudents" element={<TeacherStudents />} />
               <Route
-                path="course/mange/:courseId"
+                path="course/mange"
                 element={<CourseManagement />}
               />
               <Route path="earn" element={<Earn />} />
               <Route
-                path="add/assignment/:courseId/:chapterId/:lessonId"
+                path="add/assignment"
                 element={<AddAssignment />}
               />
               <Route path="quizzes" element={<Quizzes />} />
@@ -134,7 +138,7 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Students */}
-            <Route path="course/:courseId" element={<Course />} />
+            <Route path="course" element={<Course />} />
             <Route path="/student" element={<Students />}>
               <Route path="allcourses" element={<AllCourses />} />
               <Route path="course/data/:courseId" element={<CourseData />} />

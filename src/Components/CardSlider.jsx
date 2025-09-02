@@ -44,10 +44,10 @@ const CardSlider = () => {
       try {
         const response = await axios.get('/api/Teacher/getAllTeacher')
         setTeachers(response.data);
-        console.log(response.data);
+        
         
       } catch (error) {
-        console.log(error);
+        
       }
     }
     fetchTeachers();

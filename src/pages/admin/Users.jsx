@@ -187,7 +187,7 @@ const Users = () => {
                           title="تأكيد الحذف"
                           onClick={() => {
                             // You can add delete logic here
-                            console.log("Deleting", user.email);
+                            
                             setconfirmDelete({ status: false, email: null });
                           }}
                         >

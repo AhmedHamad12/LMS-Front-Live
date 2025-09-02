@@ -170,7 +170,7 @@ export default function AIPage() {
           },
         }
       );
-      console.log(response)
+
       const aiMessage = {
         id: Date.now() + 1,
         text:

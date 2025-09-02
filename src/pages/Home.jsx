@@ -158,26 +158,34 @@ export default function Home() {
           أعد تعريف تجربة التفوق
         </h1>
         <p className="mb-10 max-w-3xl text-lg leading-relaxed text-gray-300">
-          منصة المجرّة هي النظام البيئي المتكامل الذي يجمع أفضل المدرسين مع طلاب
-          المرحلة الثانوية الطموحين، باستخدام تكنولوجيا تفاعلية، أدوات ذكاء
+          منصة المحاضرة هي النظام البيئي المتكامل الذي يجمع أفضل المدرسين مع
+          طلاب المرحلة الثانوية الطموحين، باستخدام تكنولوجيا تفاعلية، أدوات ذكاء
           اصطناعي، وأساليب تعليمية من المستقبل.
         </p>
-        <div className="flex flex-col items-center gap-4 sm:flex-row">
-          <Link
-            to="/student-signup"
-            className="flex items-center rounded-lg bg-cyan-500 px-8 py-4 text-lg font-bold text-black transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-500/30"
-          >
-            <Monitor className="ml-2 h-6 w-6" />
-            تصفح الكورسات كطالب
-          </Link>
-          <Link
-            to="/teacher-signup"
-            className="flex items-center rounded-lg border-2 border-cyan-500 bg-transparent px-8 py-4 text-lg font-bold text-cyan-500 transition-all duration-300 hover:bg-cyan-500 hover:text-black"
-          >
-            <Star className="ml-2 h-6 w-6" />
-            انضم إلينا كمدرس
-          </Link>
-        </div>
+          <div className="flex flex-col items-center gap-4 sm:flex-row mb-10">
+            <Link
+              to="/student-signup"
+              className="flex items-center rounded-lg bg-cyan-500 px-8 py-4 text-lg font-bold text-black transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-500/30"
+            >
+              <Monitor className="ml-2 h-6 w-6" />
+              تصفح الكورسات كطالب
+            </Link>
+            <Link
+              to="/teacher-signup"
+              className="flex items-center rounded-lg border-2 border-cyan-500 bg-transparent px-8 py-4 text-lg font-bold text-cyan-500 transition-all duration-300 hover:bg-cyan-500 hover:text-black"
+            >
+              <Star className="ml-2 h-6 w-6" />
+              انضم إلينا كمدرس
+            </Link>
+          </div>
+          <div>
+            <Link
+              to="/ai"
+              className="flex justify-center items-center rounded-lg bg-cyan-500 px-8 py-4 text-lg font-bold text-black transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-500/30"
+            >
+              المساعد الذكى
+            </Link>
+          </div>
       </main>
 
       {/* AI Features Section */}
@@ -267,7 +275,7 @@ export default function Home() {
               </h3>
               <p className="text-gray-400">
                 شاهد شرح تفاعلي يتجاوز حدود المألوف، ويربط المنهج بأمثلة من عالم
-                الفضاء والتكنولوجيا.
+                التكنولوجيا.
               </p>
             </div>
             <div className="flex flex-col items-center">
@@ -305,7 +313,7 @@ export default function Home() {
             className="mb-4 text-center text-5xl font-black text-white"
             style={{ textShadow: "0 0 12px rgba(0, 191, 255, 0.5)" }}
           >
-            اكتشف كواكب المعرفة
+            اكتشف لاكتساب المعرفة
           </h2>
           <p className="mb-16 text-center text-lg text-gray-400">
             كورسات مصممة بعناية فائقة لتأخذك في رحلة من الأساسيات إلى الإتقان في
@@ -364,7 +372,7 @@ export default function Home() {
           className="mb-12 text-center text-5xl font-black text-white"
           style={{ textShadow: "0 0 12px rgba(0, 191, 255, 0.5)" }}
         >
-          لوحة شرف روّاد الفضاء
+          لوحة المتميزين
         </h2>
         <div className="mx-auto max-w-4xl rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/40 to-slate-800/50 p-8 backdrop-blur-md">
           {students?.data.map((student) => (
@@ -498,9 +506,7 @@ export default function Home() {
           <p className="text-md">01094879104</p>
           <IoCall className="text-cyan-400" size={20} />
         </div>
-        <p className="text-md">
-          &copy; 2025 منصة المجرّة. كل الأفكار محمية بقوانين المجرات الكونية.
-        </p>
+        <p className="text-md">&copy; 2025 منصة المحاضرة.</p>
       </footer>
     </div>
   );

@@ -5,25 +5,18 @@ import * as THREE from "three";
 import { useQuery } from "@tanstack/react-query";
 import axios from "../../api/axios";
 import { Cookies } from "react-cookie";
+import Loading from "../../Components/Loading";
+import toast from "react-hot-toast";
 
 const AddCourse = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [activeLesson, setActiveLesson] = useState({
-    id: 1,
-    title: "الدرس الأول: التيار الكهربي",
-  });
-  const [chapters, setChapters] = useState([
-    {
-      id: 1,
-      title: "الباب الأول: الكهربية التياريه",
-      lessons: [{ id: 1, title: "الدرس الأول: التيار الكهربي" }],
-    },
-  ]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [courseImage, setCourseImage] = useState(null);
   const [studyYear, setStudyYear] = useState(1);
   const [price, setPrice] = useState(0);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   // ALL useRef hooks must be declared FIRST, before any conditional returns
   const canvasRef = useRef(null);
@@ -81,8 +74,7 @@ const AddCourse = () => {
         },
       })
       .then((response) => {
-        // console.log("API Response:", response);
-        console.log("Response data:", response.data);
+
         return response;
       })
       .catch((error) => {
@@ -98,7 +90,6 @@ const AddCourse = () => {
           );
         }
 
-        // Also log the request data that was sent
         console.error("Request data that was sent:", {
           formDataEntries: Array.from(formData.entries()),
         });
@@ -108,7 +99,6 @@ const AddCourse = () => {
   };
   const navigate = useNavigate();
 
-  // Move useQuery hooks inside component
   const {
     isLoading: isLoadingUser,
     data: dataUser,
@@ -119,14 +109,15 @@ const AddCourse = () => {
   } = useQuery({
     queryKey: ["user-data"],
     queryFn: fetchData,
+    refetchOnWindowFocus: false,
     retry: (failureCount, error) => {
       // Retry up to 3 times, but only for 403 errors
       if (error.response?.status === 403 && failureCount < 3) {
-        console.log(
-          `Retrying user data fetch (attempt ${
-            failureCount + 1
-          }/3) due to 403 error...`
-        );
+        // console.log(
+        //   `Retrying user data fetch (attempt ${
+        //     failureCount + 1
+        //   }/3) due to 403 error...`
+        // );
         return true;
       }
       return false;
@@ -147,6 +138,7 @@ const AddCourse = () => {
   const { data: dataCourse, refetch: refetchCourse } = useQuery({
     queryKey: ["add-course"],
     queryFn: uploadCourse,
+    refetchOnWindowFocus: false,
     enabled: false,
   });
 
@@ -280,29 +272,31 @@ const AddCourse = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
       const result = await refetchCourse(); // Use refetch instead of direct function call
-      console.log("Course submission result:", result);
 
       if (result.data) {
-        alert("Course created successfully!");
-
-        navigate(`/teacher/addchapter/${result.data.data.id}`);
+        setResult(result);
+        toast.success("تم اضافة الكورس بنجاح!");
+        setTitle("");
+        setDescription("");
+        setCourseImage(null);
+        setStudyYear(1);
+        setPrice(0);
       }
     } catch (error) {
       console.error("Course submission error:", error);
-      alert(`Error creating course: ${error.message}`);
+      toast.error(`Error creating course: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
-  console.log(dataUser);
-  console.log(dataCourse);
 
   if (isLoadingUser || isFetchingUser) {
-    return (
-      <h2 className="text-white text-center mt-8">Loading user data...</h2>
-    );
+    return <Loading />;
   }
 
   // Show error state if user data fetch fails
@@ -409,46 +403,6 @@ const AddCourse = () => {
     );
   }
 
-  const updateChapterTitle = (chapterId, newTitle) => {
-    setChapters(
-      chapters.map((chapter) =>
-        chapter.id === chapterId ? { ...chapter, title: newTitle } : chapter
-      )
-    );
-  };
-
-  const updateLessonTitle = (newTitle) => {
-    setActiveLesson({ ...activeLesson, title: newTitle });
-  };
-
-  const addNewChapter = () => {
-    const newChapter = {
-      id: chapters.length + 1,
-      title: "باب جديد",
-      lessons: [],
-    };
-    setChapters([...chapters, newChapter]);
-  };
-
-  const addNewLesson = (chapterId) => {
-    setChapters(
-      chapters.map((chapter) =>
-        chapter.id === chapterId
-          ? {
-              ...chapter,
-              lessons: [
-                ...chapter.lessons,
-                {
-                  id: Date.now(),
-                  title: "درس جديد",
-                },
-              ],
-            }
-          : chapter
-      )
-    );
-  };
-
   return (
     <div
       className="text-gray-100 font-[Cairo] h-screen overflow-hidden w-full"
@@ -460,8 +414,6 @@ const AddCourse = () => {
       />
 
       <div className="flex h-screen">
-
-
         {/* Main Content */}
         <main
           ref={mainContentRef}
@@ -478,7 +430,7 @@ const AddCourse = () => {
                   className="text-4xl font-black text-white mb-2"
                   style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
                 >
-                  إدارة كورس: الفيزياء الكونية
+                  اضافة كورس 
                 </h1>
                 <p className="text-gray-400 text-lg">
                   هنا يمكنك بناء وتعديل كل تفاصيل رحلتك التعليمية.
@@ -486,9 +438,12 @@ const AddCourse = () => {
               </div>
               <button
                 type="submit"
-                className="px-6 py-3 rounded-lg bg-green-500 text-white font-bold hover:bg-green-400 transition-colors shadow-lg hover:shadow-green-500/25"
+                disabled={loading}
+                className={`px-6 py-3 rounded-lg bg-green-500 text-white font-bold hover:bg-green-400 transition-colors shadow-lg hover:shadow-green-500/25 ${
+                  loading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
-                نشر الكورس
+                {loading ? "جارى التحميل..." : "نشر الكورس"}
               </button>
             </header>
 
@@ -592,21 +547,20 @@ const AddCourse = () => {
               </div>
 
               {/* Course Structure */}
-              <div className="glass-effect rounded-2xl p-6">
-                <h2 className="text-2xl font-bold text-white mb-4">
-                  إضافة دورة جديدة
-                </h2>
-                <p className="bg-black/20 border border-white/10 rounded-2xl p-4">
-                  من خلال هذه الصفحة، يمكنك إنشاء دورات تعليمية جديدة وإدارتها
-                  بكل سهولة. قم بإدخال جميع المعلومات الأساسية التي يحتاجها
-                  المتعلمون مثل عنوان الدورة، الوصف، المدة، التخصص، وبيانات
-                  المُحاضر. سواء كنت تطلق منهجًا متكاملًا أو ورشة عمل قصيرة،
-                  تتيح لك هذه الأداة تنظيم المحتوى بشكل واضح واحترافي، مما يضمن
-                  تجربة تعليمية مميزة للطلاب.
-                </p>
-              </div>
             </div>
           </form>
+          <div className="glass-effect rounded-2xl p-6">
+            {result && <button
+              onClick={() =>
+                navigate(`/teacher/addchapter`, {
+                  state: { courseId: result.data.data.id },
+                })
+              }
+              className={`flex cursor-pointer justify-center rounded-lg border border-transparent bg-[#00BFFF] px-4 py-3 text-sm font-bold text-black shadow-sm shadow-[rgba(0,191,255,0.4)] transition-all duration-300 ease-in-out hover:translate-y-[2px] hover:shadow-[0_0_25px_rgb(0_191_255_/_0.7)]`}
+            >
+              إضافة باب جديد +
+            </button>}
+          </div>
         </main>
       </div>
     </div>

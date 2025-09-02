@@ -5,15 +5,11 @@ function StudentsSideBar() {
   const location = useLocation();
 
   const cookies = new Cookies();
-    
 
   const handleLogout = () => {
-    // Clear the token from local storage
     cookies.remove("token");
-    // Redirect to the login page
     window.location.href = "/login";
   };
-
 
   return (
     <aside className="w-20 lg:w-64 glass-effect p-2 lg:px-6 flex flex-col justify-between transition-all duration-300 flex-shrink-0 h-screen fixed top-0 right-0 z-50">
@@ -60,15 +56,20 @@ function StudentsSideBar() {
               title: "لوحة الشرف",
               icon: "M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z",
             },
-            {
-              to: "/student/prize",
-              title: "المكافآت",
-              icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1",
-            },
+            // {
+            //   to: "/student/prize",
+            //   title: "المكافآت",
+            //   icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1",
+            // },
             {
               to: "/student/profile",
               title: "الملف الشخصي",
               icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
+            },
+            {
+              to: "/ai",
+              title: "المساعد الذكى",
+              icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1",
             },
           ].map((item, index) => {
             const isActive = location.pathname === item.to;

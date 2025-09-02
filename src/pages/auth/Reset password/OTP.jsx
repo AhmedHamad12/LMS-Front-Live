@@ -6,7 +6,7 @@ const OTP = () => {
 
   const handleResendEmail = () => {
     // TODO: Implement resend password reset email functionality
-    console.log('Resending password reset email...');
+    
   };
 
   const handleBackToLogin = () => {

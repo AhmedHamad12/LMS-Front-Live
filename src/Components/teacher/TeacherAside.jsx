@@ -12,13 +12,6 @@ export default function TeacherAside() {
   const cookies = new Cookies();
   const token = cookies.get("token");
 
-  const handleLogout = () => {
-    // Clear the token from local storage
-    cookies.remove("token");
-    // Redirect to the login page
-    window.location.href = "/login";
-  };
-
   const fetchUser = () => {
     return axios
       .get("/api/Account/GetCurrentUser", {
@@ -35,6 +28,7 @@ export default function TeacherAside() {
   const { data: user } = useQuery({
     queryKey: ["user"],
     queryFn: fetchUser,
+    refetchOnWindowFocus: false,
   });
 
   const fetchAllData = () => {
@@ -53,10 +47,15 @@ export default function TeacherAside() {
   const { data: allData } = useQuery({
     queryKey: ["all-data"],
     queryFn: fetchAllData,
+    refetchOnWindowFocus: false,
   });
 
-  console.log(user);
-  console.log(allData);
+
+  const handleLogout = () => {
+    cookies.remove("token");
+    window.location.href = "/login";
+  };
+
 
   return (
     <aside className="w-20 lg:w-64 glass-effect p-2 lg:p-6 flex flex-col justify-between transition-all duration-300 flex-shrink-0 h-screen z-50">
@@ -86,6 +85,11 @@ export default function TeacherAside() {
               to: "/teacher/teacherstudents",
               title: "الطلاب",
               icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z",
+            },
+            {
+              to: "/ai",
+              title: "المساعد الذكى",
+              icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1",
             },
             // {
             //   to: "/teacher/earn",

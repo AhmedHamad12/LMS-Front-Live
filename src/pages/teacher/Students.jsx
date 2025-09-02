@@ -39,7 +39,7 @@ const TeacherStudents = () => {
     queryFn: getStudents,
   });
 
-  console.log(students);
+  // console.log(students);
 
   const filteredStudents = students?.data.filter(
     (student) =>

@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -13,25 +14,20 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     await axios
-      .post(
-        "/api/Account/Login",
-        { email, password },
-      )
+      .post("/api/Account/Login", { email, password })
       .then((response) => {
         cookies.set("token", response.data.token);
-        cookies.set("name",response.data.displayName)
-        cookies.set("email",JSON.stringify(response.data.email))
-        cookies.set("role",response.data.role)
-        cookies.set("teacherId",response.data.teacherId)
-
-        
         navigate(`/${response.data.role}/dashboard`);
-        
+
       })
       .catch((error) => {
         console.error(error);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   };
 
@@ -96,9 +92,12 @@ export default function Login() {
               <div className="mt-5">
                 <button
                   type="submit"
-                  className="flex w-full justify-center rounded-lg border border-transparent bg-[#00BFFF] px-4 py-3 text-sm font-bold text-black shadow-sm shadow-[rgba(0,191,255,0.4)] transition-all duration-300 ease-in-out hover:translate-y-[2px] hover:shadow-[0_0_25px_rgb(0_191_255_/_0.7)]"
+                  disabled={loading}
+                  className={`flex w-full cursor-pointer justify-center rounded-lg border border-transparent bg-[#00BFFF] px-4 py-3 text-sm font-bold text-black shadow-sm shadow-[rgba(0,191,255,0.4)] transition-all duration-300 ease-in-out hover:translate-y-[2px] hover:shadow-[0_0_25px_rgb(0_191_255_/_0.7)] ${
+                    loading ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
                 >
-                  تسجيل الدخول
+                  {loading ? "جارى التحميل..." : "تسجيل الدخول"}
                 </button>
               </div>
             </form>

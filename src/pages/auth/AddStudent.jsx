@@ -10,6 +10,7 @@ export default function AddStudent() {
   const [parentName, setParentName] = useState("");
   const [parentPhone, setParentPhone] = useState("");
   const [studentYears, setStudentYears] = useState(1);
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -18,27 +19,37 @@ export default function AddStudent() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     await axios
       .post(
         "/api/Student/addStudent",
-        { firstName, lastName, phone, parentName, parentPhone, studentYears: +studentYears },
+        {
+          firstName,
+          lastName,
+          phone,
+          parentName,
+          parentPhone,
+          studentYears: +studentYears,
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       )
-      .then((response) => {
+      .then(() => {
         navigate("/login");
-        
+
       })
       .catch((error) => {
         console.error(error);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   };
 
-  
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-black text-white">
@@ -136,9 +147,12 @@ export default function AddStudent() {
               <div>
                 <button
                   type="submit"
-                  className="flex w-full cursor-pointer justify-center rounded-lg border border-transparent bg-[#00BFFF] px-4 py-3 text-sm font-bold text-black shadow-sm shadow-[rgba(0,191,255,0.4)] transition-all duration-300 ease-in-out hover:translate-y-[2px] hover:shadow-[0_0_25px_rgb(0_191_255_/_0.7)]"
+                  disabled={loading}
+                  className={`flex w-full cursor-pointer justify-center rounded-lg border border-transparent bg-[#00BFFF] px-4 py-3 text-sm font-bold text-black shadow-sm shadow-[rgba(0,191,255,0.4)] transition-all duration-300 ease-in-out hover:translate-y-[2px] hover:shadow-[0_0_25px_rgb(0_191_255_/_0.7)] ${
+                    loading ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
                 >
-                  إنشاء الحساب
+                  {loading ? "جارى التحميل..." : "إنشاء الحساب"}
                 </button>
               </div>
             </form>

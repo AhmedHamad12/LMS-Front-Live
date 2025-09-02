@@ -5,6 +5,7 @@ import axios from "../../api/axios";
 import { Cookies } from "react-cookie";
 import { useQuery } from "@tanstack/react-query";
 import Loading from "../../Components/Loading";
+import toast from "react-hot-toast";
 
 const MyTasks = () => {
   const [filter, setFilter] = useState("new");
@@ -15,62 +16,12 @@ const MyTasks = () => {
   const canvasRef = useRef(null);
   const sceneRef = useRef(null);
   const mainContentRef = useRef(null);
-
-  const [assignments] = useState([
-    {
-      id: 1,
-      course: "الفيزياء الكونية",
-      title: "واجب على قانون أوم",
-      status: "new",
-      due: "يومان",
-      score: null,
-      instructions:
-        "أجب عن الأسئلة 5 و 6 في صفحة 34 من الكتاب المدرسي، وقم برفع صورة للحل.",
-    },
-    {
-      id: 2,
-      course: "رياضيات الفضاء",
-      title: "تمرين على التفاضل",
-      status: "submitted",
-      due: null,
-      score: null,
-    },
-    {
-      id: 3,
-      course: "الكيمياء الفلكية",
-      title: "مراجعة على الوحدة الأولى",
-      status: "graded",
-      due: null,
-      score: "95/100",
-      points: 150,
-    },
-    {
-      id: 4,
-      course: "الفيزياء الحديثة",
-      title: "بحث عن نظرية الكم",
-      status: "new",
-      due: "5 أيام",
-      score: null,
-      instructions:
-        "اكتب مقالًا من 300 كلمة عن أهمية نظرية الكم في التكنولوجيا الحديثة.",
-    },
-    {
-      id: 5,
-      course: "الأحياء الفضائية",
-      title: "تقرير عن التكيف الحيوي",
-      status: "missed",
-      due: "فات موعده",
-      score: "-50 نقطة",
-      points: -50,
-    },
-  ]);
-
   const cookies = new Cookies();
   const token = cookies.get("token");
 
   const getAssignments = async () => {
     return await axios.get(
-      `/api/Assignment/GetAssignmentsForStudent?category=1`,
+      `/api/Assignment/GetAssignmentsForStudent`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -79,21 +30,21 @@ const MyTasks = () => {
     );
   };
 
-  const { data: userAssignments, isLoading } = useQuery({
+  const { data: userAssignments, isLoading, refetch } = useQuery({
     queryKey: ["user-assignments"],
     queryFn: getAssignments,
   });
 
-  
 
-  const catConvert = (category) => {
-    if (category == 1) {
+  const catConvert = (submitedStatus) => {
+    if (submitedStatus == 1) {
+
       return "new";
-    } else if (category == 2) {
+    } else if (submitedStatus == 2) {
       return "submitted";
-    } else if (category == 3) {
+    } else if (submitedStatus == 3) {
       return "graded";
-    } else if (category == 4) {
+    } else if (submitedStatus == 4) {
       return "missed";
     }
   };
@@ -102,15 +53,15 @@ const MyTasks = () => {
     const date = new Date(newDate);
     return date.toLocaleDateString("en-US", {
       year: "numeric",
-      month: "long", // or "short" or "2-digit"
+      month: "long",
       day: "2-digit",
     });
   };
 
   const filteredAssignments = userAssignments?.data?.filter(
     (assignment) =>
-      filter === "all" || catConvert(assignment.assignmentCategory) === filter
-  );
+      filter === "all" || catConvert(assignment.submitedStatus) === filter
+  ) || [];
 
   const startAssignment = (assignment) => {
     setCurrentAssignment(assignment);
@@ -118,6 +69,9 @@ const MyTasks = () => {
   };
 
   const submitAssignment = async () => {
+    if (!textAnswer || !fileUpload) {
+      return toast.error("ادخل البيانات كاملة!")
+    }
     if (currentAssignment) {
       const formData = new FormData();
       formData.append("AssignmentId", currentAssignment.id);
@@ -131,11 +85,14 @@ const MyTasks = () => {
           "Content-Type": "multipart/form-data",
         },
       }).then((res) => {
+
+        toast.success("تم التسليم")
         
         setShowAssignmentModal(false);
         setTextAnswer("");
         setFileUpload(null);
         setCurrentAssignment(null);
+        refetch();
       }).catch((err) => {
         
       });
@@ -279,7 +236,7 @@ const MyTasks = () => {
   };
 
   const getButtonForStatus = (assignment) => {
-    switch (catConvert(assignment.assignmentCategory)) {
+    switch (catConvert(assignment.submitedStatus)) {
       case "new":
         return (
           <button
@@ -503,8 +460,8 @@ const MyTasks = () => {
             {filteredAssignments?.map((assignment, index) => (
               <div
                 key={index}
-                className={`bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-xl border border-white/5 rounded-2xl p-6 flex flex-col justify-between transform hover:-translate-y-2 transition-transform duration-300 ${
-                  catConvert(assignment.assignmentCategory) === "missed"
+                className={`bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-xl border border-white/5 rounded-2xl p-6 flex flex-col justify-center transform hover:-translate-y-2 transition-transform duration-300 ${
+                  catConvert(assignment.submitedStatus) === "missed"
                     ? "border-red-500/50"
                     : ""
                 }`}
@@ -519,10 +476,10 @@ const MyTasks = () => {
                         {assignment.assignmentDescription}
                       </h3>
                     </div>
-                    {getStatusBadge(catConvert(assignment.assignmentCategory))}
+                    {getStatusBadge(catConvert(assignment.submitedStatus))}
                   </div>
 
-                  {catConvert(assignment.assignmentCategory) === "new" && (
+                  {catConvert(assignment.submitedStatus) === "new" && (
                     <div className="text-sm text-yellow-400 flex items-center gap-2 mb-6">
                       <svg
                         className="w-5 h-5"
@@ -546,15 +503,15 @@ const MyTasks = () => {
                     </div>
                   )}
 
-                  {(catConvert(assignment.assignmentCategory) === "graded" ||
-                    catConvert(assignment.assignmentCategory) === "missed") && (
+                  {/* {(catConvert(assignment.submitedStatus) === "graded" ||
+                    catConvert(assignment.submitedStatus) === "missed") && (
                     <div className="bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-xl border border-white/5 rounded-lg p-3 text-center mb-6">
                       <p className="text-sm text-gray-300">
-                        {catConvert(assignment.assignmentCategory) === "graded"
+                        {catConvert(assignment.submitedStatus) === "graded"
                           ? "النتيجة"
                           : "العقوبة"}
                       </p>
-                      {/* <p
+                      <p
                         className={`text-2xl font-black ${
                           catConvert(assignment.assignmentCategory) === "graded"
                             ? "text-green-400"
@@ -562,18 +519,17 @@ const MyTasks = () => {
                         }`}
                       >
                         {assignment.score}
-                      </p> */}
-                      {/* {catConvert(assignment.assignmentCategory) === "graded" && assignment.points && (
+                      </p>
+                      {catConvert(assignment.assignmentCategory) === "graded" && assignment.points && (
                         <p className="text-xs text-green-400">
                           +{assignment.points} نقطة
                         </p>
-                      )} */}
+                      )}
                     </div>
-                  )}
+                  )} */}
 
-                  {catConvert(assignment.assignmentCategory) ===
-                    "submitted" && (
-                    <div className="text-sm text-center text-gray-400 mb-6 py-8">
+                  {catConvert(assignment.submitedStatus) === "submitted" && (
+                    <div className="text-sm text-center text-gray-400 mb-2 py-2">
                       <p>تم تسليم المهمة بنجاح، في انتظار تقييم القائد.</p>
                     </div>
                   )}

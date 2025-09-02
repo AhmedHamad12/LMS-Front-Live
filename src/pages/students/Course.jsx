@@ -1,333 +1,9 @@
-// import { useQuery } from "@tanstack/react-query";
-// import axios from "../../api/axios";
-// import React, { useState, useEffect, useRef } from "react";
-// import { Cookies } from "react-cookie";
-// import { Link, useParams } from "react-router-dom";
-// import * as THREE from "three";
-
-// const Course = () => {
-//   const [activeChapter, setActiveChapter] = useState(1);
-//   const [activeLesson, setActiveLesson] = useState("1.2");
-//   const [isLessonComplete, setIsLessonComplete] = useState(false);
-//   const [courseProgress, setCourseProgress] = useState(8);
-//   const [isChapter2Unlocked, setIsChapter2Unlocked] = useState(false);
-//   const [isAiUnlocked, setIsAiUnlocked] = useState(false);
-//   const [showPaymentModal, setShowPaymentModal] = useState(false);
-//   const [showAiModal, setShowAiModal] = useState(false);
-//   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-//   const [videoTime, setVideoTime] = useState(0);
-//   const [videoDuration, setVideoDuration] = useState(0);
-//   const canvasRef = useRef(null);
-//   const animationRef = useRef(null);
-//   const cookies = new Cookies();
-//   const token = cookies.get("token");
-
-//   const [data, setData] = useState(null);
-
-//   const { lessonId } = useParams();
-
-//   const fetchLesson = async () => {
-//     try {
-//       const response = await axios.get(`/api/Lesson/${lessonId}`);
-//       return response;
-//     } catch (error) {
-//       console.error("Error fetching course data:", error);
-//     }
-//   };
-
-//   // useEffect(() => {
-//   //   fetchCourseData();
-//   // }, []);
-
-//   const { data: lesson } = useQuery({
-//     queryKey: ["get-lesson"],
-//     queryFn: fetchLesson,
-//   });
-
-//   console.log(lesson);
-
-//   const currentLesson = data || {
-//     title: "الدرس الثاني: قانون أوم وقانونا كيرشوف",
-//     videoPoster:
-//       "https://placehold.co/1920x1080/0c0a24/ffffff?text=كورس+الفيزياء+الكونية",
-//     videoUrl: "",
-//     duration: 1330,
-//   };
-
-//   useEffect(() => {
-//     if (!canvasRef.current) return;
-
-//     const scene = new THREE.Scene();
-//     const camera = new THREE.PerspectiveCamera(
-//       75,
-//       window.innerWidth / window.innerHeight,
-//       0.1,
-//       1000
-//     );
-//     camera.position.z = 5;
-
-//     const renderer = new THREE.WebGLRenderer({
-//       canvas: canvasRef.current,
-//     });
-//     renderer.setSize(window.innerWidth, window.innerHeight);
-//     renderer.setPixelRatio(window.devicePixelRatio);
-
-//     const starGeo = new THREE.BufferGeometry();
-//     const starCount = 5000;
-//     const positions = new Float32Array(starCount * 3);
-//     for (let i = 0; i < starCount; i++) {
-//       positions[i * 3 + 0] = (Math.random() - 0.5) * 100;
-//       positions[i * 3 + 1] = (Math.random() - 0.5) * 100;
-//       positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
-//     }
-
-//     starGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-//     const starMaterial = new THREE.PointsMaterial({
-//       color: 0xaaaaaa,
-//       size: 0.08,
-//       transparent: true,
-//     });
-//     const stars = new THREE.Points(starGeo, starMaterial);
-//     scene.add(stars);
-
-//     const clock = new THREE.Clock();
-
-//     const animate = () => {
-//       const elapsedTime = clock.getElapsedTime();
-//       stars.rotation.y = -elapsedTime * 0.01;
-//       renderer.render(scene, camera);
-//       animationRef.current = requestAnimationFrame(animate);
-//     };
-
-//     const handleResize = () => {
-//       camera.aspect = window.innerWidth / window.innerHeight;
-//       camera.updateProjectionMatrix();
-//       renderer.setSize(window.innerWidth, window.innerHeight);
-//     };
-
-//     window.addEventListener("resize", handleResize);
-//     animate();
-
-//     return () => {
-//       window.removeEventListener("resize", handleResize);
-//       cancelAnimationFrame(animationRef.current);
-//     };
-//   }, []);
-
-//   const markAsComplete = () => {
-//     if (!isLessonComplete) {
-//       setIsLessonComplete(true);
-//       setCourseProgress((prev) => prev + 8);
-//     }
-//   };
-
-//   const unlockChapter2 = () => {
-//     setIsChapter2Unlocked(true);
-//     setShowPaymentModal(false);
-//   };
-
-//   const unlockAll = () => {
-//     setIsChapter2Unlocked(true);
-//     setIsAiUnlocked(true);
-//     setShowPaymentModal(false);
-//     setShowAiModal(false);
-//   };
-
-//   const unlockAIOnly = () => {
-//     setIsAiUnlocked(true);
-//     setShowAiModal(false);
-//   };
-
-//   const formatTime = (seconds) => {
-//     const minutes = Math.floor(seconds / 60);
-//     const remainingSeconds = seconds % 60;
-//     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-//   };
-
-//   const PlayButton = () => (
-//     <button
-//       onClick={() => setIsVideoPlaying(true)}
-//       className="absolute inset-0 w-full h-full flex items-center justify-center z-10"
-//     >
-//       <div className="w-24 h-24 bg-cyan-500/30 rounded-full flex items-center justify-center animate-pulse">
-//         <div className="w-20 h-20 bg-cyan-500/50 rounded-full flex items-center justify-center">
-//           <svg
-//             className="w-10 h-10 text-white"
-//             fill="currentColor"
-//             viewBox="0 0 20 20"
-//           >
-//             <path
-//               fillRule="evenodd"
-//               d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8.006v3.988a1 1 0 001.555.832l3.197-1.992a1 1 0 000-1.664l-3.197-1.992z"
-//               clipRule="evenodd"
-//             ></path>
-//           </svg>
-//         </div>
-//       </div>
-//     </button>
-//   );
-
-//   const VideoControls = () => (
-//     <div
-//       className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 z-20 transition-opacity duration-300 ${
-//         isVideoPlaying ? "opacity-100" : "opacity-0"
-//       } group-hover:opacity-100`}
-//     >
-//       <div className="flex items-center gap-4">
-//         <button onClick={() => setIsVideoPlaying(!isVideoPlaying)}>
-//           {isVideoPlaying ? (
-//             <svg
-//               className="w-8 h-8 text-white"
-//               fill="currentColor"
-//               viewBox="0 0 20 20"
-//             >
-//               <path
-//                 fillRule="evenodd"
-//                 d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z"
-//                 clipRule="evenodd"
-//               />
-//             </svg>
-//           ) : (
-//             <svg
-//               className="w-8 h-8 text-white"
-//               fill="currentColor"
-//               viewBox="0 0 20 20"
-//             >
-//               <path
-//                 fillRule="evenodd"
-//                 d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8.006v3.988a1 1 0 001.555.832l3.197-1.992a1 1 0 000-1.664l-3.197-1.992z"
-//                 clipRule="evenodd"
-//               />
-//             </svg>
-//           )}
-//         </button>
-//         <div className="text-xs font-mono text-white">
-//           {formatTime(videoTime)}
-//         </div>
-//         <div className="w-full h-1.5 bg-white/20 rounded-full cursor-pointer">
-//           <div
-//             className="h-full bg-cyan-400 rounded-full transition-all duration-300 shadow-sm shadow-cyan-400"
-//             style={{ width: `${(videoTime / videoDuration) * 100}%` }}
-//           ></div>
-//         </div>
-//         <div className="text-xs font-mono text-white">
-//           {formatTime(videoDuration)}
-//         </div>
-//       </div>
-//     </div>
-//   );
-
-//   // if (!data) {
-//   //   return (
-//   //     <div className="flex items-center justify-center h-screen text-white">
-//   //       جاري تحميل بيانات الدرس...
-//   //     </div>
-//   //   );
-//   // }
-
-//   return (
-//     <div
-//       className="text-white min-h-screen overflow-hidden w-full"
-//       style={{ fontFamily: "Cairo, sans-serif" }}
-//       dir="rtl"
-//     >
-//       <canvas
-//         ref={canvasRef}
-//         className="fixed top-0 left-0 w-full h-screen -z-10"
-//       />
-
-//       <div className="flex h-screen">
-//         <div className="flex-1 flex flex-col p-4 lg:p-6">
-//           <header className="flex-shrink-0 flex justify-between items-center mb-4">
-//             <div>
-//               <h1 className="text-2xl lg:text-3xl font-bold text-cyan-300 drop-shadow-lg">
-//                 {lesson?.data?.title}
-//               </h1>
-//               <p className="text-sm text-gray-400">{lesson?.data?.content}</p>
-//             </div>
-//             <Link
-//               to="/student/mycourses"
-//               className="px-4 py-2 text-sm rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-//             >
-//               العودة للوحة التحكم
-//             </Link>
-//           </header>
-
-//           <div className="flex-grow w-full bg-slate-900/50 backdrop-blur-2xl rounded-2xl mb-4 overflow-hidden relative group">
-//             {!isVideoPlaying && (
-//               <>
-//                 {/* <img
-//                   src={lesson?.data?.lessonImage}
-//                   alt="."
-//                   className="w-full h-full object-cover absolute inset-0"
-//                 />
-//                 <div className="absolute inset-0 bg-black/50"></div>
-//                 <PlayButton /> */}
-//               </>
-//             )}
-//             {isVideoPlaying && (
-//               // <video
-//               //   src={lesson?.data?.videoUrl}
-//               //   autoPlay
-//               //   controls
-//               //   className="w-full h-full object-cover"
-//               //   onTimeUpdate={(e) =>
-//               //     setVideoTime(e.target.currentTime)
-//               //   }
-//               //   onLoadedMetadata={(e) =>
-//               //     setVideoDuration(Math.floor(e.target.duration))
-//               //   }
-//               // />
-
-//               // <iframe src={lesson?.data?.videoUrl} frameborder="0" className="w-full h-full object-cover"></iframe>
-//               <iframe id="bplayer"
-//         src={`https://iframe.mediadelivery.net/embed/${lesson?.data?.vimeoId}/${lesson?.data?.videoUrl}?autoplay=false&responsive=true&preload=true`}
-//         allow="autoplay; fullscreen; picture-in-picture"></iframe>
-//             )}
-//             <VideoControls />
-//           </div>
-
-//           <div className="flex-shrink-0 flex justify-between items-center bg-slate-900/50 backdrop-blur-2xl rounded-2xl p-4">
-//             <button className="px-5 py-2 rounded-lg bg-white/10 text-gray-300 hover:bg-white/20 transition-colors">
-//               الدرس السابق
-//             </button>
-//             <button
-//               onClick={markAsComplete}
-//               disabled={isLessonComplete}
-//               className={`px-6 py-2 rounded-lg font-bold transition-colors shadow-lg ${
-//                 !isLessonComplete
-//                   ? "bg-green-500 hover:bg-green-400 text-white shadow-green-500/20"
-//                   : "bg-gray-600 text-gray-300 cursor-not-allowed"
-//               }`}
-//             >
-//               {isLessonComplete ? "تم الإنجاز" : "تمت المشاهدة ✔"}
-//             </button>
-//             <button
-//               disabled={!isLessonComplete}
-//               className={`px-5 py-2 rounded-lg font-bold transition-colors ${
-//                 isLessonComplete
-//                   ? "bg-cyan-500 hover:bg-cyan-400 text-black"
-//                   : "bg-gray-700 text-gray-400 cursor-not-allowed"
-//               }`}
-//             >
-//               الدرس التالي
-//             </button>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Course;
-
 import { Trophy } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Cookies } from "react-cookie";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 
 export default function Course() {
-  // const [courseId, setCourseId] = useState(16);
   const [libraryId, setLibraryId] = useState("475904");
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -339,7 +15,10 @@ export default function Course() {
   const [openCourse, setOpenCourse] = useState(1);
   const [enrollCourses, setEnrollCourses] = useState({});
   const [isActive, setIsActive] = useState(null);
-  const [circleProgress,setCircleProgress] = useState(0); // example: 70%
+  const [circleProgress, setCircleProgress] = useState(0);
+
+  // Add state to track lesson progress locally
+  const [lessonProgress, setLessonProgress] = useState({});
 
   const playerRef = useRef(null);
   const playerInstanceRef = useRef(null);
@@ -347,6 +26,7 @@ export default function Course() {
   const lastSentRef = useRef({ ms: 0, sec: 0, pct: 0 });
   const maxPosRef = useRef(0);
   const currentLessonIdRef = useRef(null);
+  const startTimeRef = useRef(0); // Add this to store the start time
 
   const SEND_EVERY_MS = 15000;
   const SEND_DELTA_SEC = 10;
@@ -412,7 +92,8 @@ export default function Course() {
     return res;
   };
 
-  const { courseId } = useParams();
+  const location = useLocation();
+  const courseId = location.state?.courseId;
 
   const loadCourse = async () => {
     setLoading(true);
@@ -420,11 +101,22 @@ export default function Course() {
 
     try {
       const res = await apiGet(`/api/StudentCourse/${courseId}/full`);
-      // const course = (res || []).find((c) => (c.id ?? c.Id) === courseId);
-
+      console.log(res)
       setEnrollCourses(res);
       setCircleProgress(Math.floor(+res?.courseProgress));
 
+      // Initialize lesson progress state from server data
+      const progressMap = {};
+      if (res?.units) {
+        res.units.forEach((unit) => {
+          unit.lessons?.forEach((lesson) => {
+            progressMap[lesson.id] = lesson.progress?.percent || 0;
+          });
+        });
+      }
+      setLessonProgress(progressMap);
+
+      const course = res; // Assuming res is the course data
 
       if (!course) {
         setLessons([{ type: "error", title: "الكورس غير موجود" }]);
@@ -489,6 +181,14 @@ export default function Course() {
         1
       )}s — ${pct.toFixed(2)}%`,
     });
+
+    // Update local lesson progress state
+    if (currentLessonIdRef.current) {
+      setLessonProgress((prev) => ({
+        ...prev,
+        [currentLessonIdRef.current]: pct,
+      }));
+    }
   };
 
   const shouldSend = (nowMs, sec, pct) => {
@@ -530,7 +230,7 @@ export default function Course() {
     const date = new Date(newDate);
     return date.toLocaleDateString("en-US", {
       year: "numeric",
-      month: "long", // or "short" or "2-digit"
+      month: "long",
       day: "2-digit",
     });
   };
@@ -546,7 +246,7 @@ export default function Course() {
     }
   };
 
-  const openLesson = async (lessonId, videoId) => {
+  const openLesson = async (lessonId, videoId, lastPositionSeconds = 0) => {
     setGateMessage("...checking gate");
     setPlayerUrl("");
     setShowProgress(false);
@@ -556,9 +256,13 @@ export default function Course() {
     lastSentRef.current = { ms: 0, sec: 0, pct: 0 };
     maxPosRef.current = 0;
     currentLessonIdRef.current = lessonId;
+    
+    // Store the start time for later use
+    startTimeRef.current = lastPositionSeconds || 0;
 
     try {
       const gate = await apiGet(`/api/Lesson/${lessonId}/gate`);
+      console.log(gate);
 
       if (gate.locked) {
         setGateMessage(
@@ -568,10 +272,28 @@ export default function Course() {
         return;
       }
 
+      // Get the latest progress data from the server
+      let serverStartTime = startTimeRef.current;
+      try {
+        const progressData = await apiGet(`/api/lesson/${lessonId}/progress/me`);
+        serverStartTime = progressData?.lastPositionSeconds || startTimeRef.current;
+        console.log(`Starting video at position: ${serverStartTime}s`);
+        
+        // Update local progress state
+        const serverPercent = progressData?.percent || 0;
+        setLessonProgress((prev) => ({
+          ...prev,
+          [lessonId]: serverPercent,
+        }));
+      } catch (e) {
+        console.log("Could not fetch progress data, using provided lastPositionSeconds");
+      }
+
       setGateMessage("");
-      setPlayerUrl(
-        `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?autoplay=false&responsive=true&preload=true`
-      );
+      
+      // Set the player URL with the correct start time
+      const playerUrl = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?start=${Math.floor(serverStartTime)}&autoplay=false&responsive=true&preload=true`;
+      setPlayerUrl(playerUrl);
       setShowProgress(true);
 
       // Initialize player when iframe loads
@@ -581,17 +303,20 @@ export default function Course() {
           playerInstanceRef.current = player;
 
           player.on("ready", () => {
-            player.getDuration((v) => (durationRef.current = v || 0));
+            console.log("Player ready");
+            
+            player.getDuration((duration) => {
+              durationRef.current = duration || 0;
+              console.log(`Video duration: ${duration}s`);
+            });
 
-            // Resume from last position
-            apiGet(`/api/lesson/${lessonId}/progress/me`)
-              .then((p) => {
-                const last = p?.lastPositionSeconds || 0;
-                if (last > 5) player.setCurrentTime(last);
-              })
-              .catch(() => {});
+            // Set the current time to the desired position
+            if (serverStartTime > 5) {
+              console.log(`Setting current time to: ${serverStartTime}s`);
+              player.setCurrentTime(serverStartTime);
+            }
 
-            sendProgress("opened", 0);
+            sendProgress("opened", serverStartTime);
           });
 
           player.on("timeupdate", (d) => {
@@ -604,12 +329,20 @@ export default function Course() {
           player.on("play", () =>
             player.getCurrentTime((t) => maybeSend("play", t || 0))
           );
+          
           player.on("pause", () =>
             player.getCurrentTime((t) => maybeSend("pause", t || 0))
           );
-          player.on("ended", () =>
-            sendProgress("ended", durationRef.current || maxPosRef.current)
-          );
+          
+          player.on("ended", () => {
+            const finalProgress = 100;
+            // Update local state immediately when video ends
+            setLessonProgress((prev) => ({
+              ...prev,
+              [lessonId]: finalProgress,
+            }));
+            sendProgress("ended", durationRef.current || maxPosRef.current);
+          });
 
           // Beacon handler for page unload
           const beaconHandler = () => {
@@ -663,9 +396,6 @@ export default function Course() {
       document.head.removeChild(script);
     };
   }, []);
-
-  
-
 
   const radius = 30;
   const stroke = 4;
@@ -758,24 +488,40 @@ export default function Course() {
                 </button>
                 {openCourse === index && (
                   <div className="animate-in slide-in-from-top-2 border-t border-white/10  pb-4 sm:pb-6 duration-300">
-                    {course.lessons?.map((unit) => (
-                      <div
-                        key={unit.id}
-                        className={`py-4 px-4 border-b-[0.1px] border-gray-600 flex items-center gap-4 cursor-pointer hover:bg-white/5 ${
-                          unit.id === isActive ? "bg-white/5" : ""
-                        }`}
-                        onClick={() => openLesson(unit.id, unit.vimeoId)}
-                      >
-                        <input
-                          type="checkbox"
-                          // disabled
-                          readOnly
-                          className="w-5 h-5 accent-cyan-400 disabled:opacity-100 disabled:accent-cyan-400 disabled:cursor-not-allowed "
-                          checked={unit.progress.percent > 80}
-                        />
-                        <p className="font-bold text-white">{unit.title}</p>
-                      </div>
-                    ))}
+                    {course.lessons?.map((unit) => {
+                      // Get progress from local state, fallback to server data
+                      const currentProgress =
+                        lessonProgress[unit.id] ?? unit.progress?.percent ?? 0;
+                      const isCompleted = currentProgress > 80;
+
+                      return (
+                        <div
+                          key={unit.id}
+                          className={`py-4 px-4 border-b-[0.1px] border-gray-600 flex items-center gap-4 cursor-pointer hover:bg-white/5 ${
+                            unit.id === isActive ? "bg-white/5" : ""
+                          }`}
+                          onClick={() =>
+                            openLesson(
+                              unit?.id,
+                              unit?.vimeoId,
+                              unit?.progress?.lastPositionSeconds
+                            )
+                          }
+                        >
+                          <input
+                            type="checkbox"
+                            readOnly
+                            className="w-5 h-5 accent-cyan-400 disabled:opacity-100 disabled:accent-cyan-400 disabled:cursor-not-allowed "
+                            checked={isCompleted}
+                          />
+                          <p className="font-bold text-white">{unit.title}</p>
+                          {/* Optional: Show progress percentage */}
+                          <span className="text-xs text-gray-400 mr-auto">
+                            {currentProgress.toFixed(0)}%
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -805,22 +551,6 @@ export default function Course() {
               </div>
             )}
           </div>
-
-          {/* {showProgress && (
-            <div className="mb-4">
-              <progress
-                className="w-full h-3 rounded overflow-hidden"
-                max="100"
-                value={progress.value}
-              />
-              <div className="text-gray-400 text-sm mt-1">{progress.text}</div>
-            </div>
-          )} */}
-
-          {/* <h4 className="text-lg font-semibold mb-2">Log</h4>
-          <pre className="bg-gray-800 border border-gray-700 p-4 rounded-lg max-h-56 overflow-auto text-sm">
-            {log}
-          </pre> */}
         </main>
       </div>
     </div>

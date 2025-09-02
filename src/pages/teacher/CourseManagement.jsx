@@ -2,22 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "../../api/axios";
 import React, { useState, useEffect, useRef } from "react";
 import { Cookies } from "react-cookie";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import * as THREE from "three";
+import Loading from "../../Components/Loading";
 
 export default function CourseManagement() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [activeLesson, setActiveLesson] = useState({
-    id: 1,
-    title: "الدرس الأول: التيار الكهربي",
-  });
-  const [chapters, setChapters] = useState([
-    {
-      id: 1,
-      title: "الباب الأول: الكهربية التياريه",
-      lessons: [{ id: 1, title: "الدرس الأول: التيار الكهربي" }],
-    },
-  ]);
+  const navigate = useNavigate();
 
   const canvasRef = useRef(null);
   const mainContentRef = useRef(null);
@@ -148,43 +139,9 @@ export default function CourseManagement() {
     return () => document.removeEventListener("click", handleClickOutside);
   }, [userMenuOpen]);
 
-  const updateChapterTitle = (chapterId, newTitle) => {
-    setChapters(
-      chapters.map((chapter) =>
-        chapter.id === chapterId ? { ...chapter, title: newTitle } : chapter
-      )
-    );
-  };
+  const location = useLocation();
 
-  const addNewChapter = () => {
-    const newChapter = {
-      id: chapters.length + 1,
-      title: "باب جديد",
-      lessons: [],
-    };
-    setChapters([...chapters, newChapter]);
-  };
-
-  const addNewLesson = (chapterId) => {
-    setChapters(
-      chapters.map((chapter) =>
-        chapter.id === chapterId
-          ? {
-              ...chapter,
-              lessons: [
-                ...chapter.lessons,
-                {
-                  id: Date.now(),
-                  title: "درس جديد",
-                },
-              ],
-            }
-          : chapter
-      )
-    );
-  };
-
-  const { courseId } = useParams();
+  const courseId = location.state?.courseId;
   const cookies = new Cookies();
   const token = cookies.get("token");
 
@@ -200,49 +157,27 @@ export default function CourseManagement() {
       });
   };
 
-  const { data: courses } = useQuery({
+  const { data: courses, isLoading: coursesLoading } = useQuery({
     queryKey: ["get-courses"],
     queryFn: fetchCourse,
   });
 
-  // console.log(courses);
-
-  // const unitId = courseUnit?.data?.id;
-
-  // const getLessons = (unitId) => {
-  //   return axios
-  //     .get(`http://lms278.runasp.net/api/Lesson/unit/${unitId}`, {
-  //       headers: {
-  //         accept: "/",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     })
-  //     .catch((error) => {
-  //       console.error("User data fetch error:", error);
-  //     });
-  // };
-
-  // const { data: lessons } = useQuery({
-  //   queryKey: ["lessons", unitId],
-  //   queryFn: () => getLessons(unitId),
-  //   enabled: !!unitId, // only after the teacherID has been retrieved fetch the details
-  // });
-
-  // console.log(courseUnit);
-  // console.log(lessons);
 
   const formatted = (newDate) => {
     const date = new Date(newDate);
     return date.toLocaleDateString("en-US", {
       year: "numeric",
-      month: "long", // or "short" or "2-digit"
+      month: "long",
       day: "2-digit",
     });
   };
 
+  if (coursesLoading) {
+    return <Loading />;
+  }
+
   return (
     <div className="bg-black text-gray-100 pt-10 px-6">
-      {/* Background Canvas */}
       <canvas
         ref={canvasRef}
         className="fixed inset-0 w-full h-full pointer-events-none"
@@ -250,6 +185,18 @@ export default function CourseManagement() {
       />
 
       <div>
+        <div className="flex justify-end mb-8">
+          <button
+            onClick={() =>
+              navigate(`/teacher/addchapter`, {
+                state: { courseId: courseId },
+              })
+            }
+            className={`px-6 py-3 rounded-lg bg-green-500 text-white font-bold hover:bg-green-400 transition-colors shadow-lg hover:shadow-green-500/25`}
+          >
+            اضافة باب جديد
+          </button>
+        </div>
         <div className="text-center mb-10">
           <div>
             <p className="text-4xl font-black mb-2">
@@ -269,12 +216,28 @@ export default function CourseManagement() {
             key={item.id}
             className="mb-5 bg-[#05050d] py-4 px-6 border border-cyan-400/30 rounded-md"
           >
-            <div className="">
-              <p className="text-2xl font-black text-cyan-400">{item.title}</p>
-              <p className="text-sm text-yellow-400 my-2">
-                {formatted(item.createdAt)}
-              </p>
-              <p>{item.description}</p>
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-2xl font-black text-cyan-400">
+                  {item.title}
+                </p>
+                <p className="text-sm text-yellow-400 my-2">
+                  {formatted(item.createdAt)}
+                </p>
+                <p>{item.description}</p>
+              </div>
+              <div>
+                <button
+                  onClick={() =>
+                    navigate(`/teacher/addlesson`, {
+                      state: { courseId: courseId, chapterId: item.id },
+                    })
+                  }
+                  className={`px-6 py-3 rounded-lg bg-green-500 text-white font-bold hover:bg-green-400 transition-colors shadow-lg hover:shadow-green-500/25`}
+                >
+                  اضافة درس جديد
+                </button>
+              </div>
             </div>
             <div>
               {item.lessons.map((lesson) => (
@@ -284,9 +247,9 @@ export default function CourseManagement() {
                 >
                   <div className="mb-2 flex gap-5 md:gap-20 items-center flex-wrap">
                     <div>
-                      <p className="text-2xl font-black text-green-400">
+                      <button onClick={() => navigate("/teacher/lesson", {state: {lessonId: lesson.id}})} className="cursor-pointer text-2xl font-black text-green-400">
                         {lesson.title}
-                      </p>
+                      </button>
                       <p className="text-sm text-yellow-400 mt-2">
                         {formatted(lesson.createdAt)}
                       </p>
@@ -294,9 +257,20 @@ export default function CourseManagement() {
                     <p className="px-2 break break-all">{lesson.content}</p>
                   </div>
                   <div className="flex justify-end">
-                    <Link to={`/teacher/add/assignment/${courseId}/${item.id}/${lesson.id}`} className="cursor-pointer px-4 py-2 bg-cyan-400 text-black rounded-md mt-4 md:mt-0">
+                    <button
+                      onClick={() =>
+                        navigate("/teacher/add/assignment", {
+                          state: {
+                            courseId: courseId,
+                            unitId: item.id,
+                            lessonId: lesson.id,
+                          },
+                        })
+                      }
+                      className="cursor-pointer px-4 py-2 bg-cyan-400 text-black rounded-md mt-4 md:mt-0"
+                    >
                       اضافة مهاه
-                    </Link>
+                    </button>
                   </div>
                 </div>
               ))}

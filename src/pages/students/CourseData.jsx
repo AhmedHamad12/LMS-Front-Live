@@ -147,43 +147,7 @@ export default function CourseData() {
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, [userMenuOpen]);
-
-  const updateChapterTitle = (chapterId, newTitle) => {
-    setChapters(
-      chapters.map((chapter) =>
-        chapter.id === chapterId ? { ...chapter, title: newTitle } : chapter
-      )
-    );
-  };
-
-  const addNewChapter = () => {
-    const newChapter = {
-      id: chapters.length + 1,
-      title: "باب جديد",
-      lessons: [],
-    };
-    setChapters([...chapters, newChapter]);
-  };
-
-  const addNewLesson = (chapterId) => {
-    setChapters(
-      chapters.map((chapter) =>
-        chapter.id === chapterId
-          ? {
-              ...chapter,
-              lessons: [
-                ...chapter.lessons,
-                {
-                  id: Date.now(),
-                  title: "درس جديد",
-                },
-              ],
-            }
-          : chapter
-      )
-    );
-  };
-
+  
   const { courseId } = useParams();
   const cookies = new Cookies();
   const token = cookies.get("token");

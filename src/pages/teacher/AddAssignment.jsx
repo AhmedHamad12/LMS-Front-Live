@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as THREE from "three";
-
-import { useQuery } from "@tanstack/react-query";
 import axios from "../../api/axios";
 import { Cookies } from "react-cookie";
-import { useParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 export default function AddAssignment() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -13,7 +11,13 @@ export default function AddAssignment() {
   const [priority, setPriority] = useState(1);
   const [file, setFile] = useState(null);
 
-  const {courseId, chapterId, lessonId} = useParams();
+  const location = useLocation();
+  const courseId = location.state?.courseId;
+  const chapterId = location.state?.unitId;
+  const lessonId = location.state?.lessonId;
+
+  console.log(courseId, chapterId, lessonId)
+
   const cookies = new Cookies();
   const token = cookies.get("token");
 
@@ -29,18 +33,16 @@ export default function AddAssignment() {
     formData.append("DueDate", dueDate);
     formData.append("Files", file);
     formData.append("AssignmentPriority", +priority);
-    // formData.append("AssignmentCategory", 1);
+    formData.append("AssignmentCategory", 1);
 
     
     await axios
-      .post(
-        `/api/Assignment/AddAssignmemt`, formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
+      .post(`/api/Assignment/AddAssignmemt`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      })
       .then((res) => console.log(res))
       .catch((error) => {
         console.error(error);

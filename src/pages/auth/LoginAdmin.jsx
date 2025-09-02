@@ -27,7 +27,7 @@ export default function LoginAdmin() {
       .then((response) => {
         cookies.set("token", response.data.token);
         navigate("/home");
-        console.log(response);
+        
       })
       .catch((error) => {
         console.error(error);

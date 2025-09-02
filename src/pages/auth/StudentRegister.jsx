@@ -30,15 +30,14 @@ function StudentRegister() {
       .then((response) => {
         cookies.set("token", response.data.token);
         navigate("/add-student");
-        console.log(response);
+        
       })
       .catch((error) => {
         console.error(error);
       });
   };
 
-  // console.log(Date().toString())
-  // console.log(Date().toString().split("T")[0])
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-black text-white">

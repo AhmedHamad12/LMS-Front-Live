@@ -84,7 +84,7 @@ const MyTasks = () => {
     queryFn: getAssignments,
   });
 
-  console.log(userAssignments);
+  
 
   const catConvert = (category) => {
     if (category == 1) {
@@ -131,13 +131,13 @@ const MyTasks = () => {
           "Content-Type": "multipart/form-data",
         },
       }).then((res) => {
-        console.log(res);
+        
         setShowAssignmentModal(false);
         setTextAnswer("");
         setFileUpload(null);
         setCurrentAssignment(null);
       }).catch((err) => {
-        console.log(err);
+        
       });
     };
   };

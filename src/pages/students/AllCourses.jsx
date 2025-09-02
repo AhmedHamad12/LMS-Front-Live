@@ -103,7 +103,7 @@ const AllCourses = () => {
         }
       );
 
-      console.log("Enrollment response:", response);
+      
 
       // If there's a payment URL, redirect to it
       if (response.data?.url) {
@@ -149,7 +149,7 @@ const AllCourses = () => {
   //   queryKey: ["enroll-course"],
   //   queryFn: enrollCourse,
   // });
-  console.log(allCourses?.data);
+  
 
   const filteredCourses = allCourses?.data.filter(
     (course) =>

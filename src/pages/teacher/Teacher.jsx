@@ -29,7 +29,7 @@ export default function Teacher() {
     queryFn: fetchUser,
   });
 
-  console.log(user);
+  // console.log(user);
 
   return (
     <>

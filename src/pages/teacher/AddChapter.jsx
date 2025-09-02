@@ -8,7 +8,7 @@ import { Cookies } from "react-cookie";
 
 const AddChapter = () => {
   const { courseId } = useParams();
-  console.log(courseId)
+  
 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [activeLesson, setActiveLesson] = useState({
@@ -81,7 +81,7 @@ const AddChapter = () => {
       })
       .then((response) => {
         // console.log("API Response:", response);
-        console.log("Response data:", response.data);
+        
         return response;
       })
       .catch((error) => {
@@ -268,7 +268,7 @@ const AddChapter = () => {
 
     try {
       const result = await uploadChapter();
-      console.log("Course unit submission result:", result);
+      
 
       if (result.data) {
         alert("Course unit created successfully!");
@@ -282,7 +282,7 @@ const AddChapter = () => {
   };
 
   // console.log(dataUser);
-  console.log(dataCourse);
+  
 
   // if (isLoadingUser || isFetchingUser) {
   //   return <h2 className="text-white text-center mt-8">Loading user data...</h2>;

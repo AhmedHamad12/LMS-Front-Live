@@ -28,7 +28,7 @@ export default function Login() {
 
         
         navigate(`/${response.data.role}/dashboard`);
-        console.log(response);
+        
       })
       .catch((error) => {
         console.error(error);

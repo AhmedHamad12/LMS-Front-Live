@@ -268,7 +268,7 @@ export default function Dashboard() {
     queryFn: getAssignments,
   });
 
-  console.log(userAssignments);
+  
 
   const getNotifications = async () => {
     return await axios.get(`/api/Notification/student/${userScore?.data.id}`, {
@@ -296,9 +296,7 @@ export default function Dashboard() {
     queryFn: getEnrollCoursesData,
   });
 
-  console.log(userScore);
-  console.log(notifications);
-  console.log(enrollCourses);
+  
 
   // const date = new Date();
   const formatted = (newDate) => {
@@ -309,7 +307,7 @@ export default function Dashboard() {
       day: "2-digit",
     });
   };
-  console.log(formatted); // e.g., "August 12, 2025"
+  
 
   if (coursesLoading || assignmentLoading) {
     return <Loading />

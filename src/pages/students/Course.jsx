@@ -475,7 +475,7 @@ export default function Course() {
     }
   };
 
-  console.log(enrollCourses);
+ 
 
   useEffect(() => {
     loadCourse();

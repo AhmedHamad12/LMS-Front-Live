@@ -93,7 +93,7 @@ const TeacherDashboard = () => {
   // console.log(allData);
   // console.log(user);
   // console.log(courses);
-  console.log(report);
+  // console.log(report);
 
   //*************************************************** */
 

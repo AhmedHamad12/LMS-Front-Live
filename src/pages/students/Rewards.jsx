@@ -188,7 +188,7 @@ const Rewards = () => {
     queryFn: getUserScore,
   });
 
-  console.log(topStudents);
+  
 
   const currentLeaderboard = leaderboards[filter] || [];
   const topThree = topStudents?.data.slice(0, 3);

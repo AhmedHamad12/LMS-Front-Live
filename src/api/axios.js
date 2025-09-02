@@ -1,7 +1,7 @@
 import axios from "axios";
 import { Cookies } from "react-cookie";
 
-const BASE_URL = "http://lms278.runasp.net";
+const BASE_URL = "https://api.elmohdra.com";
 
 // Global function to show unauthorized overlay - will be set by AuthContext
 let showUnauthorizedOverlay = null;
@@ -36,12 +36,7 @@ api.interceptors.request.use(
       console.error("Error in request interceptor:", error);
     }
     
-    console.log("Making request:", {
-      url: config.url,
-      method: config.method,
-      hasAuthHeader: !!config.headers?.Authorization,
-      hasCookies: !!config.withCredentials
-    });
+   
     
     return config;
   },
@@ -71,7 +66,7 @@ api.interceptors.response.use(
       if (showUnauthorizedOverlay) {
         const message = error?.response?.data?.message || 
           "لا يمكن الوصول لبيانات المستخدم. قد تكون هناك مشكلة في الصلاحيات أو الجلسة منتهية.";
-        console.log("Showing unauthorized overlay with message:", message);
+        
         showUnauthorizedOverlay(message);
       } else {
         console.warn("showUnauthorizedOverlay handler not set");

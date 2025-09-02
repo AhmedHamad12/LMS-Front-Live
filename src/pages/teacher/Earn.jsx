@@ -33,7 +33,7 @@ const Earn = () => {
     queryFn: getTeacherReport,
   });
 
-  console.log(report);
+  // console.log(report);
 
   // Three.js setup
   useEffect(() => {

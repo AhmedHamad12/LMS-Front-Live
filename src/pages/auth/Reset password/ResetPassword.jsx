@@ -30,9 +30,7 @@ const ResetPassword = () => {
       return
 
 
-    console.log("email and token :",{
-      email,token
-    });
+    
     
     e.preventDefault();
     setError('');

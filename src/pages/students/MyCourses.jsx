@@ -182,7 +182,7 @@ export default function MyCourses() {
     queryFn: fetchMyCourses,
   });
 
-  console.log(myCourses)
+  
 
   if (isLoading) {
     return <Loading />

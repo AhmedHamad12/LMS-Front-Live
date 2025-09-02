@@ -205,7 +205,7 @@ export default function CourseManagement() {
     queryFn: fetchCourse,
   });
 
-  console.log(courses);
+  // console.log(courses);
 
   // const unitId = courseUnit?.data?.id;
 

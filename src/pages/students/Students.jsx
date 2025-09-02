@@ -28,7 +28,7 @@ function Students() {
     queryFn: fetchUser,
   });
 
-  console.log(user);
+  
 
   return (
     <>

@@ -9,7 +9,7 @@ const AddLesson = () => {
   const { courseId, unitId } = useParams();
   const navigate = useNavigate();
 
-  console.log(courseId, unitId);
+  
 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
@@ -165,8 +165,7 @@ const AddLesson = () => {
     // fd.append("IsFreePreview", isFreePreview);
     // fd.append("VideoId", videoId);
     // if (thumbnailFile) fd.append("ThumbnailFile", thumbnailFile);
-    console.log(formData);
-    console.log(title);
+    
 
     // const r = await fetch(`${apiBase}/api/Lesson`, {
     //   method: "POST",
@@ -187,8 +186,8 @@ const AddLesson = () => {
           Authorization: `Bearer ${jwt}`,
         },
       })
-      .then((res) => console.log(res.data))
-      .catch((e) => console.log(e));
+      .then((res) => console.log("success"))
+      .catch((e) => console.log("error"));
     return response?.data;
   };
 
@@ -221,7 +220,7 @@ const AddLesson = () => {
           if (!cache.uploadUrl) {
             cache.uploadUrl = absolute;
             putCache(k, cache);
-            console.log(`Saved session URL`);
+            // console.log(`Saved session URL`);
           }
         }
       },
@@ -239,11 +238,11 @@ const AddLesson = () => {
             this.start();
             return;
           } catch (e) {
-            console.log("re-sign failed: " + e.message);
+            // console.log("re-sign failed: " + e.message);
           }
         }
         setStateText("فشل الرفع");
-        console.log("Upload error: " + err);
+        // console.log("Upload error: " + err);
       },
       async onSuccess() {
         setStateText("تم الرفع ✔ — إنشاء الدرس…");
@@ -257,7 +256,7 @@ const AddLesson = () => {
           setLessonImage(null);
         } catch (e) {
           setStateText("الرفع تم — فشل إنشاء الدرس");
-          console.log(e.message);
+          // console.log(e.message);
         }
       },
       onProgress(u, t) {
@@ -312,7 +311,7 @@ const AddLesson = () => {
         setStateText("تحضير جلسة جديدة (presign)…");
         const info = await presign(title || file.name);
         putCache(k, { videoId: info.videoId, libraryId: info.libraryId });
-        console.log(`videoId=${info.videoId}`);
+        // console.log(`videoId=${info.videoId}`);
         startTus(file, info, null);
       }
     } catch (e) {

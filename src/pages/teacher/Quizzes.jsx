@@ -37,8 +37,8 @@ const Quizzes = () => {
          
         });
         setQuizzes(response.data);
-        console.log("quizzes", response.data);
-        console.log("id", id);
+        // console.log("quizzes", response.data);
+        // console.log("id", id);
       } catch (error) {
         console.log(error);
       }

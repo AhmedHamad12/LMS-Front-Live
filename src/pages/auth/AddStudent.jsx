@@ -31,14 +31,14 @@ export default function AddStudent() {
       )
       .then((response) => {
         navigate("/login");
-        console.log(response);
+        
       })
       .catch((error) => {
         console.error(error);
       });
   };
 
-  // console.log(studentYears)
+  
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-black text-white">

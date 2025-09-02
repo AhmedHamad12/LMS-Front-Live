@@ -93,7 +93,7 @@ const CreateQuiz = () => {
   useEffect(() => {
     const fetchTargets = async () => {
       setTargetLoading(true);
-      console.log("id", id);
+      // console.log("id", id);
 
       try {
         const res = await axios.get(
@@ -106,7 +106,7 @@ const CreateQuiz = () => {
           }
         ))
         setTargetOptions(options);
-        console.log("target type data ", res.data);
+        // console.log("target type data ", res.data);
       } catch {
         setTargetOptions([]);
         toast.error("error");
@@ -152,7 +152,7 @@ const CreateQuiz = () => {
 
       //      axios.post(`/api/Quiz/CreateQuiz?CourseId=${form.targetId ? form.targetId.value : ""}`, payload
       //or just 16
-      console.log("payload",payload);
+      // console.log("payload",payload);
 //TODO: return to dynamic
       const response = await toast.promise(
         axios.post(`/api/Quiz/CreateQuiz?CourseId=${form.targetId ? form.targetId.value : ""}`, payload, {

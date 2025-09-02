@@ -39,7 +39,7 @@ export default function AddTeacher() {
           },
         }
       );
-      console.log("Success:", response.data);
+      
       navigate("/login");
     } catch (error) {
       console.error("Error:", error.response?.data || error.message);

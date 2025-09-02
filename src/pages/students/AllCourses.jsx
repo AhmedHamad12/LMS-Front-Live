@@ -7,7 +7,6 @@ import Loading from "../../Components/Loading";
 import toast from "react-hot-toast";
 
 const AllCourses = () => {
-  const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [enrollmentStatus, setEnrollmentStatus] = useState({});
   const [loadingStates, setLoadingStates] = useState({});
@@ -26,7 +25,6 @@ const AllCourses = () => {
     return axios
       .get("/api/AllowCourses/GetAllCoursesForMyStudyYear", {
         headers: {
-          accept: "text/plain",
           Authorization: `Bearer ${token}`,
         },
       })
@@ -113,13 +111,13 @@ const AllCourses = () => {
 
       // Handle different error scenarios
       if (error.response?.status === 400) {
-        alert("خطأ: لا يمكن الاشتراك في هذا الكورس");
+        toast.error("خطأ: لا يمكن الاشتراك في هذا الكورس");
       } else if (error.response?.status === 401) {
-        alert("خطأ: يرجى تسجيل الدخول مرة أخرى");
+        toast.error("خطأ: يرجى تسجيل الدخول مرة أخرى");
       } else if (error.response?.status === 403) {
-        alert("خطأ: لا تملك صلاحية الاشتراك في هذا الكورس");
+        toast.error("خطأ: لا تملك صلاحية الاشتراك في هذا الكورس");
       } else {
-        alert("حدث خطأ أثناء الاشتراك. يرجى المحاولة مرة أخرى.");
+        toast.error("حدث خطأ أثناء الاشتراك. يرجى المحاولة مرة أخرى.");
       }
     } finally {
       // Clear loading state

@@ -145,9 +145,6 @@ export default function MyCourses() {
     queryFn: fetchMyCourses,
   });
 
-  console.log(myCourses)
-
-  // Filter courses based on progress
   const getFilteredCourses = () => {
     if (!myCourses?.data) return [];
 

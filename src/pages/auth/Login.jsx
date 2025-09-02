@@ -21,6 +21,7 @@ export default function Login() {
       .then((response) => {
         cookies.set("token", response.data.token);
         navigate(`/${response.data.role}/dashboard`);
+
       })
       .catch((error) => {
         console.error(error);

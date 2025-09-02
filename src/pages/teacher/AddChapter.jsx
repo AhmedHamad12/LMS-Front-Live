@@ -8,8 +8,10 @@ import { Cookies } from "react-cookie";
 import toast from "react-hot-toast";
 
 const AddChapter = () => {
+
   const location = useLocation();
   const courseId = location.state?.courseId;
+
 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
@@ -57,7 +59,7 @@ const AddChapter = () => {
       })
       .then((response) => {
         // console.log("API Response:", response);
-        console.log("Response data:", response.data);
+        
         return response;
       })
       .catch((error) => {
@@ -224,6 +226,7 @@ const AddChapter = () => {
     try {
       const result = await uploadChapter();
 
+
       if (result.data) {
         setResult(result)
         toast.success("تم اضافة الفصل بنجاح!");
@@ -236,7 +239,7 @@ const AddChapter = () => {
     }
   };
 
-  console.log(dataCourse);
+
   return (
     <div className="min-h-screen text-gray-100 overflow-hidden relative">
       {/* Background Canvas */}

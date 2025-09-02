@@ -29,6 +29,7 @@ export default function Teacher() {
     refetchOnWindowFocus: false,
   });
 
+
   return (
     <>
       {user?.data?.role === "Teacher" ? (

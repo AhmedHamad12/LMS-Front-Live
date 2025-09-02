@@ -54,7 +54,7 @@ const MyExams = () => {
       formattedExams.sort((a,b)=>a.statusNum-b.statusNum)
       setExams(formattedExams);
     } catch (error) {
-      console.log(error);
+      
     } finally {
       setloading(false);
     }
@@ -65,7 +65,7 @@ const MyExams = () => {
       try {
         await api.post("/api/Quiz/endExpiredQuizzesForStudent");
       } catch (error) {
-        console.log(error);
+        
       }
     };
     endExpiredQuizzes();
@@ -156,7 +156,7 @@ const MyExams = () => {
         );
         setAttemptId(response.data.attemptId);
       } catch (error) {
-        console.log("error fetching attempt id", error.response);
+        
         toast.error(`${error.response?.data?.message || "خطأ"}`);
         setQuestions([]);
         setShowExamInterface(false);
@@ -189,7 +189,7 @@ const MyExams = () => {
       toast.success("تم إرسال الإجابات وإنهاء المحاولة بنجاح!");
     } catch (error) {
       toast.error("حدث خطأ أثناء إرسال الامتحان");
-      console.log("an error occurred in automatic submission", error);
+      
     } finally {
       setCurrentQuestionIndex(0);
       setAnswers([]);

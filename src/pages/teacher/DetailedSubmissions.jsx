@@ -16,7 +16,7 @@ const DetailedSubmissions = () => {
                 setLoading(true);
     
                 const response = await api.get(`/api/Quiz/submissions-with-questions/${quizId}/${submissionId}`);
-                console.log("detailed submission:", response.data);
+                // console.log("detailed submission:", response.data);
     
                 if (!Array.isArray(response.data) || response.data.length === 0) {
                     setSubmission(null);

@@ -95,6 +95,7 @@ const TeacherDashboard = () => {
     refetchOnWindowFocus: false,
   });
 
+
   const getSubmittedAssignments = async () => {
     return await axios
       .get(`/api/SubmitedAssignment/endExpiredAssignments`, {
@@ -106,6 +107,7 @@ const TeacherDashboard = () => {
         console.error("User data fetch error:", error);
       });
   };
+
 
   // const { data: submittedAssignments } = useQuery({
   //   queryKey: ["assignments"],

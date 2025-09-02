@@ -33,6 +33,7 @@ function TeacherSignup() {
       .then((response) => {
         cookies.set("token", response.data.token);
         navigate("/add-teacher");
+
       })
       .catch((error) => {
         console.error(error);

@@ -145,6 +145,7 @@ export default function MyCourses() {
     queryFn: fetchMyCourses,
   });
 
+
   const getFilteredCourses = () => {
     if (!myCourses?.data) return [];
 
@@ -199,6 +200,7 @@ export default function MyCourses() {
 
   const filteredCourses = getFilteredCourses();
   const counts = getCounts();
+
 
   if (isLoading) {
     return <Loading />;

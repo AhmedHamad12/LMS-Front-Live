@@ -154,6 +154,7 @@ export default function Profile() {
         }
       )
       .then((res) => {
+
         setName("");
         setPassword("");
       })
@@ -209,6 +210,7 @@ export default function Profile() {
     queryFn: getUserScore,
   });
 
+
   const getNotifications = async () => {
     return await axios.get(`/api/Notification/student/${userScore?.data.id}`, {
       headers: {
@@ -221,6 +223,7 @@ export default function Profile() {
     queryKey: ["notifications"],
     queryFn: getNotifications,
   });
+
 
   if (userLoading || dataLoading || scoreLoading || notificationLoading) {
     return <Loading />

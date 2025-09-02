@@ -31,12 +31,14 @@ export default function AddTeacher() {
     formData.append("path", path);
 
     try {
+
       await axios.post("/api/Teacher/addTeacher", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         },
       });
+
       navigate("/login");
     } catch (error) {
       console.error("Error:", error.response?.data || error.message);

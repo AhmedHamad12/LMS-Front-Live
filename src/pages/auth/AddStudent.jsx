@@ -40,6 +40,7 @@ export default function AddStudent() {
       )
       .then(() => {
         navigate("/login");
+
       })
       .catch((error) => {
         console.error(error);
@@ -48,6 +49,7 @@ export default function AddStudent() {
         setLoading(false);
       });
   };
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-black text-white">

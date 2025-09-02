@@ -103,6 +103,7 @@ const AllCourses = () => {
         }
       );
 
+
       if (response.data?.url) {
         window.location.href = response.data.url;
       }
@@ -124,6 +125,7 @@ const AllCourses = () => {
       setLoadingStates((prev) => ({ ...prev, [courseId]: false }));
     }
   };
+
 
   const filteredCourses = allCourses?.data.filter(
     (course) =>

@@ -18,7 +18,7 @@ const Submissions = () => {
         setLoading(true);
         const response = await api.get(`/api/Quiz/submissions/${quizId}`)
         setSubmissions(response.data)
-        console.log("submissions :",response.data);
+        // console.log("submissions :",response.data);
         
       } catch (error) {
         console.log("an error occurred :",error.response.data);

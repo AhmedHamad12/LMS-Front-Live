@@ -34,6 +34,7 @@ function StudentRegister() {
       .then((response) => {
         cookies.set("token", response.data.token);
         navigate("/add-student");
+
       })
       .catch((error) => {
         console.error(error);
@@ -42,6 +43,7 @@ function StudentRegister() {
         setLoading(false);
       });
   };
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-black text-white">

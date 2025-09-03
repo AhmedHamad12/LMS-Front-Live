@@ -307,7 +307,7 @@ const AddChapter = () => {
                 <h3 className="text-lg font-bold text-white mb-4">
                   ارفق صورة للفصل
                 </h3>
-                <div className="mt-1 flex justify-center px-6 pt-10 pb-10 border-2 border-dashed border-gray-600 rounded-lg hover:border-cyan-500 transition-colors">
+                <label className="mt-1 cursor-pointer flex justify-center px-6 pt-10 pb-10 border-2 border-dashed border-gray-600 rounded-lg hover:border-cyan-500 transition-colors">
                   <div className="space-y-2 text-center">
                     <svg
                       className="mx-auto h-12 w-12 text-gray-500"
@@ -337,7 +337,7 @@ const AddChapter = () => {
                       PNG, JPG, GIF up to 10MB
                     </p>
                   </div>
-                </div>
+                </label>
               </div>
 
               <div className="bg-[rgba(10,10,25,0.5)] backdrop-blur-xl border border-gray-800/50 rounded-2xl p-6 shadow-xl">

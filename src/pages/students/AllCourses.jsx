@@ -336,7 +336,7 @@ const AllCourses = () => {
                 <img
                   src={course.courseImage}
                   alt="صورة كورس"
-                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-48 bg-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="p-6 flex flex-col flex-grow">
                   <h3 className="text-xl font-bold text-white mb-2 group-hover:text-cyan-400 transition-colors">

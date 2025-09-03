@@ -300,7 +300,7 @@ export default function MyCourses() {
                     <img
                       src={course.courseImage}
                       alt={course.title}
-                      className="h-48 w-full object-cover"
+                      className="h-48 w-full bg-cover"
                     />
                     
                     {/* Progress overlay for completed courses */}

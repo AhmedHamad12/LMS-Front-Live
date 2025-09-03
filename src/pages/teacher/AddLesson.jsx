@@ -459,7 +459,7 @@ const AddLesson = () => {
                 <label className="block text-lg font-bold text-white mb-3">
                   صورة الدرس *
                 </label>
-                <div className="mt-1 flex justify-center px-6 pt-10 pb-10 border-2 border-dashed border-gray-600 rounded-lg hover:border-cyan-500 transition-colors">
+                <label className="mt-1 cursor-pointer flex justify-center px-6 pt-10 pb-10 border-2 border-dashed border-gray-600 rounded-lg hover:border-cyan-500 transition-colors">
                   <div className="space-y-2 text-center">
                     <svg
                       className="mx-auto h-12 w-12 text-gray-500"
@@ -495,7 +495,7 @@ const AddLesson = () => {
                       </p>
                     )}
                   </div>
-                </div>
+                </label>
               </div>
 
               <div className="glass-effect rounded-2xl p-6">
@@ -559,7 +559,7 @@ const AddLesson = () => {
                   <label className="block text-lg font-bold text-white mb-3">
                     ملخص الدرس (PDF)
                   </label>
-                  <div className="mt-1 flex justify-center px-6 pt-6 pb-6 border-2 border-dashed border-gray-600 rounded-lg hover:border-purple-400 transition-colors">
+                  <label className="mt-1 cursor-pointer flex justify-center px-6 pt-6 pb-6 border-2 border-dashed border-gray-600 rounded-lg hover:border-purple-400 transition-colors">
                     <div className="space-y-2 text-center">
                       <svg
                         className="mx-auto h-8 w-8 text-gray-500"
@@ -589,14 +589,14 @@ const AddLesson = () => {
                         </p>
                       )}
                     </div>
-                  </div>
+                  </label>
                 </div>
 
                 <div className="glass-effect rounded-2xl p-6">
                   <label className="block text-lg font-bold text-white mb-3">
                     صورة مصغرة (اختياري)
                   </label>
-                  <div className="mt-1 flex justify-center px-6 pt-6 pb-6 border-2 border-dashed border-gray-600 rounded-lg hover:border-orange-400 transition-colors">
+                  <label className="mt-1 cursor-pointer flex justify-center px-6 pt-6 pb-6 border-2 border-dashed border-gray-600 rounded-lg hover:border-orange-400 transition-colors">
                     <div className="space-y-2 text-center">
                       <svg
                         className="mx-auto h-8 w-8 text-gray-500"
@@ -626,7 +626,7 @@ const AddLesson = () => {
                         </p>
                       )}
                     </div>
-                  </div>
+                  </label>
                 </div>
               </div>
 

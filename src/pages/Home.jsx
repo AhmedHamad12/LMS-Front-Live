@@ -162,7 +162,7 @@ export default function Home() {
           طلاب المرحلة الثانوية الطموحين، باستخدام تكنولوجيا تفاعلية، أدوات ذكاء
           اصطناعي، وأساليب تعليمية من المستقبل.
         </p>
-          <div className="flex flex-col items-center gap-4 sm:flex-row mb-10">
+          <div className="flex flex-col items-center gap-4 sm:flex-row">
             <Link
               to="/student-signup"
               className="flex items-center rounded-lg bg-cyan-500 px-8 py-4 text-lg font-bold text-black transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-500/30"
@@ -176,14 +176,6 @@ export default function Home() {
             >
               <Star className="ml-2 h-6 w-6" />
               انضم إلينا كمدرس
-            </Link>
-          </div>
-          <div>
-            <Link
-              to="/ai"
-              className="flex justify-center items-center rounded-lg bg-cyan-500 px-8 py-4 text-lg font-bold text-black transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-500/30"
-            >
-              المساعد الذكى
             </Link>
           </div>
       </main>

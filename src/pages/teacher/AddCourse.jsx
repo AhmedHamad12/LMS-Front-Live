@@ -477,7 +477,7 @@ const AddCourse = () => {
                 <h3 className="text-lg font-bold text-white mb-4">
                   ارفق صورة للكورس
                 </h3>
-                <div className="mt-1 flex justify-center px-6 pt-10 pb-10 border-2 border-dashed border-gray-600 rounded-lg hover:border-cyan-500 transition-colors">
+                <label className="mt-1 cursor-pointer flex justify-center px-6 pt-10 pb-10 border-2 border-dashed border-gray-600 rounded-lg hover:border-cyan-500 transition-colors">
                   <div className="space-y-2 text-center">
                     <svg
                       className="mx-auto h-12 w-12 text-gray-500"
@@ -492,7 +492,7 @@ const AddCourse = () => {
                         strokeLinejoin="round"
                       />
                     </svg>
-                    <div className="flex text-sm text-gray-400 justify-center">
+                    <div className="flex text-sm text-gray-400 justify-center text-center">
                       <label className="relative cursor-pointer bg-gray-800/50 rounded-md px-3 py-1 font-medium text-cyan-400 hover:text-cyan-300 transition-colors">
                         <input
                           type="file"
@@ -506,7 +506,7 @@ const AddCourse = () => {
                       PNG, JPG, GIF up to 10MB
                     </p>
                   </div>
-                </div>
+                </label>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

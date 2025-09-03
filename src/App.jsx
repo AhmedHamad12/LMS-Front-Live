@@ -67,6 +67,7 @@ import AIPage from "./pages/AIPage";
 import NotFoundPage from "./Components/NotFound.jsx";
 import LessonData from "./pages/teacher/LessonData.jsx";
 import UpdateLesson from "./pages/teacher/UpdateLesson.jsx";
+import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 
 // Wire auth context with axios
 const AuthInitializer = () => {
@@ -84,91 +85,87 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <AuthInitializer />
-        <BackgroundAnimation />
-        <BrowserRouter>
-          <Routes>
-            {/* General */}
-            <Route path="/" element={<Home />} />
-            <Route path="/ai" element={<AIPage />} />
+      <GoogleReCaptchaProvider reCaptchaKey="6LcoPL0rAAAAAO7qYR94bHWxlml-PK7KzzEtj2rR">
+        <AuthProvider>
+          <AuthInitializer />
+          <BackgroundAnimation />
+          <BrowserRouter>
+            <Routes>
+              {/* General */}
+              <Route path="/" element={<Home />} />
+              <Route path="/ai" element={<AIPage />} />
 
-            {/* Teacher */}
-            <Route path="/teacher" element={<Teacher />}>
-              <Route
-                path="addlesson"
-                element={<AddLesson />}
-              />
-              <Route path="addchapter" element={<AddChapter />} />
-              <Route path="addcourse" element={<AddCourse />} />
-              <Route path="lesson" element={<LessonData />} />
-              <Route path="updateLesson" element={<UpdateLesson />} />
-              <Route path="dashboard" element={<TeacherDashboard />} />
-              <Route path="teacherstudents" element={<TeacherStudents />} />
-              <Route
-                path="course/mange"
-                element={<CourseManagement />}
-              />
-              <Route path="earn" element={<Earn />} />
-              <Route
-                path="add/assignment"
-                element={<AddAssignment />}
-              />
-              <Route path="quizzes" element={<Quizzes />} />
-              <Route path="quizzes/create" element={<CreateQuiz />} />
-              <Route path="quizzes/:quizId/questions" element={<Questions />} />
-              <Route
-                path="quizzes/:quizId/submissions"
-                element={<Submissions />}
-              />
-              <Route
-                path="quizzes/:quizId/submissions/:submissionId"
-                element={<DetailedSubmissions />}
-              />
-            </Route>
+              {/* Teacher */}
+              <Route path="/teacher" element={<Teacher />}>
+                <Route path="addlesson" element={<AddLesson />} />
+                <Route path="addchapter" element={<AddChapter />} />
+                <Route path="addcourse" element={<AddCourse />} />
+                <Route path="lesson" element={<LessonData />} />
+                <Route path="updateLesson" element={<UpdateLesson />} />
+                <Route path="dashboard" element={<TeacherDashboard />} />
+                <Route path="teacherstudents" element={<TeacherStudents />} />
+                <Route path="course/mange" element={<CourseManagement />} />
+                <Route path="earn" element={<Earn />} />
+                <Route path="add/assignment" element={<AddAssignment />} />
+                <Route path="quizzes" element={<Quizzes />} />
+                <Route path="quizzes/create" element={<CreateQuiz />} />
+                <Route
+                  path="quizzes/:quizId/questions"
+                  element={<Questions />}
+                />
+                <Route
+                  path="quizzes/:quizId/submissions"
+                  element={<Submissions />}
+                />
+                <Route
+                  path="quizzes/:quizId/submissions/:submissionId"
+                  element={<DetailedSubmissions />}
+                />
+              </Route>
 
-            {/* Reset Password */}
-            <Route path="/reset/email" element={<Email />} />
-            <Route path="/reset/check-code" element={<OTP />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
+              {/* Reset Password */}
+              <Route path="/reset/email" element={<Email />} />
+              <Route path="/reset/check-code" element={<OTP />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
 
-            {/* Students */}
-            <Route path="course" element={<Course />} />
-            <Route path="/student" element={<Students />}>
-              <Route path="allcourses" element={<AllCourses />} />
-              <Route path="course/data/:courseId" element={<CourseData />} />
-              <Route path="mytasks" element={<MyTasks />} />
-              <Route path="myexams" element={<MyExams />} />
-              <Route path="rewards" element={<Rewards />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="mycourses" element={<MyCourses />} />
-              <Route path="profile" element={<Profile />} />
-              <Route path="prize" element={<Prize />} />
-            </Route>
+              {/* Students */}
+              <Route path="course" element={<Course />} />
+              <Route path="/student" element={<Students />}>
+                <Route path="allcourses" element={<AllCourses />} />
+                <Route path="course/data/:courseId" element={<CourseData />} />
+                <Route path="mytasks" element={<MyTasks />} />
+                <Route path="myexams" element={<MyExams />} />
+                <Route path="rewards" element={<Rewards />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="mycourses" element={<MyCourses />} />
+                <Route path="profile" element={<Profile />} />
+                <Route path="prize" element={<Prize />} />
+              </Route>
 
-            {/* Auth */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/add-student" element={<AddStudent />} />
-            <Route path="/add-teacher" element={<AddTeacher />} />
-            <Route path="/student-signup" element={<StudentRegister />} />
-            <Route path="/teacher-signup" element={<TeacherSignup />} />
-            <Route path="/login-admin" element={<LoginAdmin />} />
+              {/* Auth */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/add-student" element={<AddStudent />} />
+              <Route path="/add-teacher" element={<AddTeacher />} />
+              <Route path="/student-signup" element={<StudentRegister />} />
+              <Route path="/teacher-signup" element={<TeacherSignup />} />
+              <Route path="/login-admin" element={<LoginAdmin />} />
 
-            {/* Admin */}
-            <Route path="/admin" element={<Admin />}>
-              <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="users" element={<Users />} />
-              <Route path="courses" element={<Courses />} />
-              <Route path="reports" element={<Reports />} />
-            </Route>
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
+              {/* Admin */}
+              <Route path="/admin" element={<Admin />}>
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="users" element={<Users />} />
+                <Route path="courses" element={<Courses />} />
+                <Route path="reports" element={<Reports />} />
+              </Route>
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
 
-          <UnauthorizedOverlay />
-        </BrowserRouter>
-        <Toaster />
-        <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
-      </AuthProvider>
+            <UnauthorizedOverlay />
+          </BrowserRouter>
+          <Toaster />
+          {/* <ReactQueryDevtools initialIsOpen={false} position="bottom-right" /> */}
+        </AuthProvider>
+      </GoogleReCaptchaProvider>
     </QueryClientProvider>
   );
 }

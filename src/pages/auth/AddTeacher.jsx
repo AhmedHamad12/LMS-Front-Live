@@ -2,6 +2,7 @@ import axios from "../../api/axios";
 import React, { useState } from "react";
 import { Cookies } from "react-cookie";
 import { Link, useNavigate } from "react-router";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
 export default function AddTeacher() {
   const [firstName, setFirstName] = useState("");
@@ -12,14 +13,22 @@ export default function AddTeacher() {
   const [teacherImage, setTeacherImage] = useState(null); // changed from "" to null
   const [loading, setLoading] = useState(false);
   const [path] = useState("MMMm");
+    const { executeRecaptcha } = useGoogleReCaptcha();
 
   const navigate = useNavigate();
   const cookies = new Cookies();
-  const token = cookies.get("token");
+  const userToken = cookies.get("token");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    if (!executeRecaptcha) {
+      console.log("reCAPTCHA not ready");
+      return;
+    }
+
+    const token = await executeRecaptcha("login");
 
     const formData = new FormData();
     formData.append("firstName", firstName);
@@ -29,12 +38,13 @@ export default function AddTeacher() {
     formData.append("experienceYears", experienceYears);
     formData.append("teacherImage", teacherImage); // File object
     formData.append("path", path);
-
+    formData.append("captchaToken", token);
+    
     try {
       await axios.post("/api/Teacher/addTeacher", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${userToken}`,
         },
       });
       navigate("/login");
@@ -48,7 +58,7 @@ export default function AddTeacher() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-black text-white">
       <div className="mx-auto w-full max-w-6xl p-4">
-        <div className="grid md:grid-cols-2 md:gap-8">
+        <div className="max-w-150 mx-auto">
           <main className="max-h-[95vh] overflow-y-auto rounded-2xl border border-white/5 bg-[#0a0a19]/50 p-8 shadow-2xl shadow-cyan-500/10 backdrop-blur-lg">
             <style jsx>{`
               main::-webkit-scrollbar {
@@ -70,7 +80,7 @@ export default function AddTeacher() {
                 انضم إلى كوكبة المدرسين
               </p>
               <p className="mt-2 text-gray-400">
-                كن قائدًا للمعرفة في مجرّتنا التعليمية
+                كن قائدًا للمعرفة  
               </p>
             </div>
 
@@ -204,18 +214,6 @@ export default function AddTeacher() {
               </p>
             </div>
           </main>
-
-          <div className="visuals-container relative hidden flex-col items-center justify-center overflow-hidden rounded-2xl p-8 md:flex">
-            <canvas id="nebula-canvas"></canvas>
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/30 p-8 text-center">
-              <h2 className="title-glow mb-4 text-5xl font-black text-white">
-                المجرّة.
-              </h2>
-              <p className="text-lg text-gray-300">
-                كن نجمًا يضيء سماء المعرفة لآلاف الطلاب.
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>

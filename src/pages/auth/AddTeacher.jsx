@@ -2,6 +2,7 @@ import axios from "../../api/axios";
 import React, { useState } from "react";
 import { Cookies } from "react-cookie";
 import { Link, useNavigate } from "react-router";
+import { Helmet } from "react-helmet-async";
 
 export default function AddTeacher() {
   const [firstName, setFirstName] = useState("");
@@ -49,6 +50,11 @@ export default function AddTeacher() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-black text-white">
+      <Helmet>
+        <title>إنشاء حساب جديد</title>
+        <meta name="description" content="إنشاء حساب جديد" />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="mx-auto w-full max-w-6xl p-4">
         <div className="grid md:grid-cols-2 md:gap-8">
           <main className="max-h-[95vh] overflow-y-auto rounded-2xl border border-white/5 bg-[#0a0a19]/50 p-8 shadow-2xl shadow-cyan-500/10 backdrop-blur-lg">

@@ -24,7 +24,7 @@ const Email = () => {
       return
     }
 
-    console.log(email);
+    
     
     
 
@@ -38,7 +38,7 @@ const Email = () => {
         navigate("/reset/check-code")
       } catch (error) {
         setError(error?.response?.data)
-        console.log(error);
+        
         
       }
       finally{

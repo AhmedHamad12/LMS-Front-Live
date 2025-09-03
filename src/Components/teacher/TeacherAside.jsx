@@ -50,10 +50,12 @@ export default function TeacherAside() {
     refetchOnWindowFocus: false,
   });
 
+
   const handleLogout = () => {
     cookies.remove("token");
     window.location.href = "/login";
   };
+
 
   return (
     <aside className="w-20 lg:w-64 glass-effect p-2 lg:p-6 flex flex-col justify-between transition-all duration-300 flex-shrink-0 h-screen z-50">

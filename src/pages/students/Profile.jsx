@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Cookies } from "react-cookie";
 import * as THREE from "three";
 import Loading from "../../Components/Loading";
+import { Helmet } from "react-helmet-async";
 
 export default function Profile() {
   const canvasRef = useRef(null);
@@ -154,6 +155,7 @@ export default function Profile() {
         }
       )
       .then((res) => {
+
         setName("");
         setPassword("");
       })
@@ -209,6 +211,7 @@ export default function Profile() {
     queryFn: getUserScore,
   });
 
+
   const getNotifications = async () => {
     return await axios.get(`/api/Notification/student/${userScore?.data.id}`, {
       headers: {
@@ -221,6 +224,7 @@ export default function Profile() {
     queryKey: ["notifications"],
     queryFn: getNotifications,
   });
+
 
   if (userLoading || dataLoading || scoreLoading || notificationLoading) {
     return <Loading />
@@ -258,6 +262,11 @@ export default function Profile() {
             background: #009acd;
           }
         `}</style>
+        <Helmet>
+          <title>الملف الشخصي</title>
+          <meta name="description" content="الملف الشخصي" />
+          <meta name="robots" content="noindex, nofollow" />
+        </Helmet>
 
         <h1 className="mb-2 text-4xl font-black text-white title-glow">
           الملف الشخصي

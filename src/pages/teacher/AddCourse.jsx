@@ -74,6 +74,7 @@ const AddCourse = () => {
         },
       })
       .then((response) => {
+
         return response;
       })
       .catch((error) => {
@@ -112,11 +113,11 @@ const AddCourse = () => {
     retry: (failureCount, error) => {
       // Retry up to 3 times, but only for 403 errors
       if (error.response?.status === 403 && failureCount < 3) {
-        console.log(
-          `Retrying user data fetch (attempt ${
-            failureCount + 1
-          }/3) due to 403 error...`
-        );
+        // console.log(
+        //   `Retrying user data fetch (attempt ${
+        //     failureCount + 1
+        //   }/3) due to 403 error...`
+        // );
         return true;
       }
       return false;
@@ -275,6 +276,7 @@ const AddCourse = () => {
 
     try {
       const result = await refetchCourse(); // Use refetch instead of direct function call
+
       if (result.data) {
         setResult(result);
         toast.success("تم اضافة الكورس بنجاح!");
@@ -291,6 +293,7 @@ const AddCourse = () => {
       setLoading(false);
     }
   };
+
 
   if (isLoadingUser || isFetchingUser) {
     return <Loading />;

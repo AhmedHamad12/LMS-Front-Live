@@ -35,8 +35,10 @@ const MyTasks = () => {
     queryFn: getAssignments,
   });
 
+
   const catConvert = (submitedStatus) => {
     if (submitedStatus == 1) {
+
       return "new";
     } else if (submitedStatus == 2) {
       return "submitted";
@@ -83,14 +85,16 @@ const MyTasks = () => {
           "Content-Type": "multipart/form-data",
         },
       }).then((res) => {
+
         toast.success("تم التسليم")
+        
         setShowAssignmentModal(false);
         setTextAnswer("");
         setFileUpload(null);
         setCurrentAssignment(null);
         refetch();
       }).catch((err) => {
-        console.log(err);
+        
       });
     };
   };

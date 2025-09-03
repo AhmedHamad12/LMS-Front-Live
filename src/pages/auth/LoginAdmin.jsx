@@ -2,6 +2,7 @@ import axios from "axios";
 import React, { useState } from "react";
 import { Cookies } from "react-cookie";
 import { Link, useNavigate } from "react-router";
+import { Helmet } from "react-helmet-async";
 
 export default function LoginAdmin() {
   const [email, setEmail] = useState("");
@@ -27,7 +28,7 @@ export default function LoginAdmin() {
       .then((response) => {
         cookies.set("token", response.data.token);
         navigate("/home");
-        console.log(response);
+        
       })
       .catch((error) => {
         console.error(error);
@@ -39,6 +40,11 @@ export default function LoginAdmin() {
       {/* <canvas id="bg-canvas"></canvas> */}
 
       <div className="flex h-screen items-center justify-center bg-black text-white">
+        <Helmet>
+          <title>تسجيل الدخول</title>
+          <meta name="description" content="تسجيل الدخول" />
+          <meta name="robots" content="noindex, nofollow" />
+        </Helmet>
         <div className="w-full max-w-md">
           <div className="rounded-2xl border border-white/5 bg-[#0a0a19]/50 p-8 shadow-2xl shadow-cyan-500/10 backdrop-blur-lg">
             <div className="mb-8 text-center">

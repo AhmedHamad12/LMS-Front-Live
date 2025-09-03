@@ -79,7 +79,7 @@ const Questions = () => {
           },
         });
         setquestions(response.data);
-        console.log("fetched questions", response.data);
+        // console.log("fetched questions", response.data);
       } catch (error) {
         console.log(error);
       }

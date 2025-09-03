@@ -22,49 +22,55 @@ const MyExams = () => {
   const [timeLeft, setTimeLeft] = useState(null); // seconds
   const timerRef = useRef(null);
 
+  const fetchExams = async () => {
+    try {
+      setloading(true);
+      const response = await api.get("/api/Quiz/getQuizForStudent");
+      const formattedExams = response.data.map((exam) => ({
+        id: exam.id,
+        course: exam.courseName,
+        title: exam.title,
+        statusNum: exam.QuizAttemptStatus, // keep original number for sorting
+        status:
+          exam.QuizAttemptStatus === 1
+            ? "new"
+            : exam.QuizAttemptStatus === 2
+            ? "processing"
+            : exam.QuizAttemptStatus === 3
+            ? "graded"
+            : "missed",
+        questions: exam.questions,
+        time: exam.time,
+        points: exam.score,
+        deadline: new Date(exam.deadline).toLocaleString("ar-EG", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        rank: exam.rank,
+      }));
+      formattedExams.sort((a,b)=>a.statusNum-b.statusNum)
+      setExams(formattedExams);
+    } catch (error) {
+      
+    } finally {
+      setloading(false);
+    }
+  };
+
   useEffect(() => {
     const endExpiredQuizzes = async () => {
       try {
         await api.post("/api/Quiz/endExpiredQuizzesForStudent");
       } catch (error) {
-        console.log(error);
+        
       }
     };
     endExpiredQuizzes();
 
-    const fetchExams = async () => {
-      try {
-        setloading(true);
-        const response = await api.get("/api/Quiz/getQuizForStudent");
-        const formattedExams = response.data.map((exam) => ({
-          id: exam.id,
-          course: exam.courseName,
-          title: exam.title,
-          status:
-            exam.status === 0
-              ? "new"
-              : exam.status === 1
-              ? "processing"
-              : "missed",
-          questions: exam.questions,
-          time: exam.time,
-          points: exam.score,
-          deadline: new Date(exam.deadline).toLocaleTimeString("ar-EG", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          rank: exam.rank,
-        }));
-        setExams(formattedExams);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setloading(false);
-      }
-    };
+
     fetchExams();
   }, []);
 
@@ -150,7 +156,7 @@ const MyExams = () => {
         );
         setAttemptId(response.data.attemptId);
       } catch (error) {
-        console.log("error fetching attempt id", error.response);
+        
         toast.error(`${error.response?.data?.message || "خطأ"}`);
         setQuestions([]);
         setShowExamInterface(false);
@@ -178,10 +184,12 @@ const MyExams = () => {
     try {
       await api.post("/api/Quiz/submit-answer", formattedAnswers);
       await api.post(`/api/Quiz/attempts/${attemptId}/finish`);
+
+      fetchExams()
       toast.success("تم إرسال الإجابات وإنهاء المحاولة بنجاح!");
     } catch (error) {
       toast.error("حدث خطأ أثناء إرسال الامتحان");
-      console.log("an error occurred in automatic submission", error);
+      
     } finally {
       setCurrentQuestionIndex(0);
       setAnswers([]);
@@ -280,7 +288,7 @@ const MyExams = () => {
           onClick={() => prepareExam(exam)}
           className="w-full text-center block p-3 rounded-lg bg-cyan-500 text-black font-bold hover:bg-cyan-400 transition-colors"
         >
-          ابدأ المحاكاة
+          ابدأ الامتحان
         </button>
       )}
       {exam.status === "graded" && (
@@ -530,10 +538,10 @@ const MyExams = () => {
             className="text-4xl font-black text-white mb-2"
             style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
           >
-            غرفة محاكاة الامتحانات
+            غرفة الامتحانات
           </h1>
           <p className="text-gray-400 text-lg mb-8">
-            استعد لاختبار قدراتك في مهام معرفية عالية المستوى.
+            استعد لاختبار قدراتك في الامتحانات .
           </p>
 
           {/* Filter Buttons */}

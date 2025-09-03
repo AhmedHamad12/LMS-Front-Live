@@ -161,6 +161,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false
   });
 
+
   const getNotifications = async (id) => {
     return await axios.get(
       `/api/Notification/student/${id}`,
@@ -170,6 +171,7 @@ export default function Dashboard() {
         },
       }
     );
+
   };
 
   const userId = userScore?.data.id;
@@ -193,6 +195,7 @@ export default function Dashboard() {
     queryFn: getEnrollCoursesData,
   });
 
+
   // const date = new Date();
   const formatted = (newDate) => {
     const date = new Date(newDate);
@@ -202,6 +205,7 @@ export default function Dashboard() {
       day: "2-digit",
     });
   };
+
 
   if (coursesLoading || assignmentLoading) {
     return <Loading />

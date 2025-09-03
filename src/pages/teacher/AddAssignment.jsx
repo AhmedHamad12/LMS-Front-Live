@@ -35,7 +35,7 @@ export default function AddAssignment() {
     formData.append("AssignmentPriority", +priority);
     formData.append("AssignmentCategory", 1);
 
-    console.log(token)
+    
     await axios
       .post(`/api/Assignment/AddAssignmemt`, formData, {
         headers: {

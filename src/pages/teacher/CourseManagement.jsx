@@ -162,6 +162,7 @@ export default function CourseManagement() {
     queryFn: fetchCourse,
   });
 
+
   const formatted = (newDate) => {
     const date = new Date(newDate);
     return date.toLocaleDateString("en-US", {

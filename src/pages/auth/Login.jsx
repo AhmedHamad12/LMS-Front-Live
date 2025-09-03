@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Cookies } from "react-cookie";
 import { Link, useNavigate } from "react-router";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
+import { Helmet } from "react-helmet-async";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -30,6 +31,7 @@ export default function Login() {
       .then((response) => {
         cookies.set("token", response.data.token);
         navigate(`/${response.data.role}/dashboard`);
+
       })
       .catch((error) => {
         console.error(error);
@@ -42,17 +44,38 @@ export default function Login() {
   return (
     <>
       {/* <canvas id="bg-canvas"></canvas> */}
+      <div className="flex h-screen items-center justify-center bg-black text-white">
+        <Helmet>
+          <title>تسجيل الدخول</title>
+          <meta name="description" content="تسجيل الدخول" />
+          
+        </Helmet>
+        <div className="w-full max-w-md">
+          <div className="rounded-2xl border border-white/5 bg-[#0a0a19]/50 p-8 shadow-2xl shadow-cyan-500/10 backdrop-blur-lg">
+            <div className="mb-8 text-center">
+              <p className="text-4xl font-black text-white text-shadow-[0_0_10px_rgb(0_191_255_/_0.6)]">
+                المحاضرة.
+              </p>
+              <p className="mt-2 text-gray-400">
+                بوابة الدخول إلى محطة المعرفة
+              </p>
+            </div>
 
-        <div className="flex h-screen items-center justify-center bg-black text-white">
-          <div className="w-full max-w-md">
-            <div className="rounded-2xl border border-white/5 bg-[#0a0a19]/50 p-8 shadow-2xl shadow-cyan-500/10 backdrop-blur-lg">
-              <div className="mb-8 text-center">
-                <p className="text-4xl font-black text-white text-shadow-[0_0_10px_rgb(0_191_255_/_0.6)]">
-                  المحاضرة.
-                </p>
-                <p className="mt-2 text-gray-400">
-                  بوابة الدخول إلى محطة المعرفة
-                </p>
+            <form onSubmit={handleSubmit}>
+              <div>
+                <label className="text-sm font-bold text-gray-300">
+                  البريد الإلكتروني
+                </label>
+                <div className="mt-3">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="البريد الإلكتروني"
+                    required
+                    className="w-full rounded-lg border border-white/10 bg-black/20 p-3 placeholder-gray-500 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none"
+                  />
+                </div>
               </div>
 
               <form onSubmit={handleSubmit}>

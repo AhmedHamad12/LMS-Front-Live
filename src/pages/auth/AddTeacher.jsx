@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Cookies } from "react-cookie";
 import { Link, useNavigate } from "react-router";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
+import { Helmet } from "react-helmet-async";
 
 export default function AddTeacher() {
   const [firstName, setFirstName] = useState("");
@@ -41,12 +42,14 @@ export default function AddTeacher() {
     formData.append("captchaToken", token);
     
     try {
+
       await axios.post("/api/Teacher/addTeacher", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${userToken}`,
         },
       });
+
       navigate("/login");
     } catch (error) {
       console.error("Error:", error.response?.data || error.message);
@@ -57,6 +60,11 @@ export default function AddTeacher() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-black text-white">
+      <Helmet>
+        <title>إنشاء حساب جديد</title>
+        <meta name="description" content="إنشاء حساب جديد" />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="mx-auto w-full max-w-6xl p-4">
         <div className="max-w-150 mx-auto">
           <main className="max-h-[95vh] overflow-y-auto rounded-2xl border border-white/5 bg-[#0a0a19]/50 p-8 shadow-2xl shadow-cyan-500/10 backdrop-blur-lg">

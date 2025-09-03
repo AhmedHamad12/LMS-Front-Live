@@ -7,10 +7,12 @@ import { Cookies } from "react-cookie";
 import toast from "react-hot-toast";
 
 const AddLesson = () => {
+
   const location = useLocation();
   const courseId = location.state?.courseId;
   const unitId = location.state?.chapterId;
   console.log(courseId, unitId)
+
 
   const navigate = useNavigate();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -108,6 +110,7 @@ const AddLesson = () => {
     formData.append("CourseUnitId", unitId);
     formData.append("CourseId", courseId);
     formData.append("IsFreePreview", isFreePreview);
+
     const response = await axios
       .post("/api/Lesson", formData, {
         headers: {
@@ -115,8 +118,8 @@ const AddLesson = () => {
           Authorization: `Bearer ${jwt}`,
         },
       })
-      .then((res) => console.log(res.data))
-      .catch((e) => console.log(e));
+      .then((res) => console.log("success"))
+      .catch((e) => console.log("error"));
     return response?.data;
   };
 
@@ -149,7 +152,7 @@ const AddLesson = () => {
           if (!cache.uploadUrl) {
             cache.uploadUrl = absolute;
             putCache(k, cache);
-            console.log(`Saved session URL`);
+            // console.log(`Saved session URL`);
           }
         }
       },
@@ -167,11 +170,11 @@ const AddLesson = () => {
             this.start();
             return;
           } catch (e) {
-            console.log("re-sign failed: " + e.message);
+            // console.log("re-sign failed: " + e.message);
           }
         }
         setStateText("فشل الرفع");
-        console.log("Upload error: " + err);
+        // console.log("Upload error: " + err);
       },
       async onSuccess() {
         setStateText("تم الرفع ✔ — إنشاء الدرس…");
@@ -189,7 +192,7 @@ const AddLesson = () => {
           setIsFreePreview(false);
         } catch (e) {
           setStateText("الرفع تم — فشل إنشاء الدرس");
-          console.log(e.message);
+          // console.log(e.message);
         }
       },
       onProgress(u, t) {
@@ -244,7 +247,7 @@ const AddLesson = () => {
         setStateText("تحضير جلسة جديدة (presign)…");
         const info = await presign(title || file.name);
         putCache(k, { videoId: info.videoId, libraryId: info.libraryId });
-        console.log(`videoId=${info.videoId}`);
+        // console.log(`videoId=${info.videoId}`);
         startTus(file, info, null);
       }
     } catch (e) {

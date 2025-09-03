@@ -16,6 +16,7 @@ import { Link } from "react-router-dom";
 import { IoCall } from "react-icons/io5";
 import axios from "../api/axios";
 import { useQuery } from "@tanstack/react-query";
+import { Helmet } from "react-helmet-async";
 
 export default function Home() {
   const [activeFaq, setActiveFaq] = useState(null);
@@ -50,7 +51,7 @@ export default function Home() {
   const faqs = [
     {
       q: "لمن هذه المنصة؟",
-      a: "منصة المجرّة مصممة خصيصًا لطلاب المرحلة الثانوية بجميع صفوفها، وتهدف إلى تقديم المواد العلمية والأدبية بطريقة مبتكرة وتفاعلية.",
+      a: "منصة المحاضرة مصممة خصيصًا لطلاب المرحلة الثانوية بجميع صفوفها، وتهدف إلى تقديم المواد العلمية والأدبية بطريقة مبتكرة وتفاعلية.",
     },
     {
       q: "كيف يساعدني الذكاء الاصطناعي؟",
@@ -117,6 +118,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen  text-white" style={{ direction: "rtl" }}>
+      <Helmet>
+        <title>الرئيسية</title>
+        <meta name="description" content="الرئيسية" />
+        
+      </Helmet>
       {/* Animated Background Canvas */}
       <canvas
         ref={canvasRef}

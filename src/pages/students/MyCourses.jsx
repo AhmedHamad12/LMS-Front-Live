@@ -241,7 +241,7 @@ export default function MyCourses() {
           أسطول كورساتك
         </h1>
         <p className="mb-8 text-lg text-gray-400">
-          جميع الرحلات المعرفية التي انطلقت بها في مجرّتنا.
+          جميع الكورسات المعرفية التي انطلقت بها في المنصة.
         </p>
 
         {/* Filter Buttons with counts */}
@@ -448,8 +448,7 @@ export default function MyCourses() {
         <div className="mt-16 text-center">
           <h2 className="mb-4 text-2xl font-bold">هل أنت مستعد لرحلة جديدة؟</h2>
           <p className="mx-auto mb-6 max-w-lg text-gray-400">
-            هناك دائمًا المزيد من الكواكب المعرفية في انتظار من يستكشفها. انطلق
-            في مغامرتك التالية.
+           هناك دائمًا المزيد من الكورسات المعرفية. انطلق
           </p>
           <Link 
             to="/student/allcourses" 

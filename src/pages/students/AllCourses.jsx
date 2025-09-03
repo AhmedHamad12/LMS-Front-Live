@@ -5,6 +5,7 @@ import { Cookies } from "react-cookie";
 import * as THREE from "three";
 import Loading from "../../Components/Loading";
 import toast from "react-hot-toast";
+import { Helmet } from "react-helmet-async";
 
 const AllCourses = () => {
   const [search, setSearch] = useState("");
@@ -253,6 +254,11 @@ const AllCourses = () => {
       className=" text-gray-100 font-[Cairo] h-screen overflow-hidden w-full"
       dir="rtl"
     >
+      <Helmet>
+        <title> جميع الكورسات</title>
+        <meta name="description" content="جميع الكورسات" />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <canvas
         ref={canvasRef}
         className="fixed top-0 left-0 w-full h-full -z-10"
@@ -272,7 +278,7 @@ const AllCourses = () => {
             className="text-4xl font-black text-white mb-2"
             style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
           >
-            اكتشف كواكب المعرفة
+            اكتشف كورسات المعرفة
           </h1>
           <p className="text-gray-400 text-lg mb-8">
             ابحث عن رحلتك التعليمية التالية في مجرّتنا الواسعة.

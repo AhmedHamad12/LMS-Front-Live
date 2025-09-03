@@ -2,6 +2,7 @@ import axios from "../../api/axios";
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Cookies } from "react-cookie";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { Helmet } from "react-helmet-async";
 
 export default function AddStudent() {
@@ -13,14 +14,23 @@ export default function AddStudent() {
   const [studentYears, setStudentYears] = useState(1);
   const [loading, setLoading] = useState(false);
 
+    const { executeRecaptcha } = useGoogleReCaptcha();
+
   const navigate = useNavigate();
 
   const cookies = new Cookies();
-  const token = cookies.get("token");
+  const userToken = cookies.get("token");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    if (!executeRecaptcha) {
+      console.log("reCAPTCHA not ready");
+      return;
+    }
+
+    const token = await executeRecaptcha("login");
 
     await axios
       .post(
@@ -32,10 +42,11 @@ export default function AddStudent() {
           parentName,
           parentPhone,
           studentYears: +studentYears,
+          captchaToken: token,
         },
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${userToken}`,
           },
         }
       )
@@ -60,14 +71,14 @@ export default function AddStudent() {
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="w-full max-w-6xl p-4 md:mx-auto">
-        <div className="grid md:grid-cols-2 md:gap-8">
+        <div className="max-w-150 mx-auto">
           <div className="rounded-2xl border border-white/5 bg-[#0a0a19]/50 p-8 shadow-2xl shadow-cyan-500/10 backdrop-blur-lg">
             <div className="mb-8 text-center">
               <p className="text-3xl font-black text-white text-shadow-[0_0_10px_rgb(0_191_255_/_0.6)]">
                 إنشاء حساب جديد
               </p>
               <p className="mt-2 text-gray-400">
-                انضم إلى المجرّة وابدأ رحلتك نحو التفوق
+                انضم إلى المحاضرة وابدأ رحلتك نحو التفوق
               </p>
             </div>
 
@@ -174,10 +185,6 @@ export default function AddStudent() {
               </p>
             </div>
           </div>
-
-          {/* <div className="visuals-container relative hidden flex-col items-center justify-center p-8 md:flex">
-            <canvas id="solar-system-canvas"></canvas>
-          </div> */}
         </div>
       </div>
     </div>

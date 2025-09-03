@@ -2,10 +2,20 @@ import React, { useState, useRef, useEffect } from "react";
 import { Cookies } from "react-cookie";
 import axios from "../api/axios";
 import * as THREE from "three";
+import { useNavigate } from "react-router-dom";
 
 export default function AIPage() {
   const cookies = new Cookies();
   const token = cookies.get("token");
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!token) {
+      navigate("/");
+    }
+  })
+
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);

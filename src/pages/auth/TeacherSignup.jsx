@@ -2,13 +2,16 @@ import axios from "../../api/axios";
 import { useState } from "react";
 import { Cookies } from "react-cookie";
 import { Link, useNavigate } from "react-router";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { Helmet } from "react-helmet-async";
+
 function TeacherSignup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+    const { executeRecaptcha } = useGoogleReCaptcha();
 
   const navigate = useNavigate();
 
@@ -22,14 +25,24 @@ function TeacherSignup() {
     }
     setLoading(true);
 
+    if (!executeRecaptcha) {
+      console.log("reCAPTCHA not ready");
+      return;
+    }
+
+    const token = await executeRecaptcha("login");
+
     const today = new Date();
     const joinedAt = today.toLocaleDateString("en-CA");
 
     await axios
-      .post(
-        "/api/Account/Register/Teacher",
-        { displayName: name, email, password, joinedAt },
-      )
+      .post("/api/Account/Register/Teacher", {
+        displayName: name,
+        email,
+        password,
+        joinedAt,
+        captchaToken: token,
+      })
       .then((response) => {
         cookies.set("token", response.data.token);
         navigate("/add-teacher");
@@ -37,7 +50,8 @@ function TeacherSignup() {
       })
       .catch((error) => {
         console.error(error);
-      }).finally(() => {
+      })
+      .finally(() => {
         setLoading(false);
       });
   };
@@ -50,14 +64,14 @@ function TeacherSignup() {
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <div className="w-full max-w-6xl p-4 md:mx-auto">
-        <div className="grid md:grid-cols-2 md:gap-8">
+        <div className="max-w-150 mx-auto">
           <div className="rounded-2xl border border-white/5 bg-[#0a0a19]/50 p-8 shadow-2xl shadow-cyan-500/10 backdrop-blur-lg">
             <div className="mb-8 text-center">
               <p className="text-3xl font-black text-white text-shadow-[0_0_10px_rgb(0_191_255_/_0.6)]">
                 إنشاء حساب جديد
               </p>
               <p className="mt-2 text-gray-400">
-                انضم إلى المجرّة وابدأ رحلتك نحو التفوق
+                انضم إلى المحاضرة وابدأ رحلتك نحو التفوق
               </p>
             </div>
 

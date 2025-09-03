@@ -227,10 +227,11 @@ const TeacherStudents = () => {
             className="text-4xl font-black text-white mb-2"
             style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
           >
-            قائمة طاقم المجرّة
+            قائمة الطلاب
           </h1>
           <p className="text-gray-400 text-lg mb-8">
-            تابع رواد الفضاء المسجلين في رحلاتك المعرفية.
+            {/* تابع رواد الفضاء المسجلين في رحلاتك المعرفية. */}
+            تابع الطلاب المسجلين في دوراتك المعرفية.
           </p>
 
           {/* Search and Filter */}

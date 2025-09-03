@@ -68,11 +68,11 @@ const Courses = () => {
   return (
     <main className="flex-1 p-8 overflow-y-auto custom-scrollbar">
       <h1 className="text-4xl font-black text-white mb-2 title-glow">
-        مرصد الكورسات
+         الكورسات
       </h1>
       <p className="text-gray-400 text-lg mb-8">
-        متابعة دقيقة لكل الكواكب المعرفية في المجرّة.
-      </p>
+        متابعة دقيقة لكل الكورسات في المنصة.
+              </p>
 
       {/* Search and Filter */}
       <div className="glass-effect rounded-2xl p-4 mb-8 flex flex-col md:flex-row gap-4 items-center">

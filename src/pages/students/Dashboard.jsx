@@ -260,7 +260,7 @@ export default function Dashboard() {
               <h2 className="mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold text-white title-glow">
                 مهماتك الحالية (الكورسات)
               </h2>
-              {enrollCourses?.data.map((course, index) => (
+              {enrollCourses?.data.length > 0 ? enrollCourses?.data.map((course, index) => (
                 <div key={course.id} className="overflow-hidden rounded-2xl glass-effect my-2">
                   <button
                     onClick={() =>
@@ -305,7 +305,7 @@ export default function Dashboard() {
                     </div>
                   )}
                 </div>
-              ))}
+              )) : !coursesLoading && <p className="flex justify-center items-center mt-32">لا توجد كورسات</p>}
             </div>
           </div>
 
@@ -373,7 +373,7 @@ export default function Dashboard() {
                     </p>
                   </a>
                 </div>
-              ))}
+              )) || <p>لا يوجد مهام</p>}
             </div>
 
             {/* Incoming Data */}
@@ -433,7 +433,7 @@ export default function Dashboard() {
                       <p className="text-xs text-gray-400">بالأمس</p>
                     </div>
                   </div> */}
-                  {notifications?.data.map((item) => (
+                  {notifications.data.length > 0 ? notifications?.data.map((item) => (
                     <div key={item.id} className="flex items-start">
                       <div className="h-fit rounded-full bg-purple-500/20 p-2">
                         <svg
@@ -462,7 +462,7 @@ export default function Dashboard() {
                         </p>
                       </div>
                     </div>
-                  ))}
+                  )) : <p>لا توجد بيانات</p>}
                 </div>
                 {/* <div className="mt-3 border-t border-white/10 pt-3">
                   <Link

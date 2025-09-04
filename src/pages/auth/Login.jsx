@@ -61,22 +61,6 @@ export default function Login() {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit}>
-              <div>
-                <label className="text-sm font-bold text-gray-300">
-                  البريد الإلكتروني
-                </label>
-                <div className="mt-3">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="البريد الإلكتروني"
-                    required
-                    className="w-full rounded-lg border border-white/10 bg-black/20 p-3 placeholder-gray-500 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none"
-                  />
-                </div>
-              </div>
 
               <form onSubmit={handleSubmit}>
                 <div>

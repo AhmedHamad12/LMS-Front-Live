@@ -4,6 +4,7 @@ import { Cookies } from "react-cookie";
 import { Link, useNavigate } from "react-router";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { Helmet } from "react-helmet-async";
+import toast from "react-hot-toast";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -35,6 +36,7 @@ export default function Login() {
       })
       .catch((error) => {
         console.error(error);
+        toast.error(error?.response?.data?.message)
       })
       .finally(() => {
         setLoading(false);

@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router";
 import { Cookies } from "react-cookie";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { Helmet } from "react-helmet-async";
+import toast from "react-hot-toast";
 
 function StudentRegister() {
   const [name, setName] = useState("");
@@ -50,6 +51,7 @@ function StudentRegister() {
       })
       .catch((error) => {
         console.error(error);
+        toast.error(error?.response?.data?.message);
       })
       .finally(() => {
         setLoading(false);

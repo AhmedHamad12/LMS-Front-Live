@@ -4,6 +4,7 @@ import { Cookies } from "react-cookie";
 import { Link, useNavigate } from "react-router";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { Helmet } from "react-helmet-async";
+import toast from "react-hot-toast";
 
 export default function AddTeacher() {
   const [firstName, setFirstName] = useState("");
@@ -53,6 +54,7 @@ export default function AddTeacher() {
       navigate("/login");
     } catch (error) {
       console.error("Error:", error.response?.data || error.message);
+      toast.error(error?.response?.data?.message);
     } finally {
       setLoading(false);
     }

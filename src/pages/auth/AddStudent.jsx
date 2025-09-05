@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router";
 import { Cookies } from "react-cookie";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { Helmet } from "react-helmet-async";
+import toast from "react-hot-toast";
 
 export default function AddStudent() {
   const [firstName, setFirstName] = useState("");
@@ -56,6 +57,7 @@ export default function AddStudent() {
       })
       .catch((error) => {
         console.error(error);
+        toast.error(error?.response?.data?.message);
       })
       .finally(() => {
         setLoading(false);

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import * as THREE from "three";
 import * as tus from "tus-js-client";
-import axios from "../../api/axios";
+import axios, { BASE_URL } from "../../api/axios";
 import { Cookies } from "react-cookie";
 import toast from "react-hot-toast";
 
@@ -29,7 +29,7 @@ const UpdateLesson = () => {
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [isFreePreview, setIsFreePreview] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const apiBase = "http://lms278.runasp.net";
+  const apiBase = BASE_URL;
   const [progress, setProgress] = useState(0);
   const [stats, setStats] = useState("—");
   const [stateText, setStateText] = useState("جاهز");

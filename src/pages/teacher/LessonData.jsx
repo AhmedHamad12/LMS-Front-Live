@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "../../api/axios";
+import axios, { BASE_URL } from "../../api/axios";
 import { Cookies } from "react-cookie";
 import { useEffect, useRef, useState } from "react";
 
@@ -55,7 +55,7 @@ function LessonData() {
   const SEND_DELTA_SEC = 10;
   const SEND_DELTA_PCT = 5;
 
-  const api = "http://lms278.runasp.net";
+  const api = BASE_URL;
 
   // Helper functions
   const logData = (data, title = "") => {

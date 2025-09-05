@@ -71,6 +71,7 @@ import NotFoundPage from "./Components/NotFound.jsx";
 import LessonData from "./pages/teacher/LessonData.jsx";
 import UpdateLesson from "./pages/teacher/UpdateLesson.jsx";
 import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
+import Waiting from "./pages/teacher/Waiting.jsx";
 
 // Wire auth context with axios
 const AuthInitializer = () => {
@@ -99,6 +100,7 @@ function App() {
               {/* General */}
               <Route path="/" element={<Home />} />
               <Route path="/ai" element={<AIPage />} />
+              <Route path="/waiting" element={<Waiting />} />
 
               {/* Teacher */}
               <Route path="/teacher" element={<Teacher />}>

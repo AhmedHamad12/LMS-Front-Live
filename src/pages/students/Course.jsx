@@ -2,6 +2,7 @@ import { Trophy } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Cookies } from "react-cookie";
 import { useLocation, useParams } from "react-router-dom";
+import { BASE_URL } from "../../api/axios";
 
 export default function Course() {
   const [libraryId, setLibraryId] = useState("475904");
@@ -35,7 +36,7 @@ export default function Course() {
   const cookies = new Cookies();
   const jwt = cookies.get("token");
 
-  const api = "http://lms278.runasp.net";
+  const api = BASE_URL;
 
   // Helper functions
   const logData = (data, title = "") => {

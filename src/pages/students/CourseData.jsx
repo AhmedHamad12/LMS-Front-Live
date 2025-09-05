@@ -169,32 +169,6 @@ export default function CourseData() {
     queryFn: fetchCourse,
   });
 
-  
-
-  // const unitId = courseUnit?.data?.id;
-
-  // const getLessons = (unitId) => {
-  //   return axios
-  //     .get(`http://lms278.runasp.net/api/Lesson/unit/${unitId}`, {
-  //       headers: {
-  //         accept: "/",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     })
-  //     .catch((error) => {
-  //       console.error("User data fetch error:", error);
-  //     });
-  // };
-
-  // const { data: lessons } = useQuery({
-  //   queryKey: ["lessons", unitId],
-  //   queryFn: () => getLessons(unitId),
-  //   enabled: !!unitId, // only after the teacherID has been retrieved fetch the details
-  // });
-
-  // console.log(courseUnit);
-  // console.log(lessons);
-
   const formatted = (newDate) => {
     const date = new Date(newDate);
     return date.toLocaleDateString("en-US", {

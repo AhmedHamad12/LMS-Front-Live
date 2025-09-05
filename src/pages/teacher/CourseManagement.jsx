@@ -199,7 +199,7 @@ export default function CourseManagement() {
         </div>
         <div className="text-center mb-10">
           <div>
-            <p className="text-4xl font-black mb-2">
+            <p className="text-4xl font-black mb-4">
               {courses?.data.course.title}
             </p>
           </div>
@@ -211,7 +211,7 @@ export default function CourseManagement() {
         </div>
       </div>
       <div>
-        {courses?.data.units.map((item) => (
+        {courses?.data?.units.map((item) => (
           <div
             key={item.id}
             className="mb-5 bg-[#05050d] py-4 px-6 border border-cyan-400/30 rounded-md"

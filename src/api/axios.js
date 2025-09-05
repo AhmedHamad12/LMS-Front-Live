@@ -3,7 +3,8 @@ import axios from "axios";
 import { Cookies } from "react-cookie";
 
 
-const BASE_URL = "https://api.elmohdra.com";
+export const BASE_URL = "https://api.elmohdra.com";
+
 
 
 

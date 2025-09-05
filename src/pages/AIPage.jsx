@@ -3,6 +3,7 @@ import { Cookies } from "react-cookie";
 import axios from "../api/axios";
 import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 export default function AIPage() {
   const cookies = new Cookies();
@@ -14,7 +15,7 @@ export default function AIPage() {
     if (!token) {
       navigate("/");
     }
-  })
+  });
 
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
@@ -240,27 +241,34 @@ export default function AIPage() {
         >
           {/* Header */}
           <header className="glass-effect border-b border-white/10 p-6">
-            <div className="flex items-center space-x-4 space-x-reverse">
-              <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center">
-                <svg
-                  className="w-6 h-6 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                  />
-                </svg>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-4 space-x-reverse">
+                <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                    />
+                  </svg>
+                </div>
+                <div className="ms-3">
+                  <p className="text-2xl font-bold text-white">المساعد الذكي</p>
+                  <p className="text-gray-400 text-sm">
+                    اسألني أي شيء وسأحاول مساعدتك
+                  </p>
+                </div>
               </div>
-              <div className="ms-3">
-                <p className="text-2xl font-bold text-white">المساعد الذكي</p>
-                <p className="text-gray-400 text-sm">
-                  اسألني أي شيء وسأحاول مساعدتك
-                </p>
+              <div>
+                <button className="cursor-pointer" onClick={() => navigate(-1)}>
+                  <ArrowLeft size={25} />
+                </button>
               </div>
             </div>
           </header>
@@ -386,4 +394,3 @@ export default function AIPage() {
     </div>
   );
 }
-

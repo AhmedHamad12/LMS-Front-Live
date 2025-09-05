@@ -324,7 +324,7 @@ export default function Home() {
                 <img
                   src={course.image}
                   alt={course.title}
-                  className="h-56 w-full transform object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="h-56 bg-cover w-full transform object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="p-6">
                   <h3 className="mb-2 text-2xl font-bold text-white">

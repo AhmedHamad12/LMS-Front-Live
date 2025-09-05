@@ -85,7 +85,7 @@ const CardSlider = () => {
                 <img
                   src={teacher.path}
                   alt={teacher.firstName}
-                  className="mb-6 h-36 w-36 rounded-full border-2 border-cyan-400 object-cover"
+                  className="mb-6 bg-cover h-36 w-36 rounded-full border-2 border-cyan-400 object-cover"
                 />
                 <h3 className="text-xl font-bold text-white">{teacher.firstName} {teacher.lastName}</h3>
                 <p className="mt-2 text-lg text-cyan-400">{teacher.subject}</p>

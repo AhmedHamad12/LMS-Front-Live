@@ -391,12 +391,12 @@ const MyTasks = () => {
           ref={mainContentRef}
           className="flex-1 p-8 overflow-y-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-black/20"
         >
-          <h1
+          <p
             className="text-4xl font-black text-white mb-2"
             style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
           >
             مركز قيادة المهام
-          </h1>
+          </p>
           <p className="text-gray-400 text-lg mb-8">
             جميع واجباتك الحالية والمنجزة في مكان واحد.
           </p>

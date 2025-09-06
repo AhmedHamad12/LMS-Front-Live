@@ -258,9 +258,9 @@ const AddChapter = () => {
         >
           <header className="flex-shrink-0 flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-4xl font-black text-white text-cyan-400 drop-shadow-lg">
+              <p className="text-4xl font-black text-white text-cyan-400 drop-shadow-lg">
                 إضافة فصل جديد
-              </h1>
+              </p>
               <p className="text-gray-400 text-lg mt-2">
                 أضف فصول جديدة للكورس الخاص بك.
               </p>

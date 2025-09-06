@@ -13,9 +13,9 @@ export default function UnauthorizedPage() {
 
         {/* Error Code */}
         <div>
-          <h1 className="text-9xl font-bold text-gray-200 tracking-tight">
+          <p className="text-9xl font-bold text-gray-200 tracking-tight">
             401
-          </h1>
+          </p>
         </div>
 
         {/* Error Message */}

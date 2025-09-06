@@ -30,6 +30,7 @@ export default function Login() {
     await axios
       .post("/api/Account/Login", { email, password, captchaToken: token })
       .then((response) => {
+        console.log(response.data);
         cookies.set("token", response.data.token);
         if (response.data.role === "Teacher") {
           if (response.data?.TeacherStatus === "Pending") {

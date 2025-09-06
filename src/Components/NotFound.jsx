@@ -13,9 +13,9 @@ export default function NotFoundPage() {
 
         {/* Error Code */}
         <div>
-          <h1 className="text-9xl font-bold text-gray-200 tracking-tight">
+          <p className="text-9xl font-bold text-gray-200 tracking-tight">
             404
-          </h1>
+          </p>
         </div>
 
         {/* Error Message */}

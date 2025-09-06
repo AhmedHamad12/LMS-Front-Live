@@ -469,12 +469,12 @@ const UpdateLesson = () => {
           <form onSubmit={handleFormSubmit}>
             <header className="flex justify-between items-center mb-6">
               <div>
-                <h1
+                <p
                   className="text-4xl font-black text-white mb-2"
                   style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
                 >
                   تعديل الدرس
-                </h1>
+                </p>
               </div>
               <button
                 type="submit"

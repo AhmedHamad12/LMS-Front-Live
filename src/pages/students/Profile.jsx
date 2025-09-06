@@ -268,9 +268,9 @@ export default function Profile() {
           <meta name="robots" content="noindex, nofollow" />
         </Helmet>
 
-        <h1 className="mb-2 text-4xl font-black text-white title-glow">
+        <p className="mb-2 text-4xl font-black text-white title-glow">
           الملف الشخصي
-        </h1>
+        </p>
         <p className="mb-8 text-lg text-gray-400">
           قم بتعديل بياناتك الشخصية وإدارة إعدادات حسابك.
         </p>
@@ -300,12 +300,12 @@ export default function Profile() {
             </button> */}
           </div>
           <div>
-            <h1
+            <p
               className="text-4xl font-black text-white mb-3"
               style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
             >
               {user?.data.displayName}
-            </h1>
+            </p>
             <p className="text-lg text-gray-400">{user?.data.email}</p>
           </div>
         </div>

@@ -26,6 +26,24 @@ export default function Home() {
   const cookies = new Cookies();
   const token = cookies.get("token");
 
+  const fetchUser = async () => {
+    return await axios
+      .get("/api/Account/GetCurrentUser", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .catch((error) => {
+        console.error("User data fetch error:", error);
+      });
+  };
+
+  const { data: user } = useQuery({
+    queryKey: ["user"],
+    queryFn: fetchUser,
+    refetchOnWindowFocus: false,
+  });
+
   const getCourses = async () => {
     return await axios.get(`/api/LandingPadge/GetTopCourses`).catch((error) => {
       console.error("User data fetch error:", error);
@@ -122,7 +140,6 @@ export default function Home() {
       <Helmet>
         <title>الرئيسية</title>
         <meta name="description" content="الرئيسية" />
-        
       </Helmet>
       {/* Animated Background Canvas */}
       <canvas
@@ -137,7 +154,7 @@ export default function Home() {
           <Link to="/">المحاضرة.</Link>
         </div>
         <div className="flex items-center space-x-4 space-x-reverse">
-          {!token && (
+          {!token ? (
             <>
               <Link
                 to="/login"
@@ -152,39 +169,46 @@ export default function Home() {
                 ابدأ الآن
               </Link>
             </>
+          ) : (
+            <Link
+              to={`${user?.data?.role.toLowerCase()}/dashboard`}
+              className="hover:shadow-[0 0 25px rgba(0, 191, 255, 0.7)] hidden animate-[pulse-primary] rounded-lg bg-[#00BFFF] px-[30px] py-3 text-sm font-bold text-black shadow-[0_0_15px_rgba(0,191,255,0.4)] transition-all duration-300 ease-in-out hover:-translate-y-[3px] hover:animate-none sm:block"
+            >
+              لوحة التحكم
+            </Link>
           )}
         </div>
       </header>
 
       {/* Hero Section */}
       <main className="-mt-16 flex min-h-screen flex-col items-center justify-center px-4 text-center">
-        <h1
+        <p
           className="mb-6 text-5xl leading-tight font-black text-white md:text-8xl"
           style={{ textShadow: "0 0 20px rgba(0, 191, 255, 0.6)" }}
         >
           أعد تعريف تجربة التفوق
-        </h1>
+        </p>
         <p className="mb-10 max-w-3xl text-lg leading-relaxed text-gray-300">
           منصة المحاضرة هي النظام البيئي المتكامل الذي يجمع أفضل المدرسين مع
           طلاب المرحلة الثانوية الطموحين، باستخدام تكنولوجيا تفاعلية، أدوات ذكاء
           اصطناعي، وأساليب تعليمية من المستقبل.
         </p>
-          <div className="flex flex-col items-center gap-4 sm:flex-row">
-            <Link
-              to="/student-signup"
-              className="flex items-center rounded-lg bg-cyan-500 px-8 py-4 text-lg font-bold text-black transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-500/30"
-            >
-              <Monitor className="ml-2 h-6 w-6" />
-              تصفح الكورسات كطالب
-            </Link>
-            <Link
-              to="/teacher-signup"
-              className="flex items-center rounded-lg border-2 border-cyan-500 bg-transparent px-8 py-4 text-lg font-bold text-cyan-500 transition-all duration-300 hover:bg-cyan-500 hover:text-black"
-            >
-              <Star className="ml-2 h-6 w-6" />
-              انضم إلينا كمدرس
-            </Link>
-          </div>
+        <div className="flex flex-col items-center gap-4 sm:flex-row">
+          <Link
+            to="/student-signup"
+            className="flex items-center rounded-lg bg-cyan-500 px-8 py-4 text-lg font-bold text-black transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-500/30"
+          >
+            <Monitor className="ml-2 h-6 w-6" />
+            تصفح الكورسات كطالب
+          </Link>
+          <Link
+            to="/teacher-signup"
+            className="flex items-center rounded-lg border-2 border-cyan-500 bg-transparent px-8 py-4 text-lg font-bold text-cyan-500 transition-all duration-300 hover:bg-cyan-500 hover:text-black"
+          >
+            <Star className="ml-2 h-6 w-6" />
+            انضم إلينا كمدرس
+          </Link>
+        </div>
       </main>
 
       {/* AI Features Section */}
@@ -319,8 +343,11 @@ export default function Home() {
             موادك الدراسية.
           </p>
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {courses?.data.map((course) => (
-              <div className="group overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-md">
+            {courses?.data.map((course, index) => (
+              <div
+                key={index}
+                className="group overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-md"
+              >
                 <img
                   src={course.image}
                   alt={course.title}
@@ -374,8 +401,11 @@ export default function Home() {
           لوحة المتميزين
         </h2>
         <div className="mx-auto max-w-4xl rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/40 to-slate-800/50 p-8 backdrop-blur-md">
-          {students?.data.map((student) => (
-            <div className="mb-3 flex items-center justify-between rounded-lg bg-cyan-900/40 p-4 transition-all duration-300 hover:scale-105 hover:bg-cyan-900/60">
+          {students?.data.map((student, index) => (
+            <div
+              key={index}
+              className="mb-3 flex items-center justify-between rounded-lg bg-cyan-900/40 p-4 transition-all duration-300 hover:scale-105 hover:bg-cyan-900/60"
+            >
               <div className="flex items-center">
                 <span className="mr-4 text-3xl font-bold text-yellow-400">
                   🥇

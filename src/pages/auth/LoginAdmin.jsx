@@ -48,9 +48,9 @@ export default function LoginAdmin() {
         <div className="w-full max-w-md">
           <div className="rounded-2xl border border-white/5 bg-[#0a0a19]/50 p-8 shadow-2xl shadow-cyan-500/10 backdrop-blur-lg">
             <div className="mb-8 text-center">
-              <h1 className="text-4xl font-black text-white text-shadow-[0_0_10px_rgb(0_191_255_/_0.6)]">
+              <p className="text-4xl font-black text-white text-shadow-[0_0_10px_rgb(0_191_255_/_0.6)]">
                 المجرّة.
-              </h1>
+              </p>
               <p className="mt-2 text-gray-400">
                 بوابة الدخول إلى محطة المعرفة
               </p>

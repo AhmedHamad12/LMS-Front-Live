@@ -248,12 +248,12 @@ const TeacherDashboard = () => {
             scrollbarColor: "#00BFFF rgba(0,0,0,0.2)",
           }}
         >
-          <h1
+          <p
             className="text-4xl font-black text-white mb-2"
             style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
           >
             برج مراقبة المدرس
-          </h1>
+          </p>
           <p className="text-gray-400 text-lg mb-8">
             أهلاً بك. إليك تقرير شامل عن أدائك في منصة المحاضرة.
           </p>

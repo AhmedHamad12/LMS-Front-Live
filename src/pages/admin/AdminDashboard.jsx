@@ -6,7 +6,7 @@ import RecentUsers from '../../Components/admin/RecentUsers'
 const AdminDashboard = () => {
   return (
     <div className='flex-1 p-8 overflow-y-auto custom-scrollbar'>
-            <h1 class="text-4xl font-black text-white mb-2 title-glow">برج مراقبة المجرّة</h1>
+            <p class="text-4xl font-black text-white mb-2 title-glow">برج مراقبة المجرّة</p>
             <p class="text-gray-400 text-lg mb-8">نظرة شاملة على كل عمليات المنصة.</p>
 
             <Stats/>

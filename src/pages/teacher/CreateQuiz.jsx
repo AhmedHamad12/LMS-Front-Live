@@ -206,12 +206,12 @@ const CreateQuiz = () => {
         onSubmit={handleSubmit}
         className="w-full max-w-lg glass-effect rounded-2xl p-8 border border-white/10 bg-gradient-to-br from-slate-800/40 to-slate-900/50 backdrop-blur-lg shadow-xl"
       >
-        <h1
+        <p
           className="text-3xl font-black text-white mb-6 text-center"
           style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
         >
           إنشاء اختبار جديد
-        </h1>
+        </p>
         <div className="mb-6">
           <label className="block text-gray-300 mb-2">عنوان الاختبار *</label>
           <input

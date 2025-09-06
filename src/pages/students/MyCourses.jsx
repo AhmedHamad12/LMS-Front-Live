@@ -237,9 +237,9 @@ export default function MyCourses() {
           }
         `}</style>
 
-        <h1 className="mb-2 text-4xl font-black text-white title-glow">
+        <p className="mb-2 text-4xl font-black text-white title-glow">
           أسطول كورساتك
-        </h1>
+        </p>
         <p className="mb-8 text-lg text-gray-400">
           جميع الكورسات المعرفية التي انطلقت بها في المنصة.
         </p>

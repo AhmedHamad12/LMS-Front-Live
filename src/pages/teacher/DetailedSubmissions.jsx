@@ -273,12 +273,12 @@ const DetailedSubmissions = () => {
                         </button>
                     </div>
                     
-                    <h1 
+                    <p
                         className="text-4xl font-black text-white mb-4"
                         style={{ textShadow: "0 0 12px rgba(0, 191, 255, 0.6)" }}
                     >
                         تفاصيل التقديم
-                    </h1>
+                    </p>
                     <p className="text-gray-400 text-lg">
                         عرض تفاصيل إجابة الطالب على الاختبار
                     </p>

@@ -18,7 +18,9 @@ body {
 .progress-bar::-moz-progress-bar {
   @apply bg-cyan-400 rounded; /* filled part for Firefox */
 }
-
+.grecaptcha-badge {
+  display: none !important;
+}
 #bg-canvas {
   position: fixed;
   top: 0;

@@ -1,10 +1,13 @@
+
 import axios from "../../api/axios";
 import React, { useEffect, useState } from "react";
 import { Cookies } from "react-cookie";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 
+
 const Quizzes = () => {
+
   const [quizzes, setQuizzes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [openAccordion, setOpenAccordion] = useState(null);
@@ -185,4 +188,5 @@ const Quizzes = () => {
   );
 };
 
-export default Quizzes;
+
+export default Quizzes

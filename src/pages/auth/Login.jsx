@@ -1,7 +1,7 @@
 import axios from "../../api/axios";
 import React, { useState } from "react";
 import { Cookies } from "react-cookie";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router-dom"; // useNavigate is still here, but we might not use it in the success path
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { Helmet } from "react-helmet-async";
 import toast from "react-hot-toast";
@@ -13,7 +13,6 @@ export default function Login() {
   const { executeRecaptcha } = useGoogleReCaptcha();
 
   const navigate = useNavigate();
-
   const cookies = new Cookies();
 
   const handleSubmit = async (e) => {
@@ -22,39 +21,45 @@ export default function Login() {
 
     if (!executeRecaptcha) {
       console.log("reCAPTCHA not ready");
+      setLoading(false);
       return;
     }
 
-    const token = await executeRecaptcha("login");
+    try {
+      const captchaToken = await executeRecaptcha("login");
 
-    await axios
-      .post("/api/Account/Login", { email, password, captchaToken: token })
-      .then((response) => {
-        cookies.set("token", response.data.token);
-        if (response.data.role === "Teacher") {
-          if (response.data?.status === "Pending") {
-            navigate("/waiting");
-          } else if (response.data?.status === "Rejected") {
-            toast.error("تم رفض تسجيلك");
-          } else {
-            navigate(`/teacher/dashboard`);
-          }
-        } else {
-          navigate("/student/dashboard");
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-        toast.error(error?.response?.data?.message);
-      })
-      .finally(() => {
-        setLoading(false);
+      const response = await axios.post("/api/Account/Login", {
+        email,
+        password,
+        captchaToken,
       });
+
+      cookies.set("token", response.data.token, { path: '/' }); // Set cookie to be available on all pages
+
+      if (response.data.role === "Teacher") {
+        if (response.data?.status === "Pending") {
+          navigate("/waiting");
+        } else if (response.data?.status === "Rejected") {
+          toast.error("تم رفض تسجيلك");
+        } else {
+          // **==== THIS IS THE FIX ====**
+          // Use window.location.href to force a full page reload, ensuring the cookie is set.
+          window.location.href = `/teacher/dashboard`;
+        }
+      } else {
+        // **==== APPLY THE FIX HERE TOO for students ====**
+        window.location.href = "/student/dashboard";
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(error?.response?.data?.message || "حدث خطأ في تسجيل الدخول");
+      setLoading(false);
+    }
+    // No finally block needed here as navigation will reload the page
   };
 
   return (
     <>
-      {/* <canvas id="bg-canvas"></canvas> */}
       <div className="flex h-screen items-center justify-center bg-black text-white">
         <Helmet>
           <title>تسجيل الدخول</title>

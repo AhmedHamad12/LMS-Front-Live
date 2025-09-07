@@ -1,176 +1,111 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "../../api/axios";
-import React, { useState } from "react";
 import { Cookies } from "react-cookie";
-import { Link, useLocation } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard,
+  PlusCircle,
+  FilePlus2,
+  Users,
+  BrainCircuit,
+  LogOut,
+} from "lucide-react";
 
 export default function TeacherAside() {
-  const [profileOpen, setProfileOpen] = useState(false);
-
-  const location = useLocation();
-
+  const navigate = useNavigate();
   const cookies = new Cookies();
   const token = cookies.get("token");
 
+  // --- Data Fetching Logic (Unaltered) ---
   const fetchUser = () => {
-    return axios
-      .get("/api/Account/GetCurrentUser", {
-        headers: {
-          accept: "text/plain",
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .catch((error) => {
-        console.error("User data fetch error:", error);
-      });
+    return axios.get("/api/Account/GetCurrentUser", { headers: { accept: "text/plain", Authorization: `Bearer ${token}` } })
+      .catch((error) => console.error("User data fetch error:", error));
   };
-
-  const { data: user } = useQuery({
-    queryKey: ["user"],
-    queryFn: fetchUser,
-    refetchOnWindowFocus: false,
-  });
+  const { data: user } = useQuery({ queryKey: ["user"], queryFn: fetchUser, refetchOnWindowFocus: false });
 
   const fetchAllData = () => {
-    return axios
-      .get(`/api/Teacher/getTeacherByid`, {
-        headers: {
-          accept: "text/plain",
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .catch((error) => {
-        console.error("User data fetch error:", error);
-      });
+    return axios.get(`/api/Teacher/getTeacherByid`, { headers: { accept: "text/plain", Authorization: `Bearer ${token}` } })
+      .catch((error) => console.error("User data fetch error:", error));
   };
-
-  const { data: allData } = useQuery({
-    queryKey: ["all-data"],
-    queryFn: fetchAllData,
-    refetchOnWindowFocus: false,
-  });
-
-
+  const { data: allData } = useQuery({ queryKey: ["all-data"], queryFn: fetchAllData, refetchOnWindowFocus: false });
+  
+  // --- Updated Logout Handler ---
   const handleLogout = () => {
-    cookies.remove("token");
-    window.location.href = "/login";
+    cookies.remove("token", { path: "/" });
+    navigate("/login", { replace: true });
   };
-
+  
+  // --- Navigation Items ---
+  const sidebarItems = [
+    { to: "/teacher/dashboard", title: "لوحة التحكم", icon: <LayoutDashboard size={22} /> },
+    { to: "/teacher/addcourse", title: "إضافة كورس", icon: <PlusCircle size={22} /> },
+    { to: "/teacher/quizzes", title: "الاختبارات", icon: <FilePlus2 size={22} /> },
+    { to: "/teacher/teacherstudents", title: "الطلاب", icon: <Users size={22} /> },
+    { to: "/ai", title: "المساعد الذكي", icon: <BrainCircuit size={22} /> },
+  ];
+  
+  // --- NavLink Styling Function ---
+  const getNavLinkClass = ({ isActive }) => {
+    const baseClasses = "flex items-center justify-center lg:justify-start rounded-lg p-3 transition-colors duration-200";
+    const inactiveClasses = "text-slate-400 hover:bg-white/10 hover:text-white";
+    const activeClasses = "bg-cyan-500/10 text-cyan-300 font-bold border-r-4 border-cyan-400 shadow-inner shadow-cyan-500/10";
+    return `${baseClasses} ${isActive ? activeClasses : inactiveClasses}`;
+  };
 
   return (
-    <aside className="w-20 lg:w-64 glass-effect p-2 lg:p-6 flex flex-col justify-between transition-all duration-300 flex-shrink-0 h-screen z-50">
-      <div>
-        <div className="text-2xl font-black text-center mb-6 text-white">
-          <img src="/logo.png" alt="logo" className="w-44 mx-auto" />
+    <aside className="w-20 lg:w-64 bg-slate-900/50 backdrop-blur-xl border-l border-white/5 p-2 lg:p-4 flex flex-col justify-between transition-all duration-300 flex-shrink-0 h-screen sticky top-0">
+      <div className="flex flex-col h-full">
+        {/* Logo */}
+        <div className="text-center mb-10 pt-4">
+          <Link to="/teacher/dashboard">
+            <img src="/logo.png" alt="logo" className="w-12 lg:w-36 mx-auto transition-all duration-300" />
+          </Link>
         </div>
-        <nav className="space-y-4">
-          {[
-            {
-              to: "/teacher/dashboard",
-              title: "لوحة التحكم",
-              icon: "M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z",
-            },
-            {
-              to: "/teacher/addcourse",
-              title: "اضافة كورس",
-              icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
-            },
-            {
-              to: "/teacher/quizzes",
-              title: "اضافة امتحان",
-              icon: "M9 2a1 1 0 011-1h4a1 1 0 011 1h2a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2h2zm1 4h4m-4 4h4m-4 4h4m-5-4l-1 1-2-2m3 4l-1 1-2-2",
-            },
-
-            {
-              to: "/teacher/teacherstudents",
-              title: "الطلاب",
-              icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z",
-            },
-            {
-              to: "/ai",
-              title: "المساعد الذكى",
-              icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1",
-            },
-            // {
-            //   to: "/teacher/earn",
-            //   title: "الأرباح",
-            //   icon: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6",
-            // },
-          ].map((item, index) => {
-            const isActive = location.pathname === item.to;
-            return (
-              <Link
-                key={index}
-                to={item.to}
-                className={`flex items-center justify-center lg:justify-start p-3 rounded-lg transition-all duration-300 group ${
-                  isActive
-                    ? "bg-white/10 border border-cyan-400/30 text-cyan-400 shadow-lg shadow-cyan-400/20"
-                    : "text-gray-300 hover:bg-white/5 hover:text-cyan-400"
-                }`}
-                title={item.title}
-              >
-                <svg
-                  className={`w-6 h-6 transition-colors ${
-                    isActive ? "text-cyan-400" : "group-hover:text-cyan-400"
-                  }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d={item.icon}
-                  />
-                </svg>
-                <span
-                  className={`hidden lg:ml-3 lg:block transition-colors ${
-                    isActive
-                      ? "text-cyan-400 font-semibold"
-                      : "group-hover:text-cyan-400"
-                  }`}
-                >
-                  {item.title}
-                </span>
-              </Link>
-            );
-          })}
+        
+        {/* Navigation Links */}
+        <nav className="flex-grow space-y-3">
+          {sidebarItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={getNavLinkClass}
+              end={item.to === "/teacher/dashboard"}
+              title={item.title}
+            >
+              <span className="lg:ml-3">{item.icon}</span>
+              <span className="mr-3 hidden lg:inline">{item.title}</span>
+            </NavLink>
+          ))}
         </nav>
       </div>
 
-      <div className="relative">
-        <div
-          onClick={() => setProfileOpen(!profileOpen)}
-          className="glass-effect p-2 lg:p-3 rounded-lg flex items-center justify-center lg:justify-start cursor-pointer"
-        >
+      {/* Profile and Logout Section */}
+      <div className="border-t border-slate-700/50 pt-4 space-y-3">
+        <Link to="/teacher/profile" className="flex items-center justify-center lg:justify-start p-2 rounded-lg transition-colors duration-200 hover:bg-white/10 w-full text-left">
           <img
-            src={allData?.data?.path}
+            src={allData?.data?.path || 'https://placehold.co/40x40/0ea5e9/ffffff?text=T'}
             alt="صورة المستخدم"
             className="w-10 h-10 rounded-full border-2 border-cyan-400"
           />
-          <div className="hidden lg:block mr-3">
-            <p className="font-bold text-white">
-              {`${allData?.data?.firstName} ${allData?.data?.lastName}`}
+          <div className="hidden lg:block mr-3 overflow-hidden">
+            <p className="font-bold text-white text-sm truncate">
+              {`${allData?.data?.firstName || ''} ${allData?.data?.lastName || ''}`}
             </p>
-            <p className="text-xs text-gray-400">
-              مدرس {allData?.data?.subject}
+            <p className="text-xs text-slate-400 truncate">
+              {allData?.data?.subject ? `مدرس ${allData.data.subject}` : 'مدرس'}
             </p>
           </div>
-        </div>
-        {profileOpen && (
-          <div
-            className="absolute bottom-full mb-2 w-full glass-effect rounded-lg overflow-hidden"
-            onClick={() => setProfileOpen(false)}
-          >
-            <button
-              className="block px-4 py-3 text-right text-sm text-red-400 hover:bg-red-500/20 w-full cursor-pointer"
-              onClick={handleLogout}
-            >
-              تسجيل الخروج
-            </button>
-          </div>
-        )}
+        </Link>
+        
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center lg:justify-start rounded-lg p-3 text-slate-400 transition-colors duration-200 hover:bg-red-500/20 hover:text-red-400"
+          title="تسجيل الخروج"
+        >
+          <span className="lg:ml-3"><LogOut size={22} /></span>
+          <span className="mr-3 hidden lg:inline">تسجيل الخروج</span>
+        </button>
       </div>
     </aside>
   );

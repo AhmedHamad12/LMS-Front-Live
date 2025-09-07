@@ -241,10 +241,10 @@ export default function Prize() {
         <p
           className="mb-2 text-4xl font-black text-white title-glow"
         >
-          خزنة الإنجازات
+           الإنجازات
         </p>
         <p className="mb-8 text-lg text-gray-400">
-          هنا يتم توثيق كل انتصاراتك في مجرّة المعرفة.
+          هنا يتم توثيق كل انتصاراتك في منصةالمحاضرة .
         </p>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">

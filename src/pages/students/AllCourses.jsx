@@ -278,10 +278,10 @@ const AllCourses = () => {
             className="text-4xl font-black text-white mb-2"
             style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
           >
-            اكتشف كورسات المعرفة
+              الكورسات
           </p>
           <p className="text-gray-400 text-lg mb-8">
-            ابحث عن رحلتك التعليمية التالية في مجرّتنا الواسعة.
+            ابحث عن الكورسات المتواجدة في منصةالمحاضرة.
           </p>
 
           {/* Search and Filter */}

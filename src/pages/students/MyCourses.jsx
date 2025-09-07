@@ -238,10 +238,10 @@ export default function MyCourses() {
         `}</style>
 
         <p className="mb-2 text-4xl font-black text-white title-glow">
-          أسطول كورساتك
+           كورساتك
         </p>
         <p className="mb-8 text-lg text-gray-400">
-          جميع الكورسات المعرفية التي انطلقت بها في المنصة.
+          جميع الكورسات التي انطلقت بها في المنصة.
         </p>
 
         {/* Filter Buttons with counts */}

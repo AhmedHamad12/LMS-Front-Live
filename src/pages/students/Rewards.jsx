@@ -449,17 +449,17 @@ const Rewards = () => {
             className="text-4xl font-black text-white mb-2"
             style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
           >
-            لوحة شرف المجرّة
+            لوحة الشرف 
           </p>
           <p className="text-gray-400 text-lg mb-8">
-            ساحة المنافسة لأقوى رواد الفضاء في مجرتنا التعليمية.
+            ساحة المنافسة للطلاب في منصةالمحاضرة .
           </p>
 
           {/* Filter Buttons */}
           <div className="flex items-center gap-4 mb-8 flex-wrap">
             <FilterButton
               filterKey="all_time"
-              label="على مستوى المجرة"
+              label="على مستوى المنصة"
               isActive={filter === "all_time"}
               onClick={() => setFilter("all_time")}
             />

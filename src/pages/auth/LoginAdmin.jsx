@@ -49,10 +49,10 @@ export default function LoginAdmin() {
           <div className="rounded-2xl border border-white/5 bg-[#0a0a19]/50 p-8 shadow-2xl shadow-cyan-500/10 backdrop-blur-lg">
             <div className="mb-8 text-center">
               <p className="text-4xl font-black text-white text-shadow-[0_0_10px_rgb(0_191_255_/_0.6)]">
-                المجرّة.
+                المحاضرة.
               </p>
               <p className="mt-2 text-gray-400">
-                بوابة الدخول إلى محطة المعرفة
+                بوابة الدخول إلى منصة المحاضرة
               </p>
             </div>
 
@@ -125,7 +125,7 @@ export default function LoginAdmin() {
                   to="/signup"
                   className="inline-flex w-full cursor-pointer justify-center rounded-lg border border-gray-700 bg-white/5 px-4 py-3 text-sm font-medium text-white shadow-sm hover:bg-white/10"
                 >
-                  أنشئ محطة جديدة
+                إنشاء حساب جديد
                 </Link>
               </div>
             </div>

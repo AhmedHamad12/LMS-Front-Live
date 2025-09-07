@@ -9,10 +9,10 @@ export default function Signup() {
           <div className="rounded-2xl border border-white/5 bg-[#0a0a19]/50 p-8 shadow-2xl shadow-cyan-500/10 backdrop-blur-lg">
             <div className="mb-8 text-center">
               <p className="text-3xl font-black text-white text-shadow-[0_0_10px_rgb(0_191_255_/_0.6)]">
-                إنشاء محطة جديدة
+                إنشاء حساب جديد
               </p>
               <p className="mt-2 text-gray-400">
-                انضم إلى المجرّة وابدأ رحلتك نحو التفوق
+                انضم إلى منصة المحاضرة وابدأ رحلتك نحو التفوق
               </p>
             </div>
 

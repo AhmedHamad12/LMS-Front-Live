@@ -252,7 +252,7 @@ export default function AddAssignment() {
                   className="text-4xl font-black text-white mb-2"
                   style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
                 >
-                  إدارة كورس: الفيزياء الكونية
+                  أدارة الكورس
                 </p>
                 <p className="text-gray-400 text-lg">
                   هنا يمكنك اضافة مهام جديدة.

@@ -255,7 +255,9 @@ const TeacherDashboard = () => {
             برج مراقبة المدرس
           </p>
           <p className="text-gray-400 text-lg mb-8">
+
             أهلاً بك. إليك تقرير شامل عن أدائك في منصة المحاضرة.
+
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-12">

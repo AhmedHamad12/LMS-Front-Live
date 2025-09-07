@@ -449,10 +449,12 @@ const Rewards = () => {
             className="text-4xl font-black text-white mb-2"
             style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
           >
+
             لوحة الشرف 
           </p>
           <p className="text-gray-400 text-lg mb-8">
-            ساحة المنافسة للطلاب في منصةالمحاضرة .
+            ساحة المنافسة لأقوى العباقرة في منصتنا التعليمية.
+
           </p>
 
           {/* Filter Buttons */}

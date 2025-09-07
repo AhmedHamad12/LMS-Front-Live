@@ -533,7 +533,7 @@ export default function Home() {
 
       <footer className="mt-16 border-t border-gray-900 p-8 text-center flex justify-between">
         <div className="flex items-center gap-2">
-          <p className="text-md">01094879104</p>
+          <p className="text-md">01094870104</p>
           <IoCall className="text-cyan-400" size={20} />
         </div>
         <p className="text-md">&copy; 2025 منصة المحاضرة.</p>

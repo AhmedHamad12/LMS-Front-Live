@@ -326,11 +326,11 @@ export default function Profile() {
           </div>
           <div className="rounded-2xl glass-effect p-6 text-center">
             <p className="text-sm text-gray-400">كورسات مكتملة</p>
-            <p className="text-4xl font-black text-white">1</p>
+            <p className="text-4xl font-black text-white">0</p>
           </div>
           <div className="rounded-2xl glass-effect p-6 text-center">
             <p className="text-sm text-gray-400">الأوسمة المحصلة</p>
-            <p className="text-4xl font-black text-white">2</p>
+            <p className="text-4xl font-black text-white">0</p>
           </div>
         </div>
 

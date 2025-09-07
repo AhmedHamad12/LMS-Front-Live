@@ -32,10 +32,12 @@ export default function Login() {
       .then((response) => {
         // console.log(response.data);
         cookies.set("token", response.data.token);
+
         if (response.data?.role === "Teacher") {
           if (response.data?.status === 0) {
             navigate("/waiting");
           } else if (response.data?.status === 2) {
+
             toast.error("تم رفض تسجيلك");
           } else {
             navigate(`/teacher/dashboard`);

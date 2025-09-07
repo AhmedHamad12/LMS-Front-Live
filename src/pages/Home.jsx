@@ -6,11 +6,12 @@ import { Helmet } from "react-helmet-async";
 import * as THREE from "three";
 import { motion } from "framer-motion";
 import { jwtDecode } from 'jwt-decode';
+
 import axios from "../api/axios";
 import CardSlider from "../Components/CardSlider";
-import { BookOpen, Star, Eye, BarChart3, TrendingUp, Monitor } from "lucide-react";
+import { BookOpen, Star, Eye, BarChart3, TrendingUp, Monitor, ArrowLeft } from "lucide-react";
 import { IoCall } from "react-icons/io5";
-
+import Footer from "../Components/Footer";
 // Animation Variants for Framer Motion
 const sectionVariants = {
   hidden: { opacity: 0, y: 50 },
@@ -30,18 +31,16 @@ const Header = () => {
     if (token) {
       try {
         const decodedToken = jwtDecode(token);
-        // ASP.NET Core Identity غالباً ما يستخدم هذا الاسم لحفظ الدور في التوكن
         const role = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
 
         if (role === 'Teacher') {
-          navigate("/teacher/dashboard"); // توجيه المدرس
+          window.location.href = "/teacher/dashboard";
         } else {
-          navigate("/dashboard"); // توجيه الطالب (أو أي دور آخر)
+          window.location.href = "/dashboard"; 
         }
       } catch (error) {
         console.error("Failed to decode token, redirecting to default dashboard:", error);
-        // في حالة وجود خطأ في التوكن، يتم التوجيه للصفحة الافتراضية
-        navigate("/dashboard");
+        window.location.href = "/dashboard";
       }
     }
   };
@@ -89,7 +88,6 @@ export default function Home() {
       console.error("Courses data fetch error:", error);
     });
   };
-
   const { data: courses } = useQuery({ queryKey: ["courses"], queryFn: getCourses });
 
   const getStudents = async () => {
@@ -97,7 +95,6 @@ export default function Home() {
       console.error("Students data fetch error:", error);
     });
   };
-
   const { data: students } = useQuery({ queryKey: ["students"], queryFn: getStudents });
 
   const faqs = [
@@ -158,8 +155,8 @@ export default function Home() {
         const scrollY = window.scrollY;
         const docHeight = document.documentElement.scrollHeight - window.innerHeight;
         const scrollPercent = docHeight > 0 ? scrollY / docHeight : 0;
-        camera.position.z = 5 - scrollPercent * 10;
-        camera.position.y = -scrollPercent * 2;
+        camera.position.z = 5 - scrollPercent * 15;
+        camera.position.y = -scrollPercent * 3;
     };
     window.addEventListener('scroll', handleScroll);
     
@@ -180,11 +177,11 @@ export default function Home() {
       <div className="fixed top-0 left-0 -z-10 h-full w-full bg-gradient-to-b from-[#0A0A19] via-transparent to-[#0A0A19]" />
 
       <Header />
-
-      <div className="relative overflow-x-hidden">
-        <main className="-mt-20 flex min-h-screen flex-col items-center justify-center px-4 text-center">
-          <div className="absolute -top-1/4 -right-1/4 w-1/2 h-1/2 bg-cyan-500/20 rounded-full blur-3xl animate-pulse-slow" />
-          <div className="absolute -bottom-1/4 -left-1/4 w-1/2 h-1/2 bg-purple-500/20 rounded-full blur-3xl animate-pulse-slow animation-delay-4000" />
+      
+      <>
+        <main className="relative flex min-h-[calc(100vh-80px)] flex-col items-center justify-center px-4 text-center overflow-hidden">
+          <div className="absolute -top-1/4 -right-1/4 w-1/2 h-1/2 bg-cyan-500/10 rounded-full blur-3xl animate-pulse-slow" />
+          <div className="absolute -bottom-1/4 -left-1/4 w-1/2 h-1/2 bg-purple-500/10 rounded-full blur-3xl animate-pulse-slow animation-delay-4000" />
           
           <motion.h1 
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
@@ -237,28 +234,41 @@ export default function Home() {
         <motion.section variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} id="courses" className="px-4 py-24">
             <div className="mx-auto max-w-7xl">
                 <h2 className="mb-4 text-center text-5xl font-black text-white" style={{ textShadow: "0 0 12px rgba(0, 191, 255, 0.5)" }}>اكتشف كنوز المعرفة</h2>
-                <p className="mb-16 text-center text-lg text-gray-400">كورسات مصممة بعناية فائقة لتأخذك في رحلة من الأساسيات إلى الإتقان في موادك الدراسية.</p>
+                <p className="mb-16 text-center text-lg text-gray-400">كورسات مصممة بعناية فائقة لتأخذك في رحلة من الأساسيات إلى الإتقان.</p>
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
                     {courses?.data?.map((course) => (
-                        <div key={course.id} className="group overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-md">
-                            <img src={course.image} alt={course.title} className="h-56 bg-cover w-full transform object-cover transition-transform duration-500 group-hover:scale-105"/>
-                            <div className="p-6"><h3 className="mb-2 text-2xl font-bold text-white">{course.title}</h3><p className="mb-4 text-gray-400 line-clamp-2">{course.description}</p></div>
+                        <div key={course.id} className="group overflow-hidden rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-md transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-500/20 hover:border-cyan-500/30 transform hover:-translate-y-2">
+                           <div className="relative">
+                                <img src={course.image} alt={course.title} className="h-56 w-full object-cover transition-transform duration-500 group-hover:scale-105"/>
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                                <h3 className="absolute bottom-4 right-4 text-2xl font-bold text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.8)]">{course.title}</h3>
+                           </div>
+                           <div className="p-6">
+                                <p className="mb-4 text-gray-400 line-clamp-2 h-12">{course.description}</p>
+                                <div className="flex items-center justify-end text-cyan-400 font-semibold group-hover:text-cyan-300">
+                                    <span>استكشف الكورس</span>
+                                    <ArrowLeft className="mr-2 h-5 w-5 transition-transform duration-300 group-hover:-translate-x-1" />
+                                </div>
+                           </div>
                         </div>
                     ))}
                 </div>
             </div>
         </motion.section>
 
-        <motion.section variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} id="teachers" className="bg-black/30 px-4 py-10">
-            <div className="mx-auto max-w-6xl">
-                <h2 className="text-center text-5xl font-black text-white" style={{ textShadow: "0 0 12px rgba(0, 191, 255, 0.5)" }}>انضم إلى كوكبة من أفضل المدرسين</h2>
+        <motion.section variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} id="teachers" className="bg-black/30 px-4 py-24">
+            <div className="mx-auto max-w-6xl text-center">
+                <h2 className="mb-4 text-5xl font-black text-white" style={{ textShadow: "0 0 12px rgba(0, 191, 255, 0.5)" }}>انضم إلى كوكبة من أفضل المدرسين</h2>
+                <p className="mb-12 text-lg text-gray-400">نخبة من الخبراء والمبدعين في مجال التعليم، جاهزون لإلهامك.</p>
                 <CardSlider />
-                <div className="text-center mt-8">
-                  <Link to="/teacher-signup" className="rounded-lg border-2 border-cyan-500 bg-transparent px-8 py-4 text-lg font-bold text-cyan-400 transition-all duration-300 hover:bg-cyan-500/10">أنا مدرس وأريد الانضمام</Link>
+                <div className="text-center mt-12">
+                  <Link to="/teacher-signup" className="rounded-lg bg-slate-800 border-2 border-slate-700 px-8 py-4 text-lg font-bold text-cyan-400 transition-all duration-300 hover:border-cyan-500 hover:text-white hover:scale-105">
+                    أنا مدرس وأريد الانضمام
+                  </Link>
                 </div>
             </div>
         </motion.section>
-
+        
         <motion.section variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} id="leaderboard" className="px-4 py-24">
             <h2 className="mb-12 text-center text-5xl font-black text-white" style={{ textShadow: "0 0 12px rgba(0, 191, 255, 0.5)" }}>لوحة المتميزين</h2>
             <div className="mx-auto max-w-4xl rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/40 to-slate-800/50 p-6 backdrop-blur-md space-y-3">
@@ -301,14 +311,8 @@ export default function Home() {
             </div>
         </motion.section>
 
-        <footer className="mt-16 border-t border-gray-900/50 p-8 text-center flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-2">
-                <IoCall className="text-cyan-400" size={20} />
-                <p className="text-md">01094870104</p>
-            </div>
-            <p className="text-md">&copy; 2025 منصة المحاضرة. كل الحقوق محفوظة.</p>
-        </footer>
-      </div>
+        <Footer />
+      </>
     </div>
   );
 }

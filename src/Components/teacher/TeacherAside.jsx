@@ -10,6 +10,7 @@ import {
   Users,
   BrainCircuit,
   LogOut,
+  ClipboardCheck, // 1. تم استيراد أيقونة الواجبات
 } from "lucide-react";
 
 export default function TeacherAside() {
@@ -41,6 +42,8 @@ export default function TeacherAside() {
     { to: "/teacher/dashboard", title: "لوحة التحكم", icon: <LayoutDashboard size={22} /> },
     { to: "/teacher/addcourse", title: "إضافة كورس", icon: <PlusCircle size={22} /> },
     { to: "/teacher/quizzes", title: "الاختبارات", icon: <FilePlus2 size={22} /> },
+    // --== 2. تمت إضافة زر الواجبات هنا ==--
+    { to: "/teacher/assignments", title: "الواجبات", icon: <ClipboardCheck size={22} /> },
     { to: "/teacher/teacherstudents", title: "الطلاب", icon: <Users size={22} /> },
     { to: "/ai", title: "المساعد الذكي", icon: <BrainCircuit size={22} /> },
   ];

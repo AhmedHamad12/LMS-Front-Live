@@ -1,581 +1,208 @@
-import React, { useState, useEffect, useRef } from "react";
-import * as THREE from "three";
-
-import axios from "../../api/axios";
-import { Cookies } from "react-cookie";
+import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
-import Loading from "../../Components/Loading";
+import api from "../../api/axios";
 import toast from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
+import { File, Clock, CheckCircle, XCircle, Inbox, Paperclip, UploadCloud, X } from "lucide-react";
+import Loading from "../../Components/Loading";
+import { Cookies } from "react-cookie";
 
-const MyTasks = () => {
-  const [filter, setFilter] = useState("new");
-  const [showAssignmentModal, setShowAssignmentModal] = useState(false);
-  const [currentAssignment, setCurrentAssignment] = useState(null);
-  const [fileUpload, setFileUpload] = useState(null);
-  const [textAnswer, setTextAnswer] = useState("");
-  const canvasRef = useRef(null);
-  const sceneRef = useRef(null);
-  const mainContentRef = useRef(null);
-  const cookies = new Cookies();
-  const token = cookies.get("token");
+const StarfieldBackground = lazy(() => import('../../Components/StarfieldBackground'));
 
-  const getAssignments = async () => {
-    return await axios.get(
-      `/api/Assignment/GetAssignmentsForStudent`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-  };
+// --- Helper Components ---
+const AssignmentModal = ({ assignment, onClose, onSubmit }) => {
+    // ... (This component code remains unchanged, you can keep it as is)
+    const [fileUpload, setFileUpload] = useState(null);
+    const [textAnswer, setTextAnswer] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: userAssignments, isLoading, refetch } = useQuery({
-    queryKey: ["user-assignments"],
-    queryFn: getAssignments,
-  });
-
-
-  const catConvert = (submitedStatus) => {
-    if (submitedStatus == 1) {
-
-      return "new";
-    } else if (submitedStatus == 2) {
-      return "submitted";
-    } else if (submitedStatus == 3) {
-      return "graded";
-    } else if (submitedStatus == 4) {
-      return "missed";
-    }
-  };
-
-  const formatted = (newDate) => {
-    const date = new Date(newDate);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "2-digit",
-    });
-  };
-
-  const filteredAssignments = userAssignments?.data?.filter(
-    (assignment) =>
-      filter === "all" || catConvert(assignment.submitedStatus) === filter
-  ) || [];
-
-  const startAssignment = (assignment) => {
-    setCurrentAssignment(assignment);
-    setShowAssignmentModal(true);
-  };
-
-  const submitAssignment = async () => {
-    if (!textAnswer || !fileUpload) {
-      return toast.error("ادخل البيانات كاملة!")
-    }
-    if (currentAssignment) {
-      const formData = new FormData();
-      formData.append("AssignmentId", currentAssignment.id);
-      if (fileUpload) {
-        formData.append("Files", fileUpload);
-      }
-      formData.append("SubmissionComment", textAnswer);
-      await axios.post(`/api/SubmitedAssignment/AddSubmitedAssignment`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      }).then((res) => {
-
-        toast.success("تم التسليم")
-        
-        setShowAssignmentModal(false);
-        setTextAnswer("");
-        setFileUpload(null);
-        setCurrentAssignment(null);
-        refetch();
-      }).catch((err) => {
-        
-      });
-    };
-  };
-
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    setFileUpload(file);
-  };
-
-  // Three.js setup
-  useEffect(() => {
-    if (!canvasRef.current) return;
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
-    );
-    camera.position.z = 5;
-
-    const renderer = new THREE.WebGLRenderer({
-      canvas: canvasRef.current,
-      antialias: true,
-      alpha: true,
-    });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-
-    // Create starfield
-    const createStarfield = (count, size, color) => {
-      const geometry = new THREE.BufferGeometry();
-      const positions = new Float32Array(count * 3);
-      for (let i = 0; i < count; i++) {
-        positions[i * 3 + 0] = (Math.random() - 0.5) * 200;
-        positions[i * 3 + 1] = (Math.random() - 0.5) * 200;
-        positions[i * 3 + 2] = (Math.random() - 0.5) * 200;
-      }
-      geometry.setAttribute(
-        "position",
-        new THREE.BufferAttribute(positions, 3)
-      );
-      const material = new THREE.PointsMaterial({
-        size: size,
-        color: color,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        transparent: true,
-        opacity: 0.7,
-      });
-      const starfield = new THREE.Points(geometry, material);
-      scene.add(starfield);
-      return starfield;
+    const handleSubmit = async () => {
+        if (!textAnswer && !fileUpload) {
+            return toast.error("يجب إضافة إجابة نصية أو رفع ملف على الأقل.");
+        }
+        setIsSubmitting(true);
+        await onSubmit(textAnswer, fileUpload);
+        setIsSubmitting(false);
     };
 
-    const starsFar = createStarfield(8000, 0.05, 0x888888);
-    const starsMid = createStarfield(5000, 0.1, 0xbbbbbb);
-    const starsClose = createStarfield(1500, 0.15, 0xffffff);
-
-    sceneRef.current = {
-      scene,
-      camera,
-      renderer,
-      starsFar,
-      starsMid,
-      starsClose,
-    };
-
-    // Animation loop
-    const clock = new THREE.Clock();
-    const animate = () => {
-      const elapsedTime = clock.getElapsedTime();
-      starsFar.rotation.y = elapsedTime * 0.01;
-      starsMid.rotation.y = elapsedTime * 0.02;
-      starsClose.rotation.y = elapsedTime * 0.03;
-
-      renderer.render(scene, camera);
-      requestAnimationFrame(animate);
-    };
-    animate();
-
-    // Handle scroll
-    const handleScroll = () => {
-      if (!mainContentRef.current) return;
-      const scrollY = mainContentRef.current.scrollTop;
-      const docHeight =
-        mainContentRef.current.scrollHeight -
-        mainContentRef.current.clientHeight;
-      const scrollPercent = docHeight > 0 ? scrollY / docHeight : 0;
-      camera.position.z = 5 - scrollPercent * 10;
-    };
-
-    const mainContent = mainContentRef.current;
-    if (mainContent) {
-      mainContent.addEventListener("scroll", handleScroll);
-    }
-
-    // Handle resize
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(window.devicePixelRatio);
-    };
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      if (mainContent) {
-        mainContent.removeEventListener("scroll", handleScroll);
-      }
-      window.removeEventListener("resize", handleResize);
-      renderer.dispose();
-    };
-  }, []);
-
-  const getStatusBadge = (status) => {
-    const badges = {
-      new: { text: "جديد", className: "text-yellow-300 bg-yellow-500/20" },
-      submitted: {
-        text: "تم التسليم",
-        className: "text-blue-300 bg-blue-500/20",
-      },
-      graded: {
-        text: "تم التقييم",
-        className: "text-green-300 bg-green-500/20",
-      },
-      missed: { text: "فائتة", className: "text-red-300 bg-red-500/20" },
-    };
-
-    const badge = badges[status];
     return (
-      <span
-        className={`text-xs font-bold px-2 py-1 rounded-full ${badge.className}`}
-      >
-        {badge.text}
-      </span>
-    );
-  };
-
-  const getButtonForStatus = (assignment) => {
-    switch (catConvert(assignment.submitedStatus)) {
-      case "new":
-        return (
-          <button
-            onClick={() => startAssignment(assignment)}
-            className="w-full text-center block p-3 rounded-lg bg-cyan-500 text-black font-bold hover:bg-cyan-400 transition-colors"
-          >
-            ابدأ المهمة
-          </button>
-        );
-      case "graded":
-        return (
-          <button className="w-full text-center block p-3 rounded-lg bg-gray-700 text-white font-bold hover:bg-gray-600 transition-colors">
-            عرض التقييم
-          </button>
-        );
-      default:
-        return (
-          <button className="w-full text-center block p-3 rounded-lg bg-gray-800 text-gray-400 font-bold cursor-not-allowed">
-            مغلق
-          </button>
-        );
-    }
-  };
-
-  if (isLoading) {
-    return <Loading />
-  }
-
-  return (
-    <div
-      className="text-gray-100 min-h-screen overflow-hidden w-full"
-      style={{ fontFamily: "Cairo, sans-serif" }}
-      dir="rtl"
-    >
-      <canvas
-        ref={canvasRef}
-        className="fixed top-0 left-0 w-full h-full -z-10"
-      />
-
-      {/* Assignment Modal */}
-      {showAssignmentModal && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-xl border border-white/5 rounded-2xl w-full max-w-2xl border-cyan-500/20 shadow-2xl shadow-cyan-500/10 flex flex-col max-h-[90vh]">
-            <header className="p-4 border-b border-white/10 flex-shrink-0">
-              <p className="text-sm font-bold text-cyan-300">
-                {currentAssignment?.courseName}
-              </p>
-              {/* <h2 className="text-2xl font-bold text-white">
-                {currentAssignment?.assignmentDescription}
-              </h2> */}
-            </header>
-
-            <div className="p-6 flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-black/20">
-              <h3 className="font-bold mb-2">تعليمات المهمة:</h3>
-              <p className="text-gray-300 mb-6">
-                {currentAssignment?.assignmentDescription}
-              </p>
-
-              <h3 className="font-bold mb-2">تسليم إجابتك:</h3>
-              <div className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="file_upload"
-                    className="block text-sm font-medium text-gray-300 mb-1"
-                  >
-                    رفع ملف الحل
-                  </label>
-                  <label className="mt-1 cursor-pointer flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-md">
-                    <div className="space-y-1 text-center">
-                      <svg
-                        className="mx-auto h-12 w-12 text-gray-500"
-                        stroke="currentColor"
-                        fill="none"
-                        viewBox="0 0 48 48"
-                      >
-                        <path
-                          d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      <div className="flex text-sm text-gray-400">
-                        <label
-                          htmlFor="file_upload"
-                          className="relative cursor-pointer bg-gray-800 rounded-md font-medium text-cyan-400 hover:text-cyan-300 focus-within:outline-none"
-                        >
-                          <span>اضغط للرفع</span>
-                          <input
-                            id="file_upload"
-                            name="file_upload"
-                            type="file"
-                            onChange={handleFileUpload}
-                          />
-                        </label>
-                        <p className="pr-1">أو قم بسحب الملف وإفلاته هنا</p>
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        PDF, PNG, JPG, DOCX up to 10MB
-                      </p>
-                    </div>
-                  </label>
-                  {fileUpload && (
-                    <p className="text-sm text-green-400 mt-2">
-                      تم اختيار الملف: {fileUpload.name}
-                    </p>
-                  )}
-                </div>
-
-                <div className="text-center text-gray-400 text-sm">أو</div>
-
-                <div>
-                  <label
-                    htmlFor="text_answer"
-                    className="block text-sm font-medium text-gray-300 mb-1"
-                  >
-                    كتابة الإجابة مباشرة
-                  </label>
-                  <textarea
-                    id="text_answer"
-                    rows={5}
-                    value={textAnswer}
-                    onChange={(e) => setTextAnswer(e.target.value)}
-                    className="w-full bg-black/20 rounded-lg p-2 text-sm text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                    placeholder="اكتب إجابتك هنا..."
-                  />
-                </div>
-              </div>
-            </div>
-
-            <footer className="p-4 border-t border-white/10 flex-shrink-0 flex justify-end gap-4">
-              <button
-                onClick={() => setShowAssignmentModal(false)}
-                className="px-5 py-2 rounded-lg bg-white/10 text-gray-300 hover:bg-white/20 transition-colors text-sm font-bold"
-              >
-                إلغاء
-              </button>
-              <button
-                onClick={submitAssignment}
-                className="px-6 py-2 rounded-lg bg-green-500 text-white hover:bg-green-400 transition-colors shadow-lg shadow-green-500/20 text-sm font-bold"
-              >
-                تسليم المهمة
-              </button>
-            </footer>
-          </div>
-        </div>
-      )}
-
-      <div className="flex h-screen">
-        {/* Main Content */}
-        <main
-          ref={mainContentRef}
-          className="flex-1 p-8 overflow-y-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-black/20"
-        >
-          <h1
-            className="text-4xl font-black text-white mb-2"
-            style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
-          >
-            مركز قيادة المهام
-          </h1>
-          <p className="text-gray-400 text-lg mb-8">
-            جميع واجباتك الحالية والمنجزة في مكان واحد.
-          </p>
-
-          {/* Filter Buttons */}
-          <div className="flex items-center gap-4 mb-8 flex-wrap">
-            <button
-              onClick={() => setFilter("new")}
-              className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${
-                filter === "new"
-                  ? "bg-cyan-500 text-black"
-                  : "bg-white/10 text-white"
-              }`}
-            >
-              مهام جديدة
-            </button>
-            <button
-              onClick={() => setFilter("submitted")}
-              className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${
-                filter === "submitted"
-                  ? "bg-cyan-500 text-black"
-                  : "bg-white/10 text-white"
-              }`}
-            >
-              بانتظار التقييم
-            </button>
-            <button
-              onClick={() => setFilter("graded")}
-              className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${
-                filter === "graded"
-                  ? "bg-cyan-500 text-black"
-                  : "bg-white/10 text-white"
-              }`}
-            >
-              مهام منجزة
-            </button>
-            <button
-              onClick={() => setFilter("missed")}
-              className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${
-                filter === "missed"
-                  ? "bg-cyan-500 text-black"
-                  : "bg-white/10 text-white"
-              }`}
-            >
-              مهام فائتة
-            </button>
-            <button
-              onClick={() => setFilter("all")}
-              className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${
-                filter === "all"
-                  ? "bg-cyan-500 text-black"
-                  : "bg-white/10 text-white"
-              }`}
-            >
-              الكل
-            </button>
-          </div>
-
-          {/* Assignments Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            {filteredAssignments?.map((assignment, index) => (
-              <div
-                key={index}
-                className={`bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-xl border border-white/5 rounded-2xl p-6 flex flex-col justify-center transform hover:-translate-y-2 transition-transform duration-300 ${
-                  catConvert(assignment.submitedStatus) === "missed"
-                    ? "border-red-500/50"
-                    : ""
-                }`}
-              >
-                <div>
-                  <div className="flex justify-between items-start">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="glass-effect rounded-2xl w-full max-w-2xl border-cyan-500/20 shadow-2xl shadow-cyan-500/10 flex flex-col max-h-[90vh]">
+                <header className="p-4 border-b border-white/10 flex-shrink-0 flex justify-between items-center">
                     <div>
-                      <p className="text-sm font-bold text-cyan-300">
-                        {assignment.courseName}
-                      </p>
-                      <h3 className="text-xl font-bold text-white mb-4">
-                        {assignment.assignmentDescription}
-                      </h3>
+                        <p className="text-sm font-bold text-cyan-300">{assignment?.courseName}</p>
+                        <h2 className="text-2xl font-bold text-white">تسليم المهمة</h2>
                     </div>
-                    {getStatusBadge(catConvert(assignment.submitedStatus))}
-                  </div>
-
-                  {catConvert(assignment.submitedStatus) === "new" && (
-                    <div className="text-sm text-yellow-400 flex items-center gap-2 mb-6">
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      <span>
-                        الموعد النهائي للتسليم:{" "}
-                        <span className="font-bold">
-                          {formatted(assignment.dueDate)}
-                        </span>
-                      </span>
+                    <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 transition-colors"><X size={24} /></button>
+                </header>
+                <div className="p-6 flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-black/20">
+                    <h3 className="font-bold mb-2 text-lg text-white">تعليمات المهمة:</h3>
+                    <p className="text-gray-300 mb-6 bg-black/20 p-4 rounded-lg">{assignment?.assignmentDescription}</p>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2">كتابة الإجابة (اختياري)</label>
+                            <textarea rows={4} value={textAnswer} onChange={(e) => setTextAnswer(e.target.value)} className="w-full bg-black/20 rounded-lg p-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-500 focus:outline-none transition" placeholder="اكتب إجابتك أو أي ملاحظات هنا..."/>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2">رفع ملف الحل (اختياري)</label>
+                            <div className="mt-1 cursor-pointer flex flex-col items-center justify-center px-6 py-8 border-2 border-gray-600 border-dashed rounded-md hover:border-cyan-500 transition-colors">
+                                <UploadCloud size={48} className="text-gray-500 mb-2" />
+                                <input id="file_upload" type="file" className="hidden" onChange={(e) => setFileUpload(e.target.files[0])} />
+                                <label htmlFor="file_upload" className="font-medium text-cyan-400 hover:text-cyan-300 cursor-pointer"><span>اضغط لاختيار ملف</span></label>
+                                <p className="text-xs text-gray-500 mt-1">PDF, PNG, JPG, DOCX (بحد أقصى 10MB)</p>
+                            </div>
+                            {fileUpload && (<div className="flex items-center justify-between bg-green-500/10 text-green-300 p-3 rounded-lg mt-2 text-sm"><div className="flex items-center gap-2"><Paperclip size={16} /><span>{fileUpload.name}</span></div><button onClick={() => setFileUpload(null)} className="p-1 rounded-full hover:bg-white/10"><X size={16} /></button></div>)}
+                        </div>
                     </div>
-                  )}
-
-                  {/* {(catConvert(assignment.submitedStatus) === "graded" ||
-                    catConvert(assignment.submitedStatus) === "missed") && (
-                    <div className="bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-xl border border-white/5 rounded-lg p-3 text-center mb-6">
-                      <p className="text-sm text-gray-300">
-                        {catConvert(assignment.submitedStatus) === "graded"
-                          ? "النتيجة"
-                          : "العقوبة"}
-                      </p>
-                      <p
-                        className={`text-2xl font-black ${
-                          catConvert(assignment.assignmentCategory) === "graded"
-                            ? "text-green-400"
-                            : "text-red-400"
-                        }`}
-                      >
-                        {assignment.score}
-                      </p>
-                      {catConvert(assignment.assignmentCategory) === "graded" && assignment.points && (
-                        <p className="text-xs text-green-400">
-                          +{assignment.points} نقطة
-                        </p>
-                      )}
-                    </div>
-                  )} */}
-
-                  {catConvert(assignment.submitedStatus) === "submitted" && (
-                    <div className="text-sm text-center text-gray-400 mb-2 py-2">
-                      <p>تم تسليم المهمة بنجاح، في انتظار تقييم القائد.</p>
-                    </div>
-                  )}
                 </div>
+                <footer className="p-4 border-t border-white/10 flex-shrink-0 flex justify-end gap-4">
+                    <button onClick={onClose} className="px-5 py-2 rounded-lg bg-white/10 text-gray-300 hover:bg-white/20 transition-colors font-bold">إلغاء</button>
+                    <button onClick={handleSubmit} disabled={isSubmitting} className="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-500 transition-colors shadow-lg shadow-green-500/20 font-bold flex items-center gap-2 disabled:bg-gray-500 disabled:cursor-wait">{isSubmitting ? "جاري التسليم..." : "تسليم المهمة"}</button>
+                </footer>
+            </motion.div>
+        </motion.div>
+    );
+};
 
-                <div className="mb-2">
-                  <a
-                    href={assignment.files}
-                    target="_blank"
-                    className="w-full text-center block p-3 rounded-lg bg-gray-700 text-white font-bold hover:bg-gray-600 transition-colors"
-                  >
-                    عرض الواجب
-                  </a>
+const AssignmentCard = ({ assignment, onStart }) => {
+    // ... (This component code remains unchanged, you can keep it as is)
+    const statusMap = {
+        new: { text: "جديد", icon: <File size={16} />, className: "text-yellow-300 bg-yellow-500/20 border-yellow-500/30" },
+        submitted: { text: "تم التسليم", icon: <Clock size={16} />, className: "text-blue-300 bg-blue-500/20 border-blue-500/30" },
+        graded: { text: "تم التقييم", icon: <CheckCircle size={16} />, className: "text-green-300 bg-green-500/20 border-green-500/30" },
+        missed: { text: "فائتة", icon: <XCircle size={16} />, className: "text-red-300 bg-red-500/20 border-red-500/30" },
+    };
+    const status = statusMap[assignment.statusCategory];
+    return (
+        <motion.div layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className={`glass-effect rounded-2xl p-6 flex flex-col justify-between transform hover:-translate-y-2 transition-transform duration-300 border ${status.className}`}>
+            <div>
+                <div className="flex justify-between items-start mb-4"><p className="text-sm font-bold text-cyan-300">{assignment.courseName}</p><span className={`text-xs font-bold px-3 py-1 rounded-full flex items-center gap-2 ${status.className}`}>{status.icon} {status.text}</span></div>
+                <h3 className="text-xl font-bold text-white mb-4">{assignment.assignmentDescription}</h3>
+                {(status.text === "تم التقييم" || status.text === "فائتة") && (<div className="bg-black/20 p-4 rounded-lg text-center mb-6"><p className="text-sm text-gray-300">النتيجة</p><p className={`text-3xl font-black ${status.text === "تم التقييم" ? "text-green-400" : "text-red-400"}`}>{assignment.score || 0} <span className="text-lg">/ {assignment.totalScore || 100}</span></p></div>)}
+                {status.text === "جديد" && (<div className="text-sm text-yellow-400 flex items-center gap-2 mb-6"><Clock size={16}/><span>الموعد النهائي: <span className="font-bold">{new Date(assignment.dueDate).toLocaleDateString('ar-EG')}</span></span></div>)}
+            </div>
+            <div className="space-y-2">
+                <a href={assignment.files} target="_blank" rel="noopener noreferrer" className="w-full text-center block p-3 rounded-lg bg-gray-700 text-white font-bold hover:bg-gray-600 transition-colors">عرض الواجب</a>
+                {status.text === "جديد" && <button onClick={onStart} className="w-full text-center block p-3 rounded-lg bg-cyan-500 text-black font-bold hover:bg-cyan-400 transition-colors">ابدأ المهمة</button>}
+                {status.text === "تم التقييم" && <button className="w-full text-center block p-3 rounded-lg bg-gray-700 text-white font-bold hover:bg-gray-600 transition-colors">عرض التقييم</button>}
+                {(status.text === "تم التسليم" || status.text === "فائتة") && <button className="w-full text-center block p-3 rounded-lg bg-gray-800 text-gray-400 font-bold cursor-not-allowed">مغلق</button>}
+            </div>
+        </motion.div>
+    );
+};
+
+// --- Main Component ---
+const MyTasks = () => {
+    const [filter, setFilter] = useState("new");
+    const [showAssignmentModal, setShowAssignmentModal] = useState(false);
+    const [currentAssignment, setCurrentAssignment] = useState(null);
+
+    const mainContentRef = useRef(null);
+    const cookies = new Cookies();
+    const token = cookies.get("token");
+
+    // --- CORRECTED DATA FETCHING ---
+    const { data: assignments, isLoading, refetch } = useQuery({
+        queryKey: ["user-assignments"],
+        queryFn: async () => {
+            try {
+                const response = await api.get(`/api/Assignment/GetAssignmentsForStudent`, { headers: { Authorization: `Bearer ${token}` } });
+                return response.data; // Return data on success
+            } catch (error) {
+                // If the error is 404 (No assignments found), handle it gracefully
+                if (error.response && error.response.status === 404) {
+                    return []; // Return an empty array, not an error
+                }
+                // For any other error, re-throw it to let react-query handle it
+                throw error;
+            }
+        },
+        refetchOnWindowFocus: false,
+    });
+    // --- END OF CORRECTION ---
+
+    const { filteredAssignments, counts } = useMemo(() => {
+        const mappedAssignments = assignments?.map(a => ({
+            ...a,
+            statusCategory: ["new", "submitted", "graded", "missed"][a.submitedStatus - 1] || "new"
+        })) || [];
+
+        const counts = {
+            all: mappedAssignments.length,
+            new: mappedAssignments.filter(a => a.statusCategory === "new").length,
+            submitted: mappedAssignments.filter(a => a.statusCategory === "submitted").length,
+            graded: mappedAssignments.filter(a => a.statusCategory === "graded").length,
+            missed: mappedAssignments.filter(a => a.statusCategory === "missed").length,
+        };
+
+        const filtered = filter === "all" ? mappedAssignments : mappedAssignments.filter(a => a.statusCategory === filter);
+        
+        return { filteredAssignments: filtered, counts };
+    }, [assignments, filter]);
+
+    const startAssignment = (assignment) => {
+        setCurrentAssignment(assignment);
+        setShowAssignmentModal(true);
+    };
+
+    const submitAssignment = async (textAnswer, fileUpload) => {
+        const toastId = toast.loading("جاري تسليم المهمة...");
+        const formData = new FormData();
+        formData.append("AssignmentId", currentAssignment.id);
+        if (fileUpload) formData.append("Files", fileUpload);
+        formData.append("SubmissionComment", textAnswer || " ");
+        
+        try {
+            await api.post(`/api/SubmitedAssignment/AddSubmitedAssignment`, formData, {
+                headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
+            });
+            toast.success("تم تسليم المهمة بنجاح!", { id: toastId });
+            setShowAssignmentModal(false);
+            setCurrentAssignment(null);
+            refetch();
+        } catch (err) {
+            toast.error("فشل تسليم المهمة. حاول مرة أخرى.", { id: toastId });
+        }
+    };
+
+    if (isLoading) return <Loading message="جاري تحميل مركز قيادة المهام..." />;
+
+    return (
+        <div className="text-gray-100 min-h-screen overflow-hidden w-full" style={{ fontFamily: "Cairo, sans-serif" }} dir="rtl">
+            <Suspense fallback={<div className="fixed inset-0 bg-black -z-10" />}><StarfieldBackground mainContentRef={mainContentRef} /></Suspense>
+            <AnimatePresence>
+                {showAssignmentModal && <AssignmentModal assignment={currentAssignment} onClose={() => setShowAssignmentModal(false)} onSubmit={submitAssignment}/>}
+            </AnimatePresence>
+            <main ref={mainContentRef} className="flex-1 h-screen p-4 sm:p-8 overflow-y-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-black/20">
+                <h1 className="text-4xl font-black text-white mb-2" style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}>مركز قيادة المهام</h1>
+                <p className="text-gray-400 text-lg mb-8">جميع واجباتك الحالية والمنجزة في مكان واحد.</p>
+                <div className="flex items-center gap-2 sm:gap-4 mb-8 flex-wrap">
+                    {[ { key: "new", label: "جديدة" }, { key: "submitted", label: "بانتظار التقييم" }, { key: "graded", label: "منجزة" }, { key: "missed", label: "فائتة" }, { key: "all", label: "الكل" } ]
+                    .map(btn => (
+                        <button key={btn.key} onClick={() => setFilter(btn.key)} className={`relative rounded-lg px-4 py-2 text-sm font-bold transition-colors ${filter === btn.key ? "text-white" : "text-gray-400 hover:text-white"}`}>
+                            {filter === btn.key && <motion.div layoutId="task-filter-pill" className="absolute inset-0 bg-cyan-500/20 border border-cyan-500 rounded-lg" />}
+                            <span className="relative z-10">{btn.label} ({counts[btn.key]})</span>
+                        </button>
+                    ))}
                 </div>
-
-                {getButtonForStatus(assignment)}
-              </div>
-            ))}
-
-            {/* No results message */}
-            {filteredAssignments?.length === 0 && (
-              <div className="md:col-span-2 xl:col-span-3 text-center py-16">
-                <svg
-                  className="w-16 h-16 mx-auto text-gray-600 mb-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
-                  />
-                </svg>
-                <h3 className="text-xl font-bold text-white">
-                  لا توجد مهام في هذا التصنيف
-                </h3>
-                <p className="text-gray-400">يبدو أنك أنجزت كل شيء هنا!</p>
-              </div>
-            )}
-          </div>
-        </main>
-      </div>
-    </div>
-  );
+                <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                    <AnimatePresence>
+                        {filteredAssignments.length > 0 ? (
+                            filteredAssignments.map((assignment) => (
+                                <AssignmentCard key={assignment.id} assignment={assignment} onStart={() => startAssignment(assignment)} />
+                            ))
+                        ) : (
+                            <motion.div initial={{opacity: 0}} animate={{opacity: 1}} className="md:col-span-2 xl:col-span-3 text-center py-16">
+                                <Inbox size={56} className="w-16 h-16 mx-auto text-gray-600 mb-4" />
+                                <h3 className="text-xl font-bold text-white">لا توجد مهام في هذا التصنيف</h3>
+                                <p className="text-gray-400">يبدو أنك أنجزت كل شيء هنا!</p>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </motion.div>
+            </main>
+        </div>
+    );
 };
 
 export default MyTasks;

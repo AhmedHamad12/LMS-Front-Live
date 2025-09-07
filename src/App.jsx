@@ -14,7 +14,7 @@ import UnauthorizedOverlay from "./Components/Auth/UnauthorizedOverlay";
 
 // UI & Components
 import BackgroundAnimation from "./Components/BackgroundAnimation";
-
+import ProtectedRoute from "./Components/ProtectedRoute";
 // Pages - Teacher
 import Teacher from "./pages/teacher/Teacher";
 
@@ -72,7 +72,9 @@ import LessonData from "./pages/teacher/LessonData.jsx";
 import UpdateLesson from "./pages/teacher/UpdateLesson.jsx";
 import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 import Waiting from "./pages/teacher/Waiting.jsx";
-
+import TeacherProfile from "./pages/teacher/profile.jsx";
+import TeacherAssignments from "./pages/teacher/TeacherAssignments.jsx";
+import AssignmentSubmissions from "./pages/teacher/AssignmentSubmissions.jsx";
 // Wire auth context with axios
 const AuthInitializer = () => {
   const { showUnauthorizedOverlay } = useAuth();
@@ -103,6 +105,7 @@ function App() {
               <Route path="/waiting" element={<Waiting />} />
 
               {/* Teacher */}
+              <Route element={<ProtectedRoute />}>
               <Route path="/teacher" element={<Teacher />}>
                 <Route path="addlesson" element={<AddLesson />} />
                 <Route path="addchapter" element={<AddChapter />} />
@@ -116,6 +119,12 @@ function App() {
                 <Route path="add/assignment" element={<AddAssignment />} />
                 <Route path="quizzes" element={<Quizzes />} />
                 <Route path="quizzes/create" element={<CreateQuiz />} />
+                <Route path="profile" element={<TeacherProfile />} />
+                <Route path="assignments" element={<TeacherAssignments />} />
+                <Route 
+          path="/teacher/assignments/:assignmentId/submissions" 
+          element={<AssignmentSubmissions />} 
+        />
                 <Route
                   path="quizzes/:quizId/questions"
                   element={<Questions />}
@@ -128,6 +137,7 @@ function App() {
                   path="quizzes/:quizId/submissions/:submissionId"
                   element={<DetailedSubmissions />}
                 />
+              </Route>
               </Route>
 
               {/* Reset Password */}

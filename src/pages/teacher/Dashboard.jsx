@@ -98,7 +98,7 @@ const TeacherDashboard = () => {
 
   const getSubmittedAssignments = async () => {
     return await axios
-      .get(`/api/SubmitedAssignment/endExpiredAssignments`, {
+      .post(`/api/SubmitedAssignment/endExpiredAssignments`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -299,7 +299,7 @@ const TeacherDashboard = () => {
             <div className="lg:col-span-3">
               <h2 className="text-2xl font-bold mb-6">إدارة الكورسات</h2>
               <div className="space-y-4">
-                {courses?.data?.items.map((course) => (
+                {courses?.data?.items?.map((course) => (
                   <div
                     key={course.id}
                     className="glass-effect rounded-2xl p-4 flex items-center justify-between"

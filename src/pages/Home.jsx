@@ -343,7 +343,8 @@ export default function Home() {
             موادك الدراسية.
           </p>
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {courses?.data.map((course, index) => (
+            {Array.isArray(courses?.data) &&
+            courses?.data.map((course, index) => (
               <div
                 key={index}
                 className="group overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900/40 to-slate-800/50 backdrop-blur-md"

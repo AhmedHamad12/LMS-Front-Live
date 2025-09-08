@@ -43,7 +43,7 @@ const CourseCard = ({ course, isEnrolled, isLoading, onEnroll, couponValue, onCo
 
     return (
         // الكارت بالكامل مغلف برابط يأخذك لصفحة تفاصيل الكورس
-        <Link to={`/courses/${course.id}`} className="flex">
+        <Link to={`/coursepreview/${course.id}`} key={course.id} className="block">
             <motion.div
                 variants={cardVariants}
                 initial="hidden"

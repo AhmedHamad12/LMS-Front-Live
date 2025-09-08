@@ -40,11 +40,11 @@ const Footer = () => {
                             منصة تعليمية تضع المستقبل بين يديك، باستخدام أحدث التقنيات والذكاء الاصطناعي.
                         </p>
                         <div className="flex gap-4">
-                            <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors"><Facebook size={20} /></a>
+                            <a href="https://www.facebook.com/profile.php?id=61580241463193" className="text-slate-400 hover:text-cyan-400 transition-colors"><Facebook size={20} /></a>
                             <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors"><Twitter size={20} /></a>
-                            <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors"><Instagram size={20} /></a>
-                            <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors"><Linkedin size={20} /></a>
-                            <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors"><Youtube size={20} /></a>
+                            <a href="https://www.instagram.com/elmohdra/" className="text-slate-400 hover:text-cyan-400 transition-colors"><Instagram size={20} /></a>
+                            <a href="https://www.linkedin.com/company/elmohdra" className="text-slate-400 hover:text-cyan-400 transition-colors"><Linkedin size={20} /></a>
+                            <a href="https://www.youtube.com/@elmohdra" className="text-slate-400 hover:text-cyan-400 transition-colors"><Youtube size={20} /></a>
                         </div>
                     </div>
 

@@ -34,7 +34,7 @@ export default function TeacherAside() {
   // --- Updated Logout Handler ---
   const handleLogout = () => {
     cookies.remove("token", { path: "/" });
-    navigate("/login", { replace: true });
+    navigate("/", { replace: true });
   };
   
   // --- Navigation Items ---

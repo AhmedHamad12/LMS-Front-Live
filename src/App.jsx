@@ -72,10 +72,12 @@ import LessonData from "./pages/teacher/LessonData.jsx";
 import UpdateLesson from "./pages/teacher/UpdateLesson.jsx";
 import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 import Waiting from "./pages/teacher/Waiting.jsx";
-import TeacherProfile from "./pages/teacher/profile.jsx";
+import TeacherProfile from './pages/teacher/TeacherProfile';
 import TeacherAssignments from "./pages/teacher/TeacherAssignments.jsx";
 import AssignmentSubmissions from "./pages/teacher/AssignmentSubmissions.jsx";
+import CoursePreview from "./pages/teacher/CoursePreview.jsx";
 // Wire auth context with axios
+
 const AuthInitializer = () => {
   const { showUnauthorizedOverlay } = useAuth();
 
@@ -103,7 +105,9 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/ai" element={<AIPage />} />
               <Route path="/waiting" element={<Waiting />} />
-
+              <Route path="/coursepreview/:courseId" element={<CoursePreview />} />
+              <Route path="/teacherProfile/:teacherId" element={<TeacherProfile />} />
+              
               {/* Teacher */}
               <Route element={<ProtectedRoute />}>
               <Route path="/teacher" element={<Teacher />}>

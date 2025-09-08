@@ -61,7 +61,7 @@ export default function Login() {
 
       } else {
         // توجيه الطالب يبقى كما هو
-        window.location.href = "/dashboard";
+        window.location.href = "/student/dashboard";
       }
     } catch (error) {
       console.error(error);

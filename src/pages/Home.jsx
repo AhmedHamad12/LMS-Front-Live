@@ -36,7 +36,7 @@ const Header = () => {
         if (role === 'Teacher') {
           window.location.href = "/teacher/dashboard";
         } else {
-          window.location.href = "/dashboard"; 
+          window.location.href = "/student/dashboard"; 
         }
       } catch (error) {
         console.error("Failed to decode token, redirecting to default dashboard:", error);
@@ -231,43 +231,53 @@ export default function Home() {
             </div>
         </motion.section>
 
-        <motion.section variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} id="courses" className="px-4 py-24">
-            <div className="mx-auto max-w-7xl">
-                <h2 className="mb-4 text-center text-5xl font-black text-white" style={{ textShadow: "0 0 12px rgba(0, 191, 255, 0.5)" }}>اكتشف كنوز المعرفة</h2>
-                <p className="mb-16 text-center text-lg text-gray-400">كورسات مصممة بعناية فائقة لتأخذك في رحلة من الأساسيات إلى الإتقان.</p>
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-                    {courses?.data?.map((course) => (
-                        <div key={course.id} className="group overflow-hidden rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-md transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-500/20 hover:border-cyan-500/30 transform hover:-translate-y-2">
-                           <div className="relative">
-                                <img src={course.image} alt={course.title} className="h-56 w-full object-cover transition-transform duration-500 group-hover:scale-105"/>
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                                <h3 className="absolute bottom-4 right-4 text-2xl font-bold text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.8)]">{course.title}</h3>
-                           </div>
-                           <div className="p-6">
-                                <p className="mb-4 text-gray-400 line-clamp-2 h-12">{course.description}</p>
-                                <div className="flex items-center justify-end text-cyan-400 font-semibold group-hover:text-cyan-300">
-                                    <span>استكشف الكورس</span>
-                                    <ArrowLeft className="mr-2 h-5 w-5 transition-transform duration-300 group-hover:-translate-x-1" />
-                                </div>
-                           </div>
+       <motion.section variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} id="courses" className="px-4 py-24">
+    <div className="mx-auto max-w-7xl">
+        <h2 className="mb-4 text-center text-5xl font-black text-white" style={{ textShadow: "0 0 12px rgba(0, 191, 255, 0.5)" }}>اكتشف كنوز المعرفة</h2>
+        <p className="mb-16 text-center text-lg text-gray-400">كورسات مصممة بعناية فائقة لتأخذك في رحلة من الأساسيات إلى الإتقان.</p>
+        
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {courses?.data?.map((course) => (
+                // --- التعديل هنا ---
+                <Link to={`/coursepreview/${course.id}`} key={course.id} className="block">
+                    <motion.div 
+                        variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0 } }}
+                        className="group h-full flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-md transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-500/20 hover:border-cyan-500/30 transform hover:-translate-y-2"
+                    >
+                        <div className="relative">
+                            <img src={course.image} alt={course.title} className="h-56 w-full object-cover transition-transform duration-500 group-hover:scale-105"/>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                            <h3 className="absolute bottom-4 right-4 text-2xl font-bold text-white [text-shadow:0_2px_4px_rgba(0,0,0,0.8)]">{course.title}</h3>
                         </div>
-                    ))}
-                </div>
-            </div>
-        </motion.section>
+                        <div className="p-6 flex flex-col flex-grow">
+                            <p className="mb-4 text-gray-400 line-clamp-2 h-12">{course.description}</p>
+                            <div className="flex items-center justify-end text-cyan-400 font-semibold mt-auto group-hover:text-cyan-300">
+                                <span>استكشف الكورس</span>
+                                <ArrowLeft className="mr-2 h-5 w-5 transition-transform duration-300 group-hover:-translate-x-1" />
+                            </div>
+                        </div>
+                    </motion.div>
+                </Link>
+            ))}
+        </div>
+    </div>
+</motion.section>
 
         <motion.section variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} id="teachers" className="bg-black/30 px-4 py-24">
-            <div className="mx-auto max-w-6xl text-center">
-                <h2 className="mb-4 text-5xl font-black text-white" style={{ textShadow: "0 0 12px rgba(0, 191, 255, 0.5)" }}>انضم إلى كوكبة من أفضل المدرسين</h2>
-                <p className="mb-12 text-lg text-gray-400">نخبة من الخبراء والمبدعين في مجال التعليم، جاهزون لإلهامك.</p>
-                <CardSlider />
-                <div className="text-center mt-12">
-                  <Link to="/teacher-signup" className="rounded-lg bg-slate-800 border-2 border-slate-700 px-8 py-4 text-lg font-bold text-cyan-400 transition-all duration-300 hover:border-cyan-500 hover:text-white hover:scale-105">
-                    أنا مدرس وأريد الانضمام
-                  </Link>
-                </div>
-            </div>
-        </motion.section>
+    <div className="mx-auto max-w-6xl text-center">
+        <h2 className="mb-4 text-5xl font-black text-white" style={{ textShadow: "0 0 12px rgba(0, 191, 255, 0.5)" }}>انضم إلى كوكبة من أفضل المدرسين</h2>
+        <p className="mb-12 text-lg text-gray-400">نخبة من الخبراء والمبدعين في مجال التعليم، جاهزون لإلهامك.</p>
+        
+        {/* استدعاء المكون هنا بدون props */}
+        <CardSlider />
+
+        <div className="text-center mt-12">
+            <Link to="/teacher-signup" className="rounded-lg bg-slate-800 border-2 border-slate-700 px-8 py-4 text-lg font-bold text-cyan-400 transition-all duration-300 hover:border-cyan-500 hover:text-white hover:scale-105">
+                أنا مدرس وأريد الانضمام
+            </Link>
+        </div>
+    </div>
+</motion.section>
         
         <motion.section variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} id="leaderboard" className="px-4 py-24">
             <h2 className="mb-12 text-center text-5xl font-black text-white" style={{ textShadow: "0 0 12px rgba(0, 191, 255, 0.5)" }}>لوحة المتميزين</h2>

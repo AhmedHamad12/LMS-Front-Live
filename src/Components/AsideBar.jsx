@@ -18,6 +18,7 @@ import {
 
 export default function AsideBar() {
     const navigate = useNavigate();
+    
     const cookies = new Cookies();
 
     // دمج كل الروابط في مصفوفة واحدة لسهولة التعديل
@@ -34,7 +35,7 @@ export default function AsideBar() {
 
     const handleLogout = () => {
         cookies.remove('token', { path: '/' }); 
-        navigate('/login', { replace: true }); 
+        navigate('/', { replace: true }); 
     };
     
     // -- Component for Navigation Links for cleaner code --

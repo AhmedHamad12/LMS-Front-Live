@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, Printer, Facebook, Twitter, Instagram, Linkedin, Youtube, Tiktok  } from 'lucide-react';
+import { Mail, Phone, Printer, Facebook, Twitter, Instagram, Linkedin, Youtube   } from 'lucide-react';
 import { motion } from 'framer-motion';
-
+import { FaTiktok } from 'react-icons/fa';
 const Footer = () => {
     return (
         <>
@@ -45,7 +45,9 @@ const Footer = () => {
                             <a href="https://www.instagram.com/elmohdra/" className="text-slate-400 hover:text-cyan-400 transition-colors"><Instagram size={20} /></a>
                             <a href="https://www.linkedin.com/company/elmohdra" className="text-slate-400 hover:text-cyan-400 transition-colors"><Linkedin size={20} /></a>
                             <a href="https://www.youtube.com/@elmohdra" className="text-slate-400 hover:text-cyan-400 transition-colors"><Youtube size={20} /></a>
-                            <a href="https://www.tiktok.com/@elmohdra" className="text-slate-400 hover:text-cyan-400 transition-colors"><Tiktok size={20} /></a>
+                            <a href="https://www.tiktok.com/@elmohdra" className="text-slate-400 hover:text-cyan-400 transition-colors">
+                    <FaTiktok size={20} />
+                </a>
                         </div>
                     </div>
 

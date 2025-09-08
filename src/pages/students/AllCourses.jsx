@@ -75,7 +75,7 @@ const CourseCard = ({ course, isEnrolled, isLoading, onEnroll, couponValue, onCo
                         <User size={16} className="ml-2 text-cyan-400" />
                         {/* رابط اسم المدرس يأخذك لصفحته الشخصية */}
                         <Link 
-                            to={`/teachers/${course.teacherId}`} 
+                            to={`/teacherprofile/${course.teacherId}`} 
                             className="hover:underline hover:text-white transition-colors relative z-20"
                             onClick={handleTeacherLinkClick}
                         >

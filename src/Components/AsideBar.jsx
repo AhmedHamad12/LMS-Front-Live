@@ -13,7 +13,8 @@ import {
     Gift, 
     User, 
     LogOut,
-    Rocket
+    Rocket,
+    Users // <--- الخطوة 1: استيراد أيقونة جديدة للمدرسين
 } from 'lucide-react';
 
 export default function AsideBar() {
@@ -25,6 +26,8 @@ export default function AsideBar() {
     const sidebarItems = [
         { href: "/student/dashboard", icon: <LayoutDashboard size={22} />, label: "لوحة التحكم" },
         { href: "/student/my-courses", icon: <BookCopy size={22} />, label: "كورساتي" },
+        // --- الخطوة 2: إضافة الرابط الجديد هنا ---
+        { href: "/student/teachers", icon: <Users size={22} />, label: "المدرسون" },
         { href: "/student/mytasks", icon: <ClipboardCheck size={22} />, label: "الواجبات" },
         { href: "/student/myexams", icon: <FileText size={22} />, label: "الامتحانات" },
         { href: "/student/leaderboard", icon: <Trophy size={22} />, label: "لوحة الشرف" },
@@ -33,9 +36,17 @@ export default function AsideBar() {
     
     const profileLink = { href: "/student/profile", icon: <User size={22} />, label: "الملف الشخصي" };
 
+    // --- الخطوة 3: تعديل دالة تسجيل الخروج ---
     const handleLogout = () => {
-        cookies.remove('token', { path: '/' }); 
-        navigate('/', { replace: true }); 
+        // هذه الدالة تحاول مسح الكوكي من جهة العميل (المتصفح)
+        // إذا لم تنجح، فالسبب غالباً موضح في الشرح بالأسفل
+        cookies.remove('token', { path: '/' });
+
+        // لإعادة التوجيه إلى الصفحة الرئيسية واستبدال التاريخ (history)
+        navigate('/', { replace: true });
+
+        // يمكنك أيضاً إعادة تحميل الصفحة للتأكد من تطبيق كل التغييرات
+        window.location.reload();
     };
     
     // -- Component for Navigation Links for cleaner code --
@@ -78,7 +89,7 @@ export default function AsideBar() {
         <aside className="h-screen flex w-20 flex-shrink-0 flex-col justify-between border-l border-white/5 bg-slate-900/50 p-2 backdrop-blur-xl transition-all duration-300 lg:w-64 lg:p-4">
             
             {/* Top Section: Logo and Navigation */}
-            <div className="flex flex-col flex-grow min-h-0"> {/* min-h-0 is crucial for flex-grow to work with overflow */}
+            <div className="flex flex-col flex-grow min-h-0">
                 {/* Logo */}
                 <div className="mb-12 text-center flex-shrink-0">
                     <Link to="/student/dashboard" className="text-3xl font-black text-white transition-colors hover:text-cyan-400 hidden lg:inline" style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}>

@@ -4,7 +4,31 @@
   padding: 2rem;
   text-align: center;
 }
+/* Custom Scrollbar for Webkit Browsers (Chrome, Safari, Edge) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px; /* عرض شريط التمرير */
+}
 
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #1e293b; /* لون الخلفية - اختر لوناً من باليتة ألوانك مثل slate-800 */
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #06b6d4; /* لون الشريط نفسه - اختر اللون الأساسي للمنصة مثل cyan-500 */
+  border-radius: 10px;
+  border: 2px solid #1e293b; /* لإعطاء مسافة بين الشريط والخلفية */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #22d3ee; /* لون الشريط عند مرور الماوس عليه - cyan-400 */
+}
+
+/* Custom Scrollbar for Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #06b6d4 #1e293b; /* (لون الشريط) (لون الخلفية) */
+}
 .logo {
   height: 6em;
   padding: 1.5em;

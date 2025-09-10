@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Cookies } from "react-cookie";
 import axios from "../../api/axios";
@@ -9,11 +9,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, Info, User, Tag, Check, Loader, Filter, Ticket } from "lucide-react";
 import Loading from "../../Components/Loading";
 
-// Lazy load the heavy 3D background for a massive performance boost
-const StarfieldBackground = lazy(() => import('../../Components/StarfieldBackground')); // Adjust path if needed
+const StarfieldBackground = lazy(() => import('../../Components/StarfieldBackground'));
 
 // ==================================================================
-// --- هنا يبدأ مكون الكارت الذي أرسلته لك ---
+// --- مكون الكارت مع التصحيح النهائي ---
 // ==================================================================
 const CourseCard = ({ course, isEnrolled, isLoading, onEnroll, couponValue, onCouponChange }) => {
     const cardVariants = {
@@ -29,20 +28,17 @@ const CourseCard = ({ course, isEnrolled, isLoading, onEnroll, couponValue, onCo
     
     const teacherName = course.firstName || "مدرس غير محدد";
 
-    // دالة خاصة لزر الاشتراك لمنع الرابط الرئيسي من العمل
     const handleEnrollClick = (e) => {
-        e.preventDefault(); // يمنع سلوك الرابط الافتراضي
-        e.stopPropagation(); // يمنع الحدث من الوصول للرابط الرئيسي
+        e.preventDefault();
+        e.stopPropagation();
         onEnroll();
     };
     
-    // دالة خاصة لرابط المدرس لمنع الرابط الرئيسي من العمل
     const handleTeacherLinkClick = (e) => {
-        e.stopPropagation(); // يمنع الحدث من الوصول للرابط الرئيسي
+        e.stopPropagation();
     };
 
     return (
-        // الكارت بالكامل مغلف برابط يأخذك لصفحة تفاصيل الكورس
         <Link to={`/coursepreview/${course.id}`} key={course.id} className="block">
             <motion.div
                 variants={cardVariants}
@@ -73,7 +69,6 @@ const CourseCard = ({ course, isEnrolled, isLoading, onEnroll, couponValue, onCo
                     
                     <div className="flex items-center text-gray-300 mb-4 text-sm">
                         <User size={16} className="ml-2 text-cyan-400" />
-                        {/* رابط اسم المدرس يأخذك لصفحته الشخصية */}
                         <Link 
                             to={`/teacherprofile/${course.teacherId}`} 
                             className="hover:underline hover:text-white transition-colors relative z-20"
@@ -85,7 +80,7 @@ const CourseCard = ({ course, isEnrolled, isLoading, onEnroll, couponValue, onCo
 
                     <div className="mt-auto space-y-4">
                         {!isEnrolled && !isLoading && (
-                            <div className="relative" onClick={(e) => e.stopPropagation()}>
+                            <div className="relative">
                                 <Ticket className="w-5 h-5 text-gray-400 absolute top-1/2 right-3 -translate-y-1/2" />
                                 <input
                                     type="text"
@@ -93,6 +88,12 @@ const CourseCard = ({ course, isEnrolled, isLoading, onEnroll, couponValue, onCo
                                     onChange={onCouponChange}
                                     placeholder="كود الخصم (اختياري)"
                                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 pr-10 focus:outline-none focus:bg-black/40 focus:border-cyan-400 transition-all text-white placeholder-gray-500"
+                                    // *** 👇👇👇 هذا هو التصحيح الأهم ***
+                                    // نضع الـ onClick هنا مباشرة على الـ input
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                    }}
                                 />
                             </div>
                         )}
@@ -114,10 +115,8 @@ const CourseCard = ({ course, isEnrolled, isLoading, onEnroll, couponValue, onCo
         </Link>
     );
 };
-// ==================================================================
-// --- هنا ينتهي مكون الكارت ---
-// ==================================================================
 
+// ... باقي الملف يبقى كما هو بدون تغيير ...
 
 // --- المكون الرئيسي للصفحة ---
 const AllCourses = () => {

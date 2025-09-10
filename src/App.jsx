@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-
+import LeaderboardPage from "./pages/students/LeaderboardPage.jsx";
 // Contexts & Auth
 import { AuthProvider } from "./contexts/AuthContext.jsx";
 import { useAuth } from "./hooks/useAuth";
@@ -76,6 +76,9 @@ import TeacherProfile from './pages/teacher/TeacherProfile';
 import TeacherAssignments from "./pages/teacher/TeacherAssignments.jsx";
 import AssignmentSubmissions from "./pages/teacher/AssignmentSubmissions.jsx";
 import CoursePreview from "./pages/teacher/CoursePreview.jsx";
+import AllTeachers from "./pages/students/Teachers.jsx";
+import MyTeacherProfile from "./pages/teacher/profile.jsx";
+import MyStudentProfile from "./pages/students/Profile";
 // Wire auth context with axios
 
 const AuthInitializer = () => {
@@ -124,6 +127,7 @@ function App() {
                 <Route path="quizzes" element={<Quizzes />} />
                 <Route path="quizzes/create" element={<CreateQuiz />} />
                 <Route path="profile" element={<TeacherProfile />} />
+                <Route path="Myprofile" element={<MyTeacherProfile />} />
                 <Route path="assignments" element={<TeacherAssignments />} />
                 <Route 
           path="/teacher/assignments/:assignmentId/submissions" 
@@ -159,8 +163,10 @@ function App() {
                 <Route path="rewards" element={<Rewards />} />
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="mycourses" element={<MyCourses />} />
-                <Route path="profile" element={<Profile />} />
+                <Route path="profile" element={<MyStudentProfile />} />
                 <Route path="prize" element={<Prize />} />
+                <Route path="teachers" element={<AllTeachers />} />
+                 <Route path="leaderboard" element={<LeaderboardPage />} />
               </Route>
 
               {/* Auth */}

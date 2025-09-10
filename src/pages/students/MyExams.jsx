@@ -88,9 +88,9 @@ const ExamCard = ({ exam, onStart }) => (
         <div>
             <div className="flex justify-between items-start">
                 <p className="text-sm font-bold text-cyan-300">{exam.course}</p>
-                <span className={`text-xs font-bold px-3 py-1 rounded-full flex items-center gap-2 ${exam.status === "new" ? "text-yellow-300 bg-yellow-500/20" : exam.status === "graded" ? "text-green-300 bg-green-500/20" : exam.status === "missed" ? "text-red-300 bg-red-500/20" : "text-blue-300 bg-blue-500/20"}`}>
-                    {{ "new": <File size={14}/>, "graded": <CheckCircle size={14}/>, "missed": <XCircle size={14}/>, "processing": <Clock size={14}/> }[exam.status]}
-                    {{ "new": "جديد", "graded": "تم التقييم", "missed": "فائت", "processing": "قيد المعالجة" }[exam.status]}
+                <span className={`text-xs font-bold px-3 py-1 rounded-full flex items-center gap-2 ${exam.status === "NotStarted" ? "text-yellow-300 bg-yellow-500/20" : exam.status === "Completed" ? "text-green-300 bg-green-500/20" : exam.status === "missed" ? "text-red-300 bg-red-500/20" : "text-blue-300 bg-blue-500/20"}`}>
+                    {{ "NotStarted": <File size={14}/>, "Completed": <CheckCircle size={14}/>, "missed": <XCircle size={14}/>, "processing": <Clock size={14}/> }[exam.status]}
+                    {{ "NotStarted": "جديد", "Completed": "تم التقييم", "missed": "فائت", "processing": "قيد المعالجة" }[exam.status]}
                 </span>
             </div>
             <h3 className="text-xl font-bold text-white mt-1 mb-4">{exam.title}</h3>
@@ -101,15 +101,15 @@ const ExamCard = ({ exam, onStart }) => (
                 <div><p className="font-bold text-lg text-white">{exam.points}</p><p className="text-xs text-gray-400">نقطة</p></div>
             </div>
         </div>
-        {exam.status === "new" && <button onClick={onStart} className="w-full text-center block p-3 rounded-lg bg-cyan-500 text-black font-bold hover:bg-cyan-400 transition-colors">ابدأ الامتحان</button>}
-        {exam.status === "graded" && <button className="w-full text-center block p-3 rounded-lg bg-gray-700 text-white font-bold hover:bg-gray-600 transition-colors">عرض التقرير</button>}
+        {exam.status === "NotStarted" && <button onClick={onStart} className="w-full text-center block p-3 rounded-lg bg-cyan-500 text-black font-bold hover:bg-cyan-400 transition-colors">ابدأ الامتحان</button>}
+        {exam.status === "Completed" && <button className="w-full text-center block p-3 rounded-lg bg-gray-700 text-white font-bold hover:bg-gray-600 transition-colors">عرض التقرير</button>}
         {exam.status === "missed" && <button className="w-full text-center block p-3 rounded-lg bg-red-800/50 text-red-300 font-bold cursor-not-allowed">فات الموعد</button>}
         {exam.status === "processing" && <button className="w-full text-center block p-3 rounded-lg bg-blue-800/50 text-blue-300 font-bold cursor-not-allowed">جاري التصحيح</button>}
     </motion.div>
 );
 
 const MyExams = () => {
-    const [filter, setFilter] = useState("new");
+    const [filter, setFilter] = useState("NotStarted");
     const [showStartModal, setShowStartModal] = useState(false);
     const [showExamInterface, setShowExamInterface] = useState(false);
     const [currentExam, setCurrentExam] = useState(null);
@@ -126,7 +126,7 @@ const MyExams = () => {
                 return response.data.map(exam => ({
                     id: exam.id, course: exam.courseName, title: exam.title,
                     statusNum: exam.QuizAttemptStatus,
-                    status: ["new", "processing", "graded", "missed"][exam.QuizAttemptStatus - 1],
+                    status: ["NotStarted", "processing", "Completed", "missed"][exam.QuizAttemptStatus - 1],
                     questions: exam.questions, time: exam.time, score: exam.score, points: exam.totalScore,
                     deadline: new Date(exam.deadline).toLocaleString("ar-EG", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }),
                     rank: exam.rank,

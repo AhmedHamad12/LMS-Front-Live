@@ -4,48 +4,51 @@ import axios from "../../api/axios";
 import { Cookies } from "react-cookie";
 import { useQuery } from "@tanstack/react-query";
 import Loading from "../../Components/Loading";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import { Award, Star, FileText, Bell, ChevronDown, BookOpen, Crown } from "lucide-react";
+import { Award, Star, FileText, Bell, Crown, ArrowLeft } from "lucide-react";
 
-// Lazy load the heavy 3D background
 const StarfieldBackground = lazy(() => import('../../Components/StarfieldBackground'));
 
-// --- Skeleton Loader Components ---
-const StatCardSkeleton = () => (
-    <div className="glass-effect p-6 rounded-2xl animate-pulse">
-        <div className="h-6 w-3/4 bg-slate-700 rounded mb-4"></div>
-        <div className="h-10 w-1/2 bg-slate-700 rounded"></div>
-    </div>
-);
-const ListSkeleton = ({ items = 3 }) => (
-    <div className="space-y-4">
-        {Array.from({ length: items }).map((_, i) => (
-            <div key={i} className="glass-effect p-4 rounded-2xl flex items-center gap-4 animate-pulse">
-                <div className="w-16 h-16 bg-slate-700 rounded-lg"></div>
-                <div className="flex-1 space-y-2">
-                    <div className="h-5 w-3/4 bg-slate-700 rounded"></div>
-                    <div className="h-4 w-1/2 bg-slate-700 rounded"></div>
-                </div>
-            </div>
-        ))}
-    </div>
-);
+// --- Skeleton Loaders ---
+const StatCardSkeleton = () => ( <div className="glass-effect p-6 rounded-2xl animate-pulse"><div className="h-6 w-3/4 bg-slate-700 rounded mb-4"></div><div className="h-10 w-1/2 bg-slate-700 rounded"></div></div> );
+const ListSkeleton = ({ items = 3 }) => ( <div className="space-y-4">{Array.from({ length: items }).map((_, i) => ( <div key={i} className="glass-effect p-4 rounded-2xl flex items-center gap-4 animate-pulse"><div className="w-16 h-16 bg-slate-700 rounded-lg flex-shrink-0"></div><div className="flex-1 space-y-2"><div className="h-5 w-3/4 bg-slate-700 rounded"></div><div className="h-4 w-1/2 bg-slate-700 rounded"></div></div></div> ))}</div> );
 
-
-// --- Helper Components (No Changes) ---
+// --- Helper Components ---
 const StatCard = ({ icon, title, value, subtext, colorClass, link }) => ( <Link to={link}><motion.div variants={{hidden:{opacity:0,y:20},visible:{opacity:1,y:0}}} whileHover={{y:-5,scale:1.02}} className={`glass-effect p-6 rounded-2xl flex flex-col justify-between h-full border ${colorClass} transition-colors hover:bg-slate-800/50`}><div className="flex justify-between items-start"><p className="font-bold text-white text-lg">{title}</p>{icon}</div><div><p className="text-4xl font-black text-white mt-2">{value}</p>{subtext && <p className="text-sm text-gray-400">{subtext}</p>}</div></motion.div></Link> );
-const CourseAccordionItem = ({ course, isOpen, onToggle }) => ( <div className="overflow-hidden rounded-2xl glass-effect my-2"><button onClick={onToggle} className="flex w-full items-center justify-between p-4 sm:p-6 text-right transition-colors hover:bg-white/5"><div className="flex items-center gap-4"><div className="h-fit rounded-lg bg-cyan-500/10 p-3"><BookOpen className="h-6 w-6 text-cyan-400"/></div><div><h3 className="text-lg sm:text-xl font-bold text-white">{course.title}</h3><p className="text-sm text-gray-400">تاريخ الانضمام: {new Date(course.enrolledAt).toLocaleDateString("ar-EG")}</p></div></div><ChevronDown className={`h-6 w-6 transform text-cyan-400 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}/></button><AnimatePresence>{isOpen && ( <motion.div initial={{height:0,opacity:0}} animate={{height:'auto',opacity:1}} exit={{height:0,opacity:0}} transition={{duration:0.3,ease:"easeInOut"}} className="border-t border-white/10 px-4 sm:px-6"><div className="py-6 space-y-4">{course.units.length > 0 ? course.units.map(unit => ( <div key={unit.id} className="p-3 bg-black/20 rounded-lg"><p className="font-bold text-white">{unit.title}</p><p className="text-sm text-gray-300">{unit.description}</p></div> )) : <p className="text-gray-400">لا توجد وحدات متاحة في هذا الكورس بعد.</p>}</div></motion.div> )}</AnimatePresence></div> );
 const LeaderboardItem = ({ student, rank }) => { const rankColors = { 1: "bg-yellow-500/20 border-yellow-400 text-yellow-400 shadow-lg shadow-yellow-500/10", 2: "bg-slate-500/20 border-slate-400 text-slate-300", 3: "bg-orange-700/20 border-orange-500 text-orange-400", }; const rankClass = rankColors[rank] || "bg-cyan-900/40 border-transparent"; return ( <div className={`flex items-center justify-between rounded-lg p-3 transition-all duration-300 border ${rankClass}`}><div className="flex items-center gap-4"><span className={`text-xl font-bold w-8 text-center`}>{rank}</span><span className="font-bold text-white">{student.firstName} {student.lastName}</span></div><div className="flex items-center gap-2 text-cyan-300"><span className="font-bold">{student.score}</span><Star size={16}/></div></div> ); };
 
+// --- 1. مكون جديد لعرض الكورس في القائمة ---
+const CourseListItem = ({ course }) => (
+    <Link to={`/student/course/data/${course.id}`}>
+        <motion.div
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+            whileHover={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
+            className="glass-effect p-4 rounded-2xl flex items-center gap-4 transition-colors"
+        >
+            <img src={course.courseImage} alt={course.title} className="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-white truncate">{course.title}</h3>
+                <div className="flex justify-between items-center mt-2 text-sm">
+                    <span className="font-bold text-cyan-400">تقدمك</span>
+                    <span className="text-gray-300 font-semibold">{Math.round(course.progress)}%</span>
+                </div>
+                <div className="w-full bg-slate-700 rounded-full h-1.5 mt-1">
+                    <div className="bg-gradient-to-r from-cyan-500 to-blue-500 h-1.5 rounded-full" style={{ width: `${course.progress}%` }}></div>
+                </div>
+            </div>
+            <ArrowLeft className="text-slate-500 flex-shrink-0" />
+        </motion.div>
+    </Link>
+);
 
+
+// --- Main Dashboard Component ---
 export default function Dashboard() {
-    const [openCourseIndex, setOpenCourseIndex] = useState(0); // Open first course by default
     const mainContentRef = useRef(null);
     const cookies = new Cookies();
     const token = cookies.get("token");
 
-    // --- 1. تفكيك طلبات الـ API ---
     const STALE_TIME = 5 * 60 * 1000; // 5 minutes
 
     const useStudentData = (endpoint, queryKey) => {
@@ -56,24 +59,26 @@ export default function Dashboard() {
                 return data;
             },
             refetchOnWindowFocus: false,
-            staleTime: STALE_TIME, // Data is fresh for 5 minutes
+            staleTime: STALE_TIME,
             retry: (failureCount, error) => error.response?.status === 404 ? false : failureCount < 2,
         });
     };
 
     const { data: userScore, isLoading: isScoreLoading } = useStudentData("/api/Student/GetStudentRankAndScore", "studentScore");
     const { data: userAssignments, isLoading: areAssignmentsLoading } = useStudentData(`/api/Assignment/GetAssignmentsForStudent?category=1`, "studentAssignments");
-    const { data: enrollCourses, isLoading: areCoursesLoading } = useStudentData(`/api/StudentCourse/MyCoursesWithUnits`, "studentCoursesWithUnits");
+    
+    // --- 2. تغيير رابط الـ API هنا لنسخة أسرع ---
+    const { data: enrollCourses, isLoading: areCoursesLoading } = useStudentData(`/api/StudentCourse/MyCourses`, "studentCourses");
+    
     const { data: topStudents, isLoading: areTopStudentsLoading } = useStudentData('/api/LandingPadge/TopStudents', "topStudents");
     
-    // Dependent query for notifications
     const { data: notifications, isLoading: areNotificationsLoading } = useQuery({
         queryKey: ["studentNotifications", userScore?.id],
         queryFn: async () => {
             const { data } = await axios.get(`/api/Notification/student/${userScore.id}`, { headers: { Authorization: `Bearer ${token}` } });
             return data;
         },
-        enabled: !!userScore?.id, // Only run this query when userScore.id is available
+        enabled: !!userScore?.id,
         refetchOnWindowFocus: false,
         staleTime: STALE_TIME,
     });
@@ -96,13 +101,17 @@ export default function Dashboard() {
                 </motion.div>
 
                 <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-3">
-                    <div className="space-y-8 lg:col-span-2">
-                        <h2 className="text-3xl font-bold text-white title-glow">مهماتك الحالية (الكورسات)</h2>
+                    <div className="space-y-4 lg:col-span-2">
+                        <h2 className="text-3xl font-bold text-white title-glow mb-2">مهماتك الحالية (الكورسات)</h2>
+                        
+                        {/* --- 3. استبدال الأكورديون بالقائمة الجديدة --- */}
                         {areCoursesLoading ? <ListSkeleton items={2} /> : (
                             enrollCourses?.length > 0 ? (
-                                enrollCourses.map((course, index) => (
-                                    <CourseAccordionItem key={course.id} course={course} isOpen={openCourseIndex === index} onToggle={() => setOpenCourseIndex(openCourseIndex === index ? null : index)} />
-                                ))
+                                <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.1 } } }}>
+                                    {enrollCourses.map((course) => (
+                                        <div key={course.id} className="my-3"><CourseListItem course={course} /></div>
+                                    ))}
+                                </motion.div>
                             ) : (
                                 <div className="glass-effect text-center p-12 rounded-2xl"><p className="text-gray-400">لم تشترك في أي كورس بعد. حان وقت الانطلاق!</p><Link to="/student/allcourses" className="inline-block mt-4 rounded-lg bg-purple-600 px-6 py-2 font-bold text-white transition-colors hover:bg-purple-500">اكتشف الكورسات</Link></div>
                             )
@@ -126,7 +135,7 @@ export default function Dashboard() {
                             <div className="space-y-2">
                                {areTopStudentsLoading ? <ListSkeleton items={3} /> : (
                                    topStudents?.length > 0 ? topStudents.slice(0, 5).map((student, index) => (
-                                       <LeaderboardItem key={student.id} student={student} rank={index + 1} />
+                                       <LeaderboardItem key={student.id || index} student={student} rank={index + 1} />
                                    )) : <p className="text-gray-400 text-center py-4">لا يوجد طلاب في لوحة الشرف بعد.</p>
                                )}
                             </div>

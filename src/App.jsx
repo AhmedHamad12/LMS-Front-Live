@@ -31,7 +31,7 @@ import CreateQuiz from "./pages/teacher/CreateQuiz";
 import Submissions from "./pages/teacher/Submissions";
 import DetailedSubmissions from "./pages/teacher/DetailedSubmissions.jsx";
 import AddAssignment from "./pages/teacher/AddAssignment";
-
+import ExamAttempt from "./pages/students/ExamAttempt.jsx";
 // Pages - Students
 import Students from "./pages/students/Students";
 import AllCourses from "./pages/students/AllCourses";
@@ -79,6 +79,7 @@ import CoursePreview from "./pages/teacher/CoursePreview.jsx";
 import AllTeachers from "./pages/students/Teachers.jsx";
 import MyTeacherProfile from "./pages/teacher/profile.jsx";
 import MyStudentProfile from "./pages/students/Profile";
+import CoursePlayerPage from "./pages/students/Course";
 // Wire auth context with axios
 
 const AuthInitializer = () => {
@@ -157,13 +158,14 @@ function App() {
               <Route path="course" element={<Course />} />
               <Route path="/student" element={<Students />}>
                 <Route path="allcourses" element={<AllCourses />} />
-                <Route path="course/data/:courseId" element={<CourseData />} />
+                <Route path="course/data/:courseId" element={<CoursePlayerPage />} />
                 <Route path="mytasks" element={<MyTasks />} />
                 <Route path="myexams" element={<MyExams />} />
                 <Route path="rewards" element={<Rewards />} />
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="mycourses" element={<MyCourses />} />
                 <Route path="profile" element={<MyStudentProfile />} />
+                <Route path="exam/:examId" element={<ExamAttempt />} />
                 <Route path="prize" element={<Prize />} />
                 <Route path="teachers" element={<AllTeachers />} />
                  <Route path="leaderboard" element={<LeaderboardPage />} />

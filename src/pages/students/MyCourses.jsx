@@ -2,129 +2,130 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Cookies } from "react-cookie";
 import * as THREE from "three";
 import axios from "../../api/axios";
-import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
+// <-- 1. استيراد useQueryClient
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Zap, CheckCircle, Award, PlayCircle, Star, Info } from "lucide-react";
+import { BookOpen, Zap, CheckCircle, Award, PlayCircle, Star, Info, Check } from "lucide-react";
 import Loading from "../../Components/Loading";
+import { toast } from "react-hot-toast";
 
-// --- المكونات المساعدة ---
-
+// --- المكونات المساعدة (تبقى كما هي) ---
 const StatCard = ({ icon, label, value, color }) => (
-  <div className="glass-effect p-6 rounded-2xl flex items-center gap-4">
-    <div className={`p-3 rounded-xl ${color}`}>{icon}</div>
-    <div>
-      <p className="text-gray-400 text-sm">{label}</p>
-      <p className="text-2xl font-bold text-white">{value}</p>
-    </div>
-  </div>
-);
-
-const DashboardHeader = ({ counts }) => (
-  <motion.div
-    initial={{ opacity: 0, y: -20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-    className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
-  >
-    <StatCard icon={<BookOpen size={24} className="text-white" />} label="إجمالي الكورسات" value={counts.all} color="bg-blue-500/30" />
-    <StatCard icon={<Zap size={24} className="text-white" />} label="قيد التقدم" value={counts.inProgress} color="bg-cyan-500/30" />
-    <StatCard icon={<CheckCircle size={24} className="text-white" />} label="كورسات مكتملة" value={counts.completed} color="bg-green-500/30" />
-  </motion.div>
-);
-
-const CircularProgress = ({ progress }) => {
-  const radius = 38;
-  const stroke = 7;
-  const normalizedRadius = radius - stroke / 2;
-  const circumference = normalizedRadius * 2 * Math.PI;
-  const strokeDashoffset = circumference - (progress / 100) * circumference;
-  const progressColor = progress >= 100 ? 'stroke-green-500' : 'stroke-cyan-400';
-
-  return (
-    <div className="relative w-24 h-24">
-      <svg height="100%" width="100%" viewBox="0 0 100 100" className="-rotate-90">
-        <circle className="stroke-slate-700" strokeWidth={stroke} fill="transparent" r={normalizedRadius} cx="50" cy="50" />
-        <motion.circle
-          className={progressColor}
-          strokeWidth={stroke}
-          strokeDasharray={`${circumference} ${circumference}`}
-          style={{ strokeDashoffset }}
-          strokeLinecap="round"
-          fill="transparent"
-          r={normalizedRadius}
-          cx="50"
-          cy="50"
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset }}
-          transition={{ duration: 1.5, ease: "easeInOut" }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg">
-        {progress >= 100 ? <Check size={30} className="text-green-500" /> : `${Math.round(progress)}%`}
+    <div className="glass-effect p-6 rounded-2xl flex items-center gap-4">
+      <div className={`p-3 rounded-xl ${color}`}>{icon}</div>
+      <div>
+        <p className="text-gray-400 text-sm">{label}</p>
+        <p className="text-2xl font-bold text-white">{value}</p>
       </div>
     </div>
   );
-};
-
-const CourseCard = ({ course, navigate }) => {
-  const progress = course.progress || 0;
-  const buttonInfo = useMemo(() => {
-    if (progress >= 100) return { text: "عرض الشهادة", icon: <Award size={20} />, style: "from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500" };
-    if (progress > 0) return { text: "أكمل الرحلة", icon: <PlayCircle size={20} />, style: "from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500" };
-    return { text: "ابدأ الرحلة", icon: <Star size={20} />, style: "from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500" };
-  }, [progress]);
-
-  return (
+  
+  const DashboardHeader = ({ counts }) => (
     <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.8 }}
-      transition={{ duration: 0.4 }}
-      className="glass-effect group flex flex-col overflow-hidden rounded-2xl transition-all duration-300 hover:border-cyan-400/30 hover:shadow-[0_8px_40px_rgba(0,191,255,0.25)]"
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
     >
-      <img src={course.courseImage} alt={course.title} className="h-48 w-full object-cover" />
-      <div className="flex flex-grow flex-col p-6">
-        <div className="flex justify-between items-start gap-4">
-          <h3 className="mb-2 text-xl font-bold text-white group-hover:text-cyan-400 transition-colors">
-            {course.title}
-          </h3>
-          <CircularProgress progress={progress} />
-        </div>
-        <p className="mb-4 text-sm text-gray-400 flex-grow">{course.description}</p>
-        <button
-          onClick={() => navigate(`/course/${course.id}`)}
-          className={`mt-auto w-full flex items-center justify-center gap-2 rounded-lg p-3 text-center font-bold text-white transition-all transform hover:scale-105 bg-gradient-to-r ${buttonInfo.style}`}
-        >
-          {buttonInfo.icon}
-          {buttonInfo.text}
-        </button>
-      </div>
+      <StatCard icon={<BookOpen size={24} className="text-white" />} label="إجمالي الكورسات" value={counts.all} color="bg-blue-500/30" />
+      <StatCard icon={<Zap size={24} className="text-white" />} label="قيد التقدم" value={counts.inProgress} color="bg-cyan-500/30" />
+      <StatCard icon={<CheckCircle size={24} className="text-white" />} label="كورسات مكتملة" value={counts.completed} color="bg-green-500/30" />
     </motion.div>
   );
-};
-
-const EmptyState = ({ filter, setFilter }) => (
-    <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="col-span-full text-center py-16"
-    >
-        <Info size={56} className="mx-auto text-gray-600 mb-4" />
-        <h3 className="text-xl font-bold text-white">
-            {filter === "completed" && "لا توجد كورسات مكتملة بعد"}
-            {filter === "in-progress" && "لا توجد كورسات قيد التقدم حالياً"}
-            {filter === "all" && "لم تشترك في أي كورس بعد"}
-        </h3>
-        <p className="text-gray-400 mb-6">
-            {filter !== "all" ? "جرّب تغيير الفلتر أو ابدأ كورسًا جديدًا!" : "اكتشف الكورسات المتاحة وانطلق في رحلتك."}
-        </p>
-        <Link to="/student/allcourses" className="text-cyan-400 hover:text-cyan-300 font-bold underline transition-colors">
-            اكتشف كورسات جديدة
-        </Link>
-    </motion.div>
-);
+  
+  const CircularProgress = ({ progress }) => {
+    const radius = 38;
+    const stroke = 7;
+    const normalizedRadius = radius - stroke / 2;
+    const circumference = normalizedRadius * 2 * Math.PI;
+    const strokeDashoffset = circumference - (progress / 100) * circumference;
+    const progressColor = progress >= 100 ? 'stroke-green-500' : 'stroke-cyan-400';
+  
+    return (
+      <div className="relative w-24 h-24">
+        <svg height="100%" width="100%" viewBox="0 0 100 100" className="-rotate-90">
+          <circle className="stroke-slate-700" strokeWidth={stroke} fill="transparent" r={normalizedRadius} cx="50" cy="50" />
+          <motion.circle
+            className={progressColor}
+            strokeWidth={stroke}
+            strokeDasharray={`${circumference} ${circumference}`}
+            style={{ strokeDashoffset }}
+            strokeLinecap="round"
+            fill="transparent"
+            r={normalizedRadius}
+            cx="50"
+            cy="50"
+            initial={{ strokeDashoffset: circumference }}
+            animate={{ strokeDashoffset }}
+            transition={{ duration: 1.5, ease: "easeInOut" }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg">
+          {progress >= 100 ? <Check size={30} className="text-green-500" /> : `${Math.round(progress)}%`}
+        </div>
+      </div>
+    );
+  };
+  
+  const CourseCard = ({ course, navigate }) => {
+    const progress = course.progress || 0;
+    const buttonInfo = useMemo(() => {
+      if (progress >= 100) return { text: "عرض الشهادة", icon: <Award size={20} />, style: "from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500" };
+      if (progress > 0) return { text: "أكمل الرحلة", icon: <PlayCircle size={20} />, style: "from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500" };
+      return { text: "ابدأ الرحلة", icon: <Star size={20} />, style: "from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500" };
+    }, [progress]);
+  
+    return (
+      <motion.div
+        layout
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.8 }}
+        transition={{ duration: 0.4 }}
+        className="glass-effect group flex flex-col overflow-hidden rounded-2xl transition-all duration-300 hover:border-cyan-400/30 hover:shadow-[0_8px_40px_rgba(0,191,255,0.25)]"
+      >
+        <img src={course.courseImage} alt={course.title} className="h-48 w-full object-cover" />
+        <div className="flex flex-grow flex-col p-6">
+          <div className="flex justify-between items-start gap-4">
+            <h3 className="mb-2 text-xl font-bold text-white group-hover:text-cyan-400 transition-colors">
+              {course.title}
+            </h3>
+            <CircularProgress progress={progress} />
+          </div>
+          <p className="mb-4 text-sm text-gray-400 flex-grow">{course.description}</p>
+          <button
+            onClick={() => navigate(`/student/course/data/${course.id}`)}
+            className={`mt-auto w-full flex items-center justify-center gap-2 rounded-lg p-3 text-center font-bold text-white transition-all transform hover:scale-105 bg-gradient-to-r ${buttonInfo.style}`}
+          >
+            {buttonInfo.icon}
+            {buttonInfo.text}
+          </button>
+        </div>
+      </motion.div>
+    );
+  };
+  
+  const EmptyState = ({ filter, setFilter }) => (
+      <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="col-span-full text-center py-16"
+      >
+          <Info size={56} className="mx-auto text-gray-600 mb-4" />
+          <h3 className="text-xl font-bold text-white">
+              {filter === "completed" && "لا توجد كورسات مكتملة بعد"}
+              {filter === "in-progress" && "لا توجد كورسات قيد التقدم حالياً"}
+              {filter === "all" && "لم تشترك في أي كورس بعد"}
+          </h3>
+          <p className="text-gray-400 mb-6">
+              {filter !== "all" ? "جرّب تغيير الفلتر أو ابدأ كورسًا جديدًا!" : "اكتشف الكورسات المتاحة وانطلق في رحلتك."}
+          </p>
+          <Link to="/student/allcourses" className="text-cyan-400 hover:text-cyan-300 font-bold underline transition-colors">
+              اكتشف كورسات جديدة
+          </Link>
+      </motion.div>
+  );
 
 // --- المكون الرئيسي ---
 export default function MyCourses() {
@@ -134,9 +135,13 @@ export default function MyCourses() {
   const navigate = useNavigate();
   const cookies = new Cookies();
   const token = cookies.get("token");
+  const location = useLocation();
+  // <-- 2. تهيئة queryClient
+  const queryClient = useQueryClient();
 
-  // --- منطق خلفية النجوم (Three.js) ---
+  // --- منطق خلفية النجوم (يبقى كما هو) ---
   useEffect(() => {
+    // ... الكود الخاص بالنجوم يبقى كما هو ...
     if (!canvasRef.current) return;
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -198,8 +203,51 @@ export default function MyCourses() {
   const { data: myCourses, isLoading } = useQuery({
     queryKey: ["myCourses"],
     queryFn: () => axios.get("/api/StudentCourse/MyCourses", { headers: { Authorization: `Bearer ${token}` } }),
-    enabled: !!token
+    enabled: !!token,
   });
+
+  // <-- 3. الكود الجديد والمحسن للتعامل مع العائد من الدفع
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const paymentStatus = params.get('paymentStatus');
+    const merchantOrderId = params.get('merchantOrderId');
+
+    // إذا كان الدفع ناجحًا ويوجد merchantOrderId، نفذ المنطق
+    if (paymentStatus === 'SUCCESS' && merchantOrderId) {
+      const verifyPaymentAndNotify = async () => {
+        try {
+          // استدعاء الـ API الجديد في الباك اند
+          const response = await axios.get(`/api/orders/by-merchant-order/${merchantOrderId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          
+          const courseTitle = response.data.courseTitle;
+
+          // عرض رسالة التهنئة بالاسم الصحيح للكورس
+          toast.success(`تم الاشتراك بنجاح في كورس "${courseTitle}"!`, {
+            duration: 4000, // 4 ثواني
+            position: 'top-center',
+          });
+
+        } catch (error) {
+          console.error("خطأ في جلب تفاصيل الطلب:", error);
+          // رسالة احتياطية في حال فشل جلب اسم الكورس
+          toast.success('تمت عملية الشراء بنجاح!', {
+            duration: 4000,
+            position: 'top-center',
+          });
+        } finally {
+          // 4. تحديث قائمة الكورسات تلقائيًا لتظهر فيها الدورة الجديدة
+          queryClient.invalidateQueries(['myCourses']);
+          // 5. تنظيف الرابط في كل الأحوال (نجاح أو فشل)
+          navigate('/student/mycourses', { replace: true });
+        }
+      };
+
+      verifyPaymentAndNotify();
+    }
+  }, [location, navigate, token, queryClient]); // تم تحديث الـ dependencies
+
 
   const { filteredCourses, counts } = useMemo(() => {
     const courses = myCourses?.data || [];

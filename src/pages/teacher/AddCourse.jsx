@@ -241,7 +241,7 @@ const AddCourse = () => {
                         إضافة الفصل الأول +
                     </button>
                     <button
-                        onClick={() => navigate(`/teacher/courses`)} // Adjust this link to your manage courses page
+                        onClick={() => navigate(`/teacher/dashboard`)} // Adjust this link to your manage courses page
                         className="w-full sm:w-auto px-8 py-3 rounded-lg bg-slate-700/80 text-white font-bold hover:bg-slate-600/80 transition-colors"
                     >
                         العودة للكورسات

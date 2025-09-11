@@ -150,6 +150,7 @@ const AddLesson = () => {
                 await createLesson({ videoId: info.videoId, videoFile: file });
                 setStateText("تم إنشاء الدرس ✅");
                 toast.success("تم إنشاء الدرس بنجاح!");
+                navigate("/teacher/dashboard")
                 delCache(fileKey(file));
                 // Reset form completely and go back to step 1
                 setTitle(""); setContent(""); setLessonImage(null); setVideoFile(null);

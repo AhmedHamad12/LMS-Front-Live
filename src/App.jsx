@@ -1,10 +1,11 @@
 import "./index.css";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+
 import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-
+import LeaderboardPage from "./pages/students/LeaderboardPage.jsx";
 // Contexts & Auth
 import { AuthProvider } from "./contexts/AuthContext.jsx";
 import { useAuth } from "./hooks/useAuth";
@@ -13,9 +14,10 @@ import UnauthorizedOverlay from "./Components/Auth/UnauthorizedOverlay";
 
 // UI & Components
 import BackgroundAnimation from "./Components/BackgroundAnimation";
-
+import ProtectedRoute from "./Components/ProtectedRoute";
 // Pages - Teacher
 import Teacher from "./pages/teacher/Teacher";
+
 import TeacherDashboard from "./pages/teacher/Dashboard";
 import TeacherStudents from "./pages/teacher/Students";
 import Earn from "./pages/teacher/Earn";
@@ -29,7 +31,7 @@ import CreateQuiz from "./pages/teacher/CreateQuiz";
 import Submissions from "./pages/teacher/Submissions";
 import DetailedSubmissions from "./pages/teacher/DetailedSubmissions.jsx";
 import AddAssignment from "./pages/teacher/AddAssignment";
-
+import ExamAttempt from "./pages/students/ExamAttempt.jsx";
 // Pages - Students
 import Students from "./pages/students/Students";
 import AllCourses from "./pages/students/AllCourses";
@@ -61,6 +63,7 @@ import Email from "./pages/auth/Reset password/Email";
 import OTP from "./pages/auth/Reset password/OTP";
 import ResetPassword from "./pages/auth/Reset password/ResetPassword";
 
+
 // Pages - Others
 import Home from "./pages/Home";
 import AIPage from "./pages/AIPage";
@@ -69,8 +72,16 @@ import LessonData from "./pages/teacher/LessonData.jsx";
 import UpdateLesson from "./pages/teacher/UpdateLesson.jsx";
 import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 import Waiting from "./pages/teacher/Waiting.jsx";
-
+import TeacherProfile from './pages/teacher/TeacherProfile';
+import TeacherAssignments from "./pages/teacher/TeacherAssignments.jsx";
+import AssignmentSubmissions from "./pages/teacher/AssignmentSubmissions.jsx";
+import CoursePreview from "./pages/teacher/CoursePreview.jsx";
+import AllTeachers from "./pages/students/Teachers.jsx";
+import MyTeacherProfile from "./pages/teacher/profile.jsx";
+import MyStudentProfile from "./pages/students/Profile";
+import CoursePlayerPage from "./pages/students/Course";
 // Wire auth context with axios
+
 const AuthInitializer = () => {
   const { showUnauthorizedOverlay } = useAuth();
 
@@ -81,11 +92,13 @@ const AuthInitializer = () => {
   return null;
 };
 
+
 function App() {
   const queryClient = new QueryClient();
 
   return (
     <QueryClientProvider client={queryClient}>
+
       <GoogleReCaptchaProvider reCaptchaKey="6LcoPL0rAAAAAO7qYR94bHWxlml-PK7KzzEtj2rR">
         <AuthProvider>
           <AuthInitializer />
@@ -96,8 +109,11 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/ai" element={<AIPage />} />
               <Route path="/waiting" element={<Waiting />} />
-
+              <Route path="/coursepreview/:courseId" element={<CoursePreview />} />
+              <Route path="/teacherProfile/:teacherId" element={<TeacherProfile />} />
+              
               {/* Teacher */}
+              <Route element={<ProtectedRoute />}>
               <Route path="/teacher" element={<Teacher />}>
                 <Route path="addlesson" element={<AddLesson />} />
                 <Route path="addchapter" element={<AddChapter />} />
@@ -111,6 +127,13 @@ function App() {
                 <Route path="add/assignment" element={<AddAssignment />} />
                 <Route path="quizzes" element={<Quizzes />} />
                 <Route path="quizzes/create" element={<CreateQuiz />} />
+                <Route path="profile" element={<TeacherProfile />} />
+                <Route path="Myprofile" element={<MyTeacherProfile />} />
+                <Route path="assignments" element={<TeacherAssignments />} />
+                <Route 
+          path="/teacher/assignments/:assignmentId/submissions" 
+          element={<AssignmentSubmissions />} 
+        />
                 <Route
                   path="quizzes/:quizId/questions"
                   element={<Questions />}
@@ -124,6 +147,7 @@ function App() {
                   element={<DetailedSubmissions />}
                 />
               </Route>
+              </Route>
 
               {/* Reset Password */}
               <Route path="/reset/email" element={<Email />} />
@@ -134,14 +158,17 @@ function App() {
               <Route path="course" element={<Course />} />
               <Route path="/student" element={<Students />}>
                 <Route path="allcourses" element={<AllCourses />} />
-                <Route path="course/data/:courseId" element={<CourseData />} />
+                <Route path="course/data/:courseId" element={<CoursePlayerPage />} />
                 <Route path="mytasks" element={<MyTasks />} />
                 <Route path="myexams" element={<MyExams />} />
                 <Route path="rewards" element={<Rewards />} />
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="mycourses" element={<MyCourses />} />
-                <Route path="profile" element={<Profile />} />
+                <Route path="profile" element={<MyStudentProfile />} />
+                <Route path="exam/:examId" element={<ExamAttempt />} />
                 <Route path="prize" element={<Prize />} />
+                <Route path="teachers" element={<AllTeachers />} />
+                 <Route path="leaderboard" element={<LeaderboardPage />} />
               </Route>
 
               {/* Auth */}
@@ -168,6 +195,7 @@ function App() {
           {/* <ReactQueryDevtools initialIsOpen={false} position="bottom-right" /> */}
         </AuthProvider>
       </GoogleReCaptchaProvider>
+
     </QueryClientProvider>
   );
 }

@@ -1,559 +1,472 @@
-import { Trophy } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+// src/pages/students/CoursePlayerPage.jsx
+
+import React, { useState, useEffect, useMemo, lazy, Suspense, useRef, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+// <-- الخطوة 1: تحديث سطر الاستيراد
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import { Cookies } from "react-cookie";
-import { useLocation, useParams } from "react-router-dom";
-import { BASE_URL } from "../../api/axios";
+import axios from "../../api/axios";
+import Loading from "../../Components/Loading";
+import { Helmet } from "react-helmet-async";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-hot-toast";
+import { ChevronDown, LayoutList, PlayCircle, FileText, CheckCircle, Lock, XCircle, Trophy, BookCopy, Download, Clock } from "lucide-react";
 
-export default function Course() {
-  const [libraryId, setLibraryId] = useState("475904");
-  const [lessons, setLessons] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [gateMessage, setGateMessage] = useState("");
-  const [playerUrl, setPlayerUrl] = useState("");
-  const [showProgress, setShowProgress] = useState(false);
-  const [progress, setProgress] = useState({ value: 0, text: "" });
-  const [log, setLog] = useState("{}");
-  const [openCourse, setOpenCourse] = useState(1);
-  const [enrollCourses, setEnrollCourses] = useState({});
-  const [isActive, setIsActive] = useState(null);
-  const [circleProgress, setCircleProgress] = useState(0);
+const StarfieldBackground = lazy(() => import('../../Components/StarfieldBackground'));
 
-  // Add state to track lesson progress locally
-  const [lessonProgress, setLessonProgress] = useState({});
+/* =============================
+   Hook Player (مستقر وعالي الأداء)
+   ============================= */
+// ... (كود الـ useAdvancedPlayer يبقى كما هو بدون تغيير)
+const useAdvancedPlayer = (activeLesson, playerUrl, token, onProgressUpdate, expectedStartSec) => {
+    const playerRef = useRef(null);
+    const playerInstanceRef = useRef(null);
+    const durationRef = useRef(0);
+    const maxPosRef = useRef(0);
+    const sentOpenedRef = useRef(false);
+    const onProgressUpdateRef = useRef(onProgressUpdate);
+    useEffect(() => { onProgressUpdateRef.current = onProgressUpdate; }, [onProgressUpdate]);
+    const SEEK_TOLERANCE = 0.75;
+    useEffect(() => {
+        const scriptId = "player-js-script";
+        if (document.getElementById(scriptId)) return;
+        const script = document.createElement("script");
+        script.id = scriptId;
+        script.src = "https://assets.mediadelivery.net/playerjs/playerjs-latest.min.js";
+        script.async = true;
+        document.head.appendChild(script);
+    }, []);
+    const buildPayload = useCallback((event, sec) => {
+        const dur = durationRef.current || 0;
+        const pct = dur > 0 ? +((sec / dur) * 100).toFixed(2) : 0;
+        return {
+            durationSeconds: Math.round(dur),
+            positionSeconds: Math.round(sec || 0),
+            maxPositionSeconds: Math.round(Math.max(maxPosRef.current || 0, sec || 0)),
+            percent: pct,
+            event,
+        };
+    }, []);
+    const sendProgress = useCallback(async (event, sec, opts = {}) => {
+        if (!activeLesson) return;
+        try {
+            const payload = buildPayload(event, sec);
+            if (onProgressUpdateRef.current) { onProgressUpdateRef.current(activeLesson.id, payload.percent); }
+            if (opts.beacon && navigator.sendBeacon) {
+                const url = `${axios.defaults.baseURL}/api/lesson/${activeLesson.id}/progress`;
+                const blob = new Blob([JSON.stringify({ ...payload, token })], { type: 'application/json' });
+                navigator.sendBeacon(url, blob);
+                return;
+            }
+            await axios.post(`/api/lesson/${activeLesson.id}/progress`, payload, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        } catch { /* Ignore */ }
+    }, [activeLesson, token, buildPayload]);
+    useEffect(() => {
+        if (!activeLesson || !playerUrl || !playerRef.current || !window.playerjs) return;
+        if (playerInstanceRef.current) { try { playerInstanceRef.current.destroy(); } catch { } playerInstanceRef.current = null; }
 
-  const playerRef = useRef(null);
-  const playerInstanceRef = useRef(null);
-  const durationRef = useRef(0);
-  const lastSentRef = useRef({ ms: 0, sec: 0, pct: 0 });
-  const maxPosRef = useRef(0);
-  const currentLessonIdRef = useRef(null);
-  const startTimeRef = useRef(0); // Add this to store the start time
+        const player = new window.playerjs.Player(playerRef.current);
+        playerInstanceRef.current = player;
+        durationRef.current = 0;
+        maxPosRef.current = expectedStartSec || 0;
+        sentOpenedRef.current = false;
+        
+        player.on('ready', () => {
+            player.getDuration((d) => { durationRef.current = d || 0; });
+            const resumeAt = Math.max(0, Math.floor(expectedStartSec || 0));
+            if (resumeAt > 0) { try { player.setCurrentTime(resumeAt); player.play(); } catch { } }
+            else { try { player.play(); } catch {} }
+        });
+        player.on('timeupdate', (d) => {
+            const t = d?.seconds || 0;
+            maxPosRef.current = Math.max(maxPosRef.current, t);
+            if (!sentOpenedRef.current) {
+                const resumeAt = +expectedStartSec || 0;
+                const reachedResume = resumeAt <= SEEK_TOLERANCE || t >= (resumeAt - SEEK_TOLERANCE);
+                if (reachedResume) {
+                    sendProgress('opened', t);
+                    sentOpenedRef.current = true;
+                }
+            }
+            sendProgress('timeupdate', t);
+        });
+        const cleanup = () => {
+            window.removeEventListener('beforeunload', beaconHandler, { capture: true });
+            document.removeEventListener('visibilitychange', visHandler);
+            if (playerInstanceRef.current) {
+                try { playerInstanceRef.current.getCurrentTime((t) => { if ((t || 0) > 0) sendProgress('pause', t || 0); }); } catch { }
+                try { playerInstanceRef.current.destroy(); } catch { }
+                playerInstanceRef.current = null;
+            }
+        };
+        const beaconHandler = () => { if (playerInstanceRef.current) { playerInstanceRef.current.getCurrentTime((t) => sendProgress('pause', t || 0, { beacon: true })); } };
+        window.addEventListener('beforeunload', beaconHandler, { capture: true });
+        const visHandler = () => { if (document.visibilityState === 'hidden') beaconHandler(); };
+        document.addEventListener('visibilitychange', visHandler);
+        return cleanup;
+    }, [activeLesson, playerUrl, expectedStartSec, sendProgress]);
+    return { playerRef };
+};
 
-  const SEND_EVERY_MS = 15000;
-  const SEND_DELTA_SEC = 10;
-  const SEND_DELTA_PCT = 5;
 
-  const cookies = new Cookies();
-  const jwt = cookies.get("token");
+/* =============================
+   UI Components (Optimized with React.memo)
+   ============================= */
+// ... (كل المكونات الأخرى تبقى كما هي بدون تغيير)
+const formatDuration = (totalSeconds) => {
+    if (isNaN(totalSeconds) || totalSeconds <= 0) return null;
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+};
 
-  const api = BASE_URL;
+const CourseHeader = ({ title, progress }) => {
+    const radius = 30; const stroke = 4;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (progress / 100) * circumference;
+    return (
+        <div className="flex-shrink-0 bg-slate-900/50 backdrop-blur-lg p-4 flex items-center justify-between border-b border-slate-700">
+            <h2 className="text-xl font-bold text-white truncate pr-4">{title}</h2>
+            <div className="flex items-center gap-3 text-sm flex-shrink-0">
+                <div className="relative w-16 h-16">
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r={radius} stroke="rgb(51 65 85)" strokeWidth={stroke} fill="none" />
+                        <motion.circle
+                            cx="40" cy="40" r={radius} stroke="url(#gradient)" strokeWidth={stroke} fill="none"
+                            strokeDasharray={circumference} strokeLinecap="round"
+                            initial={{ strokeDashoffset: circumference }} animate={{ strokeDashoffset: offset }}
+                            transition={{ duration: 1.5, ease: "easeInOut" }}
+                        />
+                        <defs>
+                            <linearGradient id="gradient">
+                                <stop offset="0%" stopColor="#67e8f9" />
+                                <stop offset="100%" stopColor="#3b82f6" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <Trophy className="w-6 h-6 text-cyan-400" />
+                    </div>
+                </div>
+                <span className="font-bold text-gray-200">تقدمك ({Math.floor(progress)}%)</span>
+            </div>
+        </div>
+    );
+};
 
-  // Helper functions
-  const logData = (data, title = "") => {
-    const logText =
-      (title ? title + "\n" : "") +
-      (typeof data === "string" ? data : JSON.stringify(data, null, 2));
-    setLog(logText);
-  };
+const LessonPlayer = ({ lesson, playerRef, playerUrl, gateMessage }) => {
+    const [activeTab, setActiveTab] = useState('details');
+    useEffect(() => { setActiveTab('details'); }, [lesson?.id]);
 
-  const getHeaders = (extra = {}) => ({
-    Authorization: `Bearer ${jwt}`,
-    ...extra,
-  });
+    const TabButton = ({ id, label, count }) => (
+        <button
+            onClick={() => setActiveTab(id)}
+            className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${
+                activeTab === id ? 'bg-cyan-500/20 text-cyan-300' : 'text-gray-400 hover:bg-slate-700/50'
+            }`}
+        >
+            {label} {count !== undefined && <span className="text-xs bg-slate-700 text-gray-300 rounded-full px-2 py-0.5 ml-1">{count}</span>}
+        </button>
+    );
 
-  const apiGet = async (path) => {
-    const response = await fetch(api + path, { headers: getHeaders() });
-    let body;
-    try {
-      body = await response.json();
-    } catch {
-      body = await response.text();
-    }
-    if (!response.ok) {
-      throw new Error(typeof body === "string" ? body : JSON.stringify(body));
-    }
-    return body;
-  };
+    if (!lesson) {
+        return (
+            <div className="bg-slate-900/70 backdrop-blur-md border border-slate-800 rounded-2xl w-full h-full flex flex-col items-center justify-center text-center p-8">
+                <BookCopy size={48} className="text-cyan-400 mb-4" />
+                <h3 className="text-2xl font-bold text-white mb-2">أهلاً بك في الكورس</h3>
+                <p className="text-gray-400">اختر درسًا من القائمة الجانبية لبدء التعلم.</p>
+            </div>
+        );
+    }
 
-  const apiPost = async (path, data, opts = {}) => {
-    const url = api + path;
-    const body = JSON.stringify(data);
+    return (
+        <div className="bg-slate-900/70 backdrop-blur-md border border-slate-800 rounded-2xl w-full h-full flex flex-col">
+            <div className="aspect-video bg-black rounded-t-2xl border-b border-slate-800 overflow-hidden">
+                {gateMessage ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-center p-4">
+                        {gateMessage.startsWith('🔒') ? ( <Lock size={48} className="text-yellow-400 mb-4" />) : (<Loading />)}
+                        <p className={gateMessage.startsWith('🔒') ? 'text-yellow-300' : 'text-gray-400'}>{gateMessage}</p>
+                    </div>
+                ) : playerUrl ? (
+                    <iframe ref={playerRef} key={lesson.id} className="w-full h-full" src={playerUrl} title={lesson.title} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center"><Loading message="...جاري التحضير"/></div>
+                )}
+            </div>
+            <div className="p-4 border-b border-slate-800">
+                <h2 className="text-2xl font-bold text-white">{lesson.title}</h2>
+            </div>
+            <div className="p-4 flex-shrink-0">
+                <div className="flex items-center gap-2">
+                    <TabButton id="details" label="تفاصيل الدرس" />
+                    <TabButton id="attachments" label="الملحقات" count={lesson.attachments?.length || 0} />
+                </div>
+            </div>
+            <div className="flex-grow p-4 pt-0 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800/50">
+                {activeTab === 'details' && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                        <p className="text-gray-300 whitespace-pre-line leading-relaxed">
+                            {lesson.summary || lesson.content || "لا يوجد وصف لهذا الدرس."}
+                        </p>
+                    </motion.div>
+                )}
+                {activeTab === 'attachments' && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                        {(!lesson.attachments || lesson.attachments.length === 0) ? (
+                            <div className="flex flex-col items-center justify-center text-center text-gray-500 pt-8">
+                                <FileText size={40} className="mb-2"/>
+                                <p>لا توجد مرفقات لهذا الدرس.</p>
+                            </div>
+                        ) : (
+                            <ul className="space-y-2">
+                                {lesson.attachments.map(file => (
+                                    <li key={file.id}>
+                                        <a href={file.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg bg-slate-800/60 hover:bg-slate-800 transition-colors duration-200">
+                                            <FileText size={20} className="text-cyan-400 flex-shrink-0" />
+                                            <span className="text-gray-200 font-medium">{file.name}</span>
+                                            <Download size={18} className="text-gray-400 ml-auto" />
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </motion.div>
+                )}
+            </div>
+        </div>
+    );
+};
 
-    if (opts.beacon && navigator.sendBeacon) {
-      navigator.sendBeacon(url, new Blob([body], { type: "application/json" }));
-      return { ok: true, beacon: true };
-    }
+const LessonItem = React.memo(({ lesson, onLessonClick, isActive, progress }) => {
+    const isCompleted = progress >= 95;
+    const formattedDuration = formatDuration(lesson.duration);
+    return (
+        <button
+            onClick={() => onLessonClick(lesson)}
+            className={`w-full text-right flex items-center gap-3 p-3 rounded-md transition-all duration-200 border-r-4 ${
+                isActive ? 'bg-cyan-500/10 border-cyan-400' : isCompleted ? 'border-green-500/20' : 'border-transparent'
+            } hover:bg-slate-700/50`}
+        >
+            {isCompleted ? <CheckCircle size={20} className="text-green-500 flex-shrink-0" /> : <PlayCircle size={20} className={`flex-shrink-0 transition-colors ${isActive ? 'text-cyan-400' : 'text-slate-500'}`} />}
+            <span className={`flex-grow ${isActive ? 'text-white font-semibold' : 'text-slate-300'} ${isCompleted ? 'line-through text-slate-400' : ''}`}>{lesson.title}</span>
+            {formattedDuration && (
+                <div className="flex items-center gap-1 text-xs text-slate-400 font-mono ml-3 flex-shrink-0">
+                    <Clock size={12} /> <span>{formattedDuration}</span>
+                </div>
+            )}
+            <div className="w-12 text-left flex-shrink-0 text-xs text-slate-400 font-mono">{Math.floor(progress)}%</div>
+        </button>
+    );
+});
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: getHeaders({ "Content-Type": "application/json" }),
-      body,
-    });
+const UnitItem = React.memo(({ unit, index, onLessonClick, activeLesson, lessonProgressMap, isOpen, onToggle }) => {
+    const { totalLessons, completedLessons, isUnitCompleted } = useMemo(() => {
+        const totalLessons = unit.lessons.length;
+        if (totalLessons === 0) return { totalLessons: 0, completedLessons: 0, isUnitCompleted: false };
+        const completedLessons = unit.lessons.filter(l => (lessonProgressMap[l.id] ?? l.progress?.percent ?? 0) >= 95).length;
+        const isUnitCompleted = completedLessons === totalLessons;
+        return { totalLessons, completedLessons, isUnitCompleted };
+    }, [unit.lessons, lessonProgressMap]);
 
-    let res;
-    try {
-      res = await response.json();
-    } catch {
-      res = await response.text();
-    }
+    return (
+        <div className={`bg-slate-800/50 rounded-lg mb-3 transition-all duration-300 ${isUnitCompleted ? 'shadow-lg shadow-green-500/10' : ''}`}>
+            <button onClick={onToggle} className="w-full text-right p-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex flex-col items-start gap-1">
+                        <span className={`font-bold text-sm ${isUnitCompleted ? 'text-green-400' : 'text-cyan-400'}`}>الباب {index + 1}</span>
+                        <span className="text-white font-semibold text-lg">{unit.title}</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-slate-400 font-mono text-sm flex-shrink-0">{completedLessons}/{totalLessons} مكتمل</span>
+                      <ChevronDown className={`transform transition-transform duration-300 flex-shrink-0 ${isOpen ? 'rotate-180' : ''} text-cyan-400`} size={24} />
+                    </div>
+                </div>
+            </button>
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: 'easeInOut' }} className="overflow-hidden border-t border-slate-700/50">
+                        <div className="p-2 space-y-1">
+                            {unit.lessons.map(lesson => ( <LessonItem key={lesson.id} lesson={lesson} onLessonClick={onLessonClick} isActive={activeLesson?.id === lesson.id} progress={lessonProgressMap[lesson.id] ?? lesson.progress?.percent ?? 0} /> ))}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+});
 
-    if (!response.ok) {
-      throw new Error(typeof res === "string" ? res : JSON.stringify(res));
-    }
-    return res;
-  };
+const CourseCurriculum = ({ units, activeLesson, onLessonClick, lessonProgressMap }) => {
+    const findUnitIdForLesson = useCallback((lessonId) => {
+        if (!units || !lessonId) return units?.[0]?.id ?? null;
+        for (const unit of units) { if (unit.lessons.some(l => l.id === lessonId)) return unit.id; }
+        return units?.[0]?.id ?? null;
+    }, [units]);
 
-  const location = useLocation();
-  const courseId = location.state?.courseId;
+    const [openUnitId, setOpenUnitId] = useState(() => findUnitIdForLesson(activeLesson?.id));
+    useEffect(() => { if (activeLesson) setOpenUnitId(findUnitIdForLesson(activeLesson.id)); }, [activeLesson, findUnitIdForLesson]);
 
-  const loadCourse = async () => {
-    setLoading(true);
-    setLessons([]);
+    return (
+        <div className="bg-slate-900/70 backdrop-blur-md border border-slate-800 rounded-2xl h-full flex flex-col">
+            <h3 className="text-xl font-bold text-white p-4 flex-shrink-0 flex items-center gap-3 border-b border-slate-800">
+                <LayoutList size={22} /> <span>محتويات الكورس</span>
+            </h3>
+            <div className="flex-grow overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800/50">
+                {units?.map((unit, index) => ( <UnitItem key={unit.id} unit={unit} index={index} onLessonClick={onLessonClick} activeLesson={activeLesson} lessonProgressMap={lessonProgressMap} isOpen={openUnitId === unit.id} onToggle={() => setOpenUnitId(openUnitId === unit.id ? null : unit.id)} /> ))}
+            </div>
+        </div>
+    );
+};
 
-    try {
-      const res = await apiGet(`/api/StudentCourse/${courseId}/full`);
-      console.log(res)
-      setEnrollCourses(res);
-      setCircleProgress(Math.floor(+res?.courseProgress));
 
-      // Initialize lesson progress state from server data
-      const progressMap = {};
-      if (res?.units) {
-        res.units.forEach((unit) => {
-          unit.lessons?.forEach((lesson) => {
-            progressMap[lesson.id] = lesson.progress?.percent || 0;
-          });
-        });
-      }
-      setLessonProgress(progressMap);
-
-      const course = res; // Assuming res is the course data
-
-      if (!course) {
-        setLessons([{ type: "error", title: "الكورس غير موجود" }]);
-        logData(res);
-        return;
-      }
-
-      const units = course.units || course.Units || [];
-      const lessonsList = [];
-
-      units.forEach((u) => {
-        const uid = u.id ?? u.Id;
-        const utitle = u.title ?? u.Title ?? "وحدة " + uid;
-
-        lessonsList.push({
-          type: "unit",
-          title: `📁 ${utitle}`,
-        });
-
-        const unitLessons = u.lessons || u.Lessons || [];
-        unitLessons.forEach((l) => {
-          const lid = l.id ?? l.Id;
-          const ltitle = l.title ?? l.Title;
-          const thumb =
-            l.thumbnailUrl ?? l.ThumbnailUrl ?? l.lessonImage ?? l.LessonImage;
-          const vId = l.vimeoId ?? l.VimeoId;
-
-          lessonsList.push({
-            type: "lesson",
-            id: lid,
-            videoId: vId,
-            title: ltitle,
-            thumbnail: thumb,
-          });
-        });
-      });
-
-      setLessons(
-        lessonsList.length
-          ? lessonsList
-          : [{ type: "error", title: "لا يوجد دروس" }]
-      );
-      logData(course, "Course:");
-    } catch (e) {
-      logData(String(e), "LOAD ERROR:");
-    } finally {
-      setLoading(false);
-    }
-  };
-
- 
-
-  useEffect(() => {
-    loadCourse();
-  }, [courseId]);
-
-  const updateUI = (sec) => {
-    const pct = durationRef.current > 0 ? (sec / durationRef.current) * 100 : 0;
-    setProgress({
-      value: pct,
-      text: `الموضع ${sec.toFixed(1)}s / ${durationRef.current.toFixed(
-        1
-      )}s — ${pct.toFixed(2)}%`,
-    });
-
-    // Update local lesson progress state
-    if (currentLessonIdRef.current) {
-      setLessonProgress((prev) => ({
-        ...prev,
-        [currentLessonIdRef.current]: pct,
-      }));
-    }
-  };
-
-  const shouldSend = (nowMs, sec, pct) => {
-    const last = lastSentRef.current;
-    if (nowMs - last.ms >= SEND_EVERY_MS) return true;
-    if (Math.abs(sec - last.sec) >= SEND_DELTA_SEC) return true;
-    if (Math.abs(pct - last.pct) >= SEND_DELTA_PCT) return true;
-    return false;
-  };
-
-  const buildPayload = (event, sec) => {
-    const pct =
-      durationRef.current > 0
-        ? +((sec / durationRef.current) * 100).toFixed(2)
-        : 0;
-    return {
-      durationSeconds: Math.round(durationRef.current || 0),
-      positionSeconds: Math.round(sec || 0),
-      maxPositionSeconds: Math.round(maxPosRef.current || 0),
-      percent: pct,
-      event,
-    };
-  };
-
-  const sendProgress = async (event, sec, opts = {}) => {
-    try {
-      const payload = buildPayload(event, sec);
-      await apiPost(
-        `/api/lesson/${currentLessonIdRef.current}/progress`,
-        payload,
-        opts
-      );
-    } catch (e) {
-      // Ignore errors temporarily
-    }
-  };
-
-  const formatted = (newDate) => {
-    const date = new Date(newDate);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "2-digit",
-    });
-  };
-
-  const maybeSend = (event, sec) => {
-    const now = Date.now();
-    const pct = durationRef.current > 0 ? (sec / durationRef.current) * 100 : 0;
-    const last = lastSentRef.current;
-
-    if (event !== "timeupdate" || shouldSend(now, sec, pct)) {
-      sendProgress(event, sec);
-      lastSentRef.current = { ms: now, sec, pct };
-    }
-  };
-
-  const openLesson = async (lessonId, videoId, lastPositionSeconds = 0) => {
-    setGateMessage("...checking gate");
-    setPlayerUrl("");
-    setShowProgress(false);
-    setIsActive(lessonId);
-
-    durationRef.current = 0;
-    lastSentRef.current = { ms: 0, sec: 0, pct: 0 };
-    maxPosRef.current = 0;
-    currentLessonIdRef.current = lessonId;
+/* =============================
+   الصفحة الرئيسية (مع منطق محسّن)
+   ============================= */
+export default function CoursePlayerPage() {
+    const { courseId, lessonId: initialLessonId } = useParams();
+    const cookies = new Cookies();
+    const token = cookies.get("token");
+    const queryClient = useQueryClient();
+    // <-- الخطوة 2: تهيئة الـ hooks
+    const location = useLocation();
+    const navigate = useNavigate();
     
-    // Store the start time for later use
-    startTimeRef.current = lastPositionSeconds || 0;
+    const [activeLesson, setActiveLesson] = useState(null);
+    const [gateMessage, setGateMessage] = useState("");
+    const [playerUrl, setPlayerUrl] = useState("");
+    const [lessonProgressMap, setLessonProgressMap] = useState({});
+    const [expectedStartSec, setExpectedStartSec] = useState(0);
+    const mainContentRef = useRef(null);
+    const isInitialLoad = useRef(true);
 
-    try {
-      const gate = await apiGet(`/api/Lesson/${lessonId}/gate`);
-      console.log(gate);
-
-      if (gate.locked) {
-        setGateMessage(
-          `🔒 مقفول: لازم تشاهد ${gate.requiredPercent}% من الدرس السابق (إنت ${gate.currentPercent}%).`
-        );
-        logData(gate, "Gate:");
-        return;
-      }
-
-      // Get the latest progress data from the server
-      let serverStartTime = startTimeRef.current;
-      try {
-        const progressData = await apiGet(`/api/lesson/${lessonId}/progress/me`);
-        serverStartTime = progressData?.lastPositionSeconds || startTimeRef.current;
-        console.log(`Starting video at position: ${serverStartTime}s`);
-        
-        // Update local progress state
-        const serverPercent = progressData?.percent || 0;
-        setLessonProgress((prev) => ({
-          ...prev,
-          [lessonId]: serverPercent,
-        }));
-      } catch (e) {
-        console.log("Could not fetch progress data, using provided lastPositionSeconds");
-      }
-
-      setGateMessage("");
-      
-      // Set the player URL with the correct start time
-      const playerUrl = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?start=${Math.floor(serverStartTime)}&autoplay=false&responsive=true&preload=true`;
-      setPlayerUrl(playerUrl);
-      setShowProgress(true);
-
-      // Initialize player when iframe loads
-      setTimeout(() => {
-        if (window.playerjs && playerRef.current) {
-          const player = new window.playerjs.Player(playerRef.current);
-          playerInstanceRef.current = player;
-
-          player.on("ready", () => {
-            console.log("Player ready");
-            
-            player.getDuration((duration) => {
-              durationRef.current = duration || 0;
-              console.log(`Video duration: ${duration}s`);
-            });
-
-            // Set the current time to the desired position
-            if (serverStartTime > 5) {
-              console.log(`Setting current time to: ${serverStartTime}s`);
-              player.setCurrentTime(serverStartTime);
-            }
-
-            sendProgress("opened", serverStartTime);
-          });
-
-          player.on("timeupdate", (d) => {
-            const t = d.seconds || 0;
-            maxPosRef.current = Math.max(maxPosRef.current, t);
-            updateUI(t);
-            maybeSend("timeupdate", t);
-          });
-
-          player.on("play", () =>
-            player.getCurrentTime((t) => maybeSend("play", t || 0))
-          );
-          
-          player.on("pause", () =>
-            player.getCurrentTime((t) => maybeSend("pause", t || 0))
-          );
-          
-          player.on("ended", () => {
-            const finalProgress = 100;
-            // Update local state immediately when video ends
-            setLessonProgress((prev) => ({
-              ...prev,
-              [lessonId]: finalProgress,
-            }));
-            sendProgress("ended", durationRef.current || maxPosRef.current);
-          });
-
-          // Beacon handler for page unload
-          const beaconHandler = () => {
-            if (!currentLessonIdRef.current || !player) return;
-            player.getCurrentTime((t) => {
-              const sec = t || 0;
-              const payload = buildPayload("pause", sec);
-              apiPost(
-                `/api/lesson/${currentLessonIdRef.current}/progress`,
-                payload,
-                { beacon: true }
-              );
-            });
-          };
-
-          const handleVisibilityChange = () => {
-            if (document.visibilityState === "hidden") beaconHandler();
-          };
-
-          window.addEventListener("beforeunload", beaconHandler, {
-            capture: true,
-          });
-          document.addEventListener("visibilitychange", handleVisibilityChange);
-
-          // Cleanup function
-          return () => {
-            window.removeEventListener("beforeunload", beaconHandler, {
-              capture: true,
-            });
-            document.removeEventListener(
-              "visibilitychange",
-              handleVisibilityChange
-            );
-          };
+    // <-- الخطوة 3: إضافة الـ hook لتنظيف الرابط
+    useEffect(() => {
+        // التحقق من وجود أي query parameters في الرابط (مثل ?paymentStatus=SUCCESS)
+        if (location.search) {
+            // استبدال الرابط الحالي بالمسار فقط، مما يزيل كل الـ query parameters
+            // { replace: true } تضمن عدم إضافة الرابط القديم إلى سجل المتصفح
+            navigate(location.pathname, { replace: true });
         }
-      }, 1000);
-    } catch (e) {
-      logData(String(e), "Open ERROR:");
-    }
-  };
+    }, [location.pathname, location.search, navigate]); // تعتمد على هذه القيم لتشغيل الـ hook عند التغيير
 
-  // Load Player.js script
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src =
-      "https://assets.mediadelivery.net/playerjs/playerjs-latest.min.js";
-    script.async = true;
-    document.head.appendChild(script);
 
-    return () => {
-      document.head.removeChild(script);
-    };
-  }, []);
+    const { data: courseData, isLoading, isError } = useQuery({
+        queryKey: ["coursePlayerData", courseId],
+        queryFn: async () => {
+            const { data } = await axios.get(`/api/StudentCourse/${courseId}/full`, { headers: { Authorization: `Bearer ${token}` } });
+            return data;
+        },
+        onSuccess: (data) => {
+            if (isInitialLoad.current && data?.units) {
+                const initialProgress = {};
+                data.units.forEach(unit => unit.lessons.forEach(lesson => {
+                    initialProgress[lesson.id] = Math.floor(lesson.progress?.percent || 0);
+                }));
+                setLessonProgressMap(initialProgress);
+                isInitialLoad.current = false;
+            }
+            if (!activeLesson && data?.units?.length > 0) {
+                const allLessons = data.units.flatMap(u => u.lessons);
+                const lessonToPlay = allLessons.find(l => l.id === parseInt(initialLessonId)) || allLessons.find(l => (l.progress?.percent || 0) < 95) || allLessons[0];
+                if (lessonToPlay) handleLessonClick(lessonToPlay, true);
+            }
+        },
+        refetchOnWindowFocus: false,
+    });
 
-  const radius = 30;
-  const stroke = 4;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (circleProgress / 100) * circumference;
+    const handleProgressUpdate = useCallback((lessonId, newPercent) => {
+        const rounded = Math.floor(newPercent);
+        setLessonProgressMap(prev => {
+            const cur = prev[lessonId] ?? 0;
+            if (rounded > cur) return { ...prev, [lessonId]: rounded };
+            return prev;
+        });
+    }, []);
+    
+    const { playerRef } = useAdvancedPlayer(activeLesson, playerUrl, token, handleProgressUpdate, expectedStartSec);
 
-  return (
-    <div className=" bg-gray-950 text-gray-100" dir="rtl">
-      <div className=" text-2xl font-semibold bg-gray-950 border-b border-gray-800 py-2 px-12 flex items-center justify-between">
-        <p>{enrollCourses?.course?.title}</p>
+    const overallCourseProgress = useMemo(() => {
+        if (!courseData?.units) return 0;
+        const lessons = courseData.units.flatMap(u => u.lessons);
+        if (lessons.length === 0) return 0;
+        const totalPercent = lessons.reduce((sum, lesson) => {
+            const p = lessonProgressMap[lesson.id] ?? lesson.progress?.percent ?? 0;
+            return sum + p;
+        }, 0);
+        return totalPercent / lessons.length;
+    }, [courseData, lessonProgressMap]);
+    
+    const handleLessonClick = useCallback(async (lesson, isInitial = false) => {
+        if (!lesson || (!isInitial && lesson.id === activeLesson?.id)) return;
+        
+        setActiveLesson(lesson);
+        setPlayerUrl("");
+        setGateMessage("...جاري التحقق");
+        setExpectedStartSec(0);
 
-        <div className="flex items-center space-x-3 text-gray-200">
-          {/* Circular progress */}
-          <div className="relative w-16 h-16">
-            <svg
-              className="w-full h-full transform -rotate-90"
-              viewBox="0 0 80 80"
-            >
-              {/* Background circle */}
-              <circle
-                cx="40"
-                cy="40"
-                r={radius}
-                stroke="gray"
-                strokeWidth={stroke}
-                fill="none"
-                className="opacity-30"
-              />
-              {/* Progress circle */}
-              <circle
-                cx="40"
-                cy="40"
-                r={radius}
-                stroke="rgb(129, 140, 248)" // Tailwind indigo-400
-                strokeWidth={stroke}
-                fill="none"
-                strokeDasharray={circumference}
-                strokeDashoffset={offset}
-                strokeLinecap="round"
-              />
-            </svg>
+        try {
+            const { data: gate } = await axios.get(`/api/Lesson/${lesson.id}/gate`, { headers: { Authorization: `Bearer ${token}` } });
+            if (gate.locked) {
+                setGateMessage(`🔒 مقفول: يجب إكمال ${gate.requiredPercent}% من الدرس السابق${gate.currentPercent != null ? ` (أنت ${gate.currentPercent}%)` : ''}.`);
+                return;
+            }
 
-            {/* Icon inside */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Trophy className="w-6 h-6 text-indigo-400" />
-            </div>
-          </div>
+            let startTime = 0;
+            try {
+                const { data: progressData } = await axios.get(`/api/lesson/${lesson.id}/progress/me`, { headers: { Authorization: `Bearer ${token}` } });
+                const maxPos = progressData?.maxPositionSeconds ?? progressData?.lastPositionSeconds ?? 0;
+                const percent = progressData?.percent ?? 0;
+                startTime = percent >= 98 ? 0 : Math.max(0, Math.floor(maxPos));
+            } catch { /* Start from 0 if no progress found */ }
 
-          {/* Text */}
-          <span className="text-lg">تقدمك ({circleProgress}%)</span>
-        </div>
-      </div>
-      <div className="grid grid-cols-[320px_1fr] min-h-[calc(100vh-58px)] h-screen">
-        <div className="border-l border-gray-800 bg-gray-950 overflow-auto px-2">
-          <div>
-            {enrollCourses?.units?.map((course, index) => (
-              <div
-                key={course.id}
-                className="overflow-hidden rounded-2xl glass-effect my-2"
-              >
-                <button
-                  onClick={() =>
-                    setOpenCourse(openCourse === index ? null : index)
-                  }
-                  className="flex w-full items-center justify-between p-4 sm:p-6 text-right transition-colors bg-gray-800 hover:bg-white/5 "
-                >
-                  <div>
-                    <h3 className="text-lg sm:text-xl font-bold text-white">
-                      {course.title}
-                    </h3>
-                    <p className="text-sm text-gray-400">
-                      {formatted(course.createdAt)}
-                    </p>
-                  </div>
-                  <svg
-                    className={`h-6 w-6 transform text-cyan-400 transition-transform duration-300 ${
-                      openCourse === index ? "rotate-180" : ""
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 9l-7 7-7-7"
-                    ></path>
-                  </svg>
-                </button>
-                {openCourse === index && (
-                  <div className="animate-in slide-in-from-top-2 border-t border-white/10  pb-4 sm:pb-6 duration-300">
-                    {course.lessons?.map((unit) => {
-                      // Get progress from local state, fallback to server data
-                      const currentProgress =
-                        lessonProgress[unit.id] ?? unit.progress?.percent ?? 0;
-                      const isCompleted = currentProgress > 80;
+            setExpectedStartSec(startTime);
+            setGateMessage("");
+            setPlayerUrl(`https://iframe.mediadelivery.net/embed/475904/${lesson.vimeoId}?autoplay=true&responsive=true&preload=true&startTime=${startTime}`);
 
-                      return (
-                        <div
-                          key={unit.id}
-                          className={`py-4 px-4 border-b-[0.1px] border-gray-600 flex items-center gap-4 cursor-pointer hover:bg-white/5 ${
-                            unit.id === isActive ? "bg-white/5" : ""
-                          }`}
-                          onClick={() =>
-                            openLesson(
-                              unit?.id,
-                              unit?.vimeoId,
-                              unit?.progress?.lastPositionSeconds
-                            )
-                          }
-                        >
-                          <input
-                            type="checkbox"
-                            readOnly
-                            className="w-5 h-5 accent-cyan-400 disabled:opacity-100 disabled:accent-cyan-400 disabled:cursor-not-allowed "
-                            checked={isCompleted}
-                          />
-                          <p className="font-bold text-white">{unit.title}</p>
-                          {/* Optional: Show progress percentage */}
-                          <span className="text-xs text-gray-400 mr-auto">
-                            {currentProgress.toFixed(0)}%
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+            if (!isInitial) {
+                queryClient.invalidateQueries({ queryKey: ["coursePlayerData", courseId] });
+            }
+        } catch (error) {
+            toast.error("حدث خطأ أثناء تحميل الدرس.");
+            setGateMessage("لا يمكن تحميل الدرس حاليًا.");
+        }
+    }, [activeLesson, token, queryClient, courseId]);
 
-        {/* Main Content */}
-        <main className="p-4">
-          {gateMessage && (
-            <div className="mb-2 text-gray-400">{gateMessage}</div>
-          )}
+    if (isLoading) return <Loading message="جاري تحميل الكورس..." />;
 
-          <div></div>
-
-          <div className="mb-4">
-            {playerUrl ? (
-              <iframe
-                ref={playerRef}
-                src={playerUrl}
-                className="w-full aspect-video border-0 rounded-lg bg-black"
-                allow="autoplay; fullscreen; picture-in-picture"
-              />
-            ) : (
-              <div className="w-full aspect-video bg-gray-800 rounded-lg flex items-center justify-center text-gray-400">
-                اختر درس لبدء المشاهدة
-              </div>
-            )}
-          </div>
-        </main>
-      </div>
-    </div>
-  );
+    if (isError) {
+        return (
+            <div className="flex flex-col items-center justify-center h-screen bg-black text-white text-center">
+                <XCircle size={64} className="text-red-500 mb-4" />
+                <h2 className="text-3xl font-bold mb-2">حدث خطأ</h2>
+                <p className="text-gray-400 mb-6">لم نتمكن من تحميل بيانات الكورس.</p>
+                <Link to="/student/my-courses" className="px-6 py-2 bg-cyan-500 text-black font-bold rounded-lg hover:bg-cyan-400 transition-colors">
+                    العودة إلى كورساتي
+                </Link>
+            </div>
+        );
+    }
+    
+    return (
+        <div className="bg-black text-gray-100 min-h-screen" style={{ fontFamily: "Cairo, sans-serif" }}>
+            <Helmet><title>{courseData?.course?.title || "مشغّل الكورس"}</title></Helmet>
+            <Suspense fallback={<div className="fixed inset-0 bg-black -z-10" />}>
+                <StarfieldBackground mainContentRef={mainContentRef} />
+            </Suspense>
+            <div ref={mainContentRef} className="flex flex-col h-screen overflow-y-auto">
+                <div className="sticky top-0 z-20">
+                    <CourseHeader title={courseData?.course?.title} progress={overallCourseProgress} />
+                </div>
+                <div className="flex-grow p-4 sm:p-6 lg:p-8 grid grid-cols-1 xl:grid-cols-3 gap-8 min-h-0">
+                    <div className="xl:col-span-2 min-h-0">
+                        <LessonPlayer lesson={activeLesson} playerUrl={playerUrl} gateMessage={gateMessage} playerRef={playerRef} />
+                    </div>
+                    <div className="xl:col-span-1 min-h-0">
+                        <CourseCurriculum units={courseData?.units || []} activeLesson={activeLesson} onLessonClick={handleLessonClick} lessonProgressMap={lessonProgressMap} />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 }

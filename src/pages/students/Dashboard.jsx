@@ -1,482 +1,148 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef, Suspense, lazy } from "react";
 import { Link } from "react-router-dom";
 import axios from "../../api/axios";
 import { Cookies } from "react-cookie";
 import { useQuery } from "@tanstack/react-query";
-import BackgroundAnimation from "../../Components/BackgroundAnimation";
-import * as THREE from "three";
 import Loading from "../../Components/Loading";
+import { motion } from "framer-motion";
+import { Helmet } from "react-helmet-async";
+import { Award, Star, FileText, Bell, Crown, ArrowLeft } from "lucide-react";
 
+const StarfieldBackground = lazy(() => import('../../Components/StarfieldBackground'));
+
+// --- Skeleton Loaders ---
+const StatCardSkeleton = () => ( <div className="glass-effect p-6 rounded-2xl animate-pulse"><div className="h-6 w-3/4 bg-slate-700 rounded mb-4"></div><div className="h-10 w-1/2 bg-slate-700 rounded"></div></div> );
+const ListSkeleton = ({ items = 3 }) => ( <div className="space-y-4">{Array.from({ length: items }).map((_, i) => ( <div key={i} className="glass-effect p-4 rounded-2xl flex items-center gap-4 animate-pulse"><div className="w-16 h-16 bg-slate-700 rounded-lg flex-shrink-0"></div><div className="flex-1 space-y-2"><div className="h-5 w-3/4 bg-slate-700 rounded"></div><div className="h-4 w-1/2 bg-slate-700 rounded"></div></div></div> ))}</div> );
+
+// --- Helper Components ---
+const StatCard = ({ icon, title, value, subtext, colorClass, link }) => ( <Link to={link}><motion.div variants={{hidden:{opacity:0,y:20},visible:{opacity:1,y:0}}} whileHover={{y:-5,scale:1.02}} className={`glass-effect p-6 rounded-2xl flex flex-col justify-between h-full border ${colorClass} transition-colors hover:bg-slate-800/50`}><div className="flex justify-between items-start"><p className="font-bold text-white text-lg">{title}</p>{icon}</div><div><p className="text-4xl font-black text-white mt-2">{value}</p>{subtext && <p className="text-sm text-gray-400">{subtext}</p>}</div></motion.div></Link> );
+const LeaderboardItem = ({ student, rank }) => { const rankColors = { 1: "bg-yellow-500/20 border-yellow-400 text-yellow-400 shadow-lg shadow-yellow-500/10", 2: "bg-slate-500/20 border-slate-400 text-slate-300", 3: "bg-orange-700/20 border-orange-500 text-orange-400", }; const rankClass = rankColors[rank] || "bg-cyan-900/40 border-transparent"; return ( <div className={`flex items-center justify-between rounded-lg p-3 transition-all duration-300 border ${rankClass}`}><div className="flex items-center gap-4"><span className={`text-xl font-bold w-8 text-center`}>{rank}</span><span className="font-bold text-white">{student.firstName} {student.lastName}</span></div><div className="flex items-center gap-2 text-cyan-300"><span className="font-bold">{student.score}</span><Star size={16}/></div></div> ); };
+
+// --- 1. مكون جديد لعرض الكورس في القائمة ---
+const CourseListItem = ({ course }) => (
+    <Link to={`/student/course/data/${course.id}`}>
+        <motion.div
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+            whileHover={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
+            className="glass-effect p-4 rounded-2xl flex items-center gap-4 transition-colors"
+        >
+            <img src={course.courseImage} alt={course.title} className="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-white truncate">{course.title}</h3>
+                <div className="flex justify-between items-center mt-2 text-sm">
+                    <span className="font-bold text-cyan-400">تقدمك</span>
+                    <span className="text-gray-300 font-semibold">{Math.round(course.progress)}%</span>
+                </div>
+                <div className="w-full bg-slate-700 rounded-full h-1.5 mt-1">
+                    <div className="bg-gradient-to-r from-cyan-500 to-blue-500 h-1.5 rounded-full" style={{ width: `${course.progress}%` }}></div>
+                </div>
+            </div>
+            <ArrowLeft className="text-slate-500 flex-shrink-0" />
+        </motion.div>
+    </Link>
+);
+
+
+// --- Main Dashboard Component ---
 export default function Dashboard() {
-  const [userPoints, setUserPoints] = useState(150);
-  const [openCourse, setOpenCourse] = useState(1);
-  const [timeRemaining, setTimeRemaining] = useState("12:34:56");
+    const mainContentRef = useRef(null);
+    const cookies = new Cookies();
+    const token = cookies.get("token");
 
-  const canvasRef = useRef(null);
-  const mainContentRef = useRef(null);
-  const sceneRef = useRef(null);
-  const cameraRef = useRef(null);
-  const rendererRef = useRef(null);
-  const starsRef = useRef({ far: null, mid: null, close: null });
+    const STALE_TIME = 5 * 60 * 1000; // 5 minutes
 
-    useEffect(() => {
-      if (!canvasRef.current) return;
-  
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(
-        75,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        1000
-      );
-      camera.position.z = 5;
-  
-      const renderer = new THREE.WebGLRenderer({
-        canvas: canvasRef.current,
-      });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(window.devicePixelRatio);
-  
-      sceneRef.current = scene;
-      cameraRef.current = camera;
-      rendererRef.current = renderer;
-  
-      // Create starfield
-      const createStarfield = (count, size, color) => {
-        const geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(count * 3);
-        for (let i = 0; i < count; i++) {
-          positions[i * 3 + 0] = (Math.random() - 0.5) * 200;
-          positions[i * 3 + 1] = (Math.random() - 0.5) * 200;
-          positions[i * 3 + 2] = (Math.random() - 0.5) * 200;
-        }
-        geometry.setAttribute(
-          "position",
-          new THREE.BufferAttribute(positions, 3)
-        );
-        const material = new THREE.PointsMaterial({
-          size: size,
-          color: color,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-          transparent: true,
-          opacity: 0.7,
+    const useStudentData = (endpoint, queryKey) => {
+        return useQuery({
+            queryKey: [queryKey],
+            queryFn: async () => {
+                const { data } = await axios.get(endpoint, { headers: { Authorization: `Bearer ${token}` } });
+                return data;
+            },
+            refetchOnWindowFocus: false,
+            staleTime: STALE_TIME,
+            retry: (failureCount, error) => error.response?.status === 404 ? false : failureCount < 2,
         });
-        const starfield = new THREE.Points(geometry, material);
-        scene.add(starfield);
-        return starfield;
-      };
-  
-      starsRef.current.far = createStarfield(8000, 0.05, 0x888888);
-      starsRef.current.mid = createStarfield(5000, 0.1, 0xbbbbbb);
-      starsRef.current.close = createStarfield(1500, 0.15, 0xffffff);
-  
-      // Animation loop
-      const clock = new THREE.Clock();
-      const animate = () => {
-        const elapsedTime = clock.getElapsedTime();
-        if (starsRef.current.far)
-          starsRef.current.far.rotation.y = elapsedTime * 0.01;
-        if (starsRef.current.mid)
-          starsRef.current.mid.rotation.y = elapsedTime * 0.02;
-        if (starsRef.current.close)
-          starsRef.current.close.rotation.y = elapsedTime * 0.03;
-  
-        renderer.render(scene, camera);
-        requestAnimationFrame(animate);
-      };
-  
-      animate();
-  
-      // Handle window resize
-      const handleResize = () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-      };
-  
-      window.addEventListener("resize", handleResize);
-  
-      return () => {
-        window.removeEventListener("resize", handleResize);
-      };
-    }, []);
-  
-    // Scroll-based animation
-    useEffect(() => {
-      const handleScroll = () => {
-        if (!mainContentRef.current || !cameraRef.current) return;
-        const scrollY = mainContentRef.current.scrollTop;
-        const docHeight =
-          mainContentRef.current.scrollHeight -
-          mainContentRef.current.clientHeight;
-        const scrollPercent = docHeight > 0 ? scrollY / docHeight : 0;
-  
-        cameraRef.current.position.z = 5 - scrollPercent * 10;
-      };
-  
-      if (mainContentRef.current) {
-        mainContentRef.current.addEventListener("scroll", handleScroll);
-      }
-  
-      return () => {
-        if (mainContentRef.current) {
-          mainContentRef.current.removeEventListener("scroll", handleScroll);
-        }
-      };
-    }, []);
+    };
 
-  const cookies = new Cookies();
-  const token = cookies.get("token");
-
-  const getUserScore = async () => {
-    return await axios.get("/api/Student/GetStudentRankAndScore", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-  };
-
-  const { data: userScore } = useQuery({
-    queryKey: ["user-score"],
-    queryFn: getUserScore,
-    refetchOnWindowFocus: false
-  });
-
-  const getAssignments = async () => {
-    return await axios.get(
-      `/api/Assignment/GetAssignmentsForStudent?category=1`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
+    const { data: userScore, isLoading: isScoreLoading } = useStudentData("/api/Student/GetStudentRankAndScore", "studentScore");
+    const { data: userAssignments, isLoading: areAssignmentsLoading } = useStudentData(`/api/Assignment/GetAssignmentsForStudent?category=1`, "studentAssignments");
+    
+    // --- 2. تغيير رابط الـ API هنا لنسخة أسرع ---
+    const { data: enrollCourses, isLoading: areCoursesLoading } = useStudentData(`/api/StudentCourse/MyCourses`, "studentCourses");
+    
+    const { data: topStudents, isLoading: areTopStudentsLoading } = useStudentData('/api/LandingPadge/TopStudents', "topStudents");
+    
+    const { data: notifications, isLoading: areNotificationsLoading } = useQuery({
+        queryKey: ["studentNotifications", userScore?.id],
+        queryFn: async () => {
+            const { data } = await axios.get(`/api/Notification/student/${userScore.id}`, { headers: { Authorization: `Bearer ${token}` } });
+            return data;
         },
-      }
-    );
-  };
-
-  const { data: userAssignments, isLoading: assignmentLoading } = useQuery({
-    queryKey: ["user-assignments"],
-    queryFn: getAssignments,
-    refetchOnWindowFocus: false
-  });
-
-
-  const getNotifications = async (id) => {
-    return await axios.get(
-      `/api/Notification/student/${id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-  };
-
-  const userId = userScore?.data.id;
-
-  const { data: notifications } = useQuery({
-    queryKey: ["notifications", userId],
-    queryFn: () => getNotifications(userId),
-    enabled: !!userId,
-  });
-
-  const getEnrollCoursesData = async () => {
-    return await axios.get(`/api/StudentCourse/MyCoursesWithUnits`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+        enabled: !!userScore?.id,
+        refetchOnWindowFocus: false,
+        staleTime: STALE_TIME,
     });
-  };
+    
+    return (
+        <div className="min-h-screen text-gray-100" style={{ fontFamily: "Cairo, sans-serif" }}>
+            <Helmet><title>لوحة التحكم</title></Helmet>
+            <Suspense fallback={<div className="fixed inset-0 bg-black -z-10" />}>
+                <StarfieldBackground mainContentRef={mainContentRef} />
+            </Suspense>
 
-  const { data: enrollCourses, isLoading: coursesLoading } = useQuery({
-    queryKey: ["enroll-courses-data"],
-    queryFn: getEnrollCoursesData,
-  });
+            <main ref={mainContentRef} className="flex-1 h-screen overflow-y-auto p-4 sm:p-6 lg:p-8 scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-black/20">
+                <h2 className="mb-2 text-3xl sm:text-4xl font-black text-white title-glow">أهلاً بعودتك، {userScore?.firstName || 'يا رائد الفضاء'}!</h2>
+                <p className="mb-8 text-lg text-gray-400">مهمتك التالية في انتظارك. استعد للانطلاق.</p>
 
+                <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mb-8" initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.1 } }}}>
+                    {isScoreLoading ? <StatCardSkeleton /> : <StatCard icon={<Award size={24} className="text-cyan-400" />} title="ترتيبك في المجرة" value={`#${userScore?.rank || 'N/A'}`} colorClass="border-cyan-500/30" link="/student/rewards" />}
+                    {isScoreLoading ? <StatCardSkeleton /> : <StatCard icon={<Star size={24} className="text-yellow-400" />} title="نقاط الخبرة (XP)" value={userScore?.score || 0} colorClass="border-yellow-500/30" link="/student/rewards" />}
+                    {areAssignmentsLoading ? <StatCardSkeleton /> : <StatCard icon={<FileText size={24} className="text-purple-400" />} title="مهام جديدة" value={userAssignments?.length || 0} subtext="في انتظار إنجازك" colorClass="border-purple-500/30" link="/student/mytasks" />}
+                </motion.div>
 
-  // const date = new Date();
-  const formatted = (newDate) => {
-    const date = new Date(newDate);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long", // or "short" or "2-digit"
-      day: "2-digit",
-    });
-  };
-
-
-  if (coursesLoading || assignmentLoading) {
-    return <Loading />
-  }
-
-  return (
-    <div
-      className="min-h-screen  text-gray-100"
-      style={{ fontFamily: "Cairo, sans-serif" }}
-    >
-      {/* Background Canvas */}
-      <canvas
-        ref={canvasRef}
-        className="fixed top-0 left-0 w-full h-full -z-10"
-      />
-
-      {/* Main Content */}
-      <main
-        className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8"
-        style={{
-          scrollbarWidth: "thin",
-          scrollbarColor: "#00BFFF rgba(0,0,0,0.2)",
-        }}
-      >
-        <style jsx>{`
-          main::-webkit-scrollbar {
-            width: 6px;
-          }
-          main::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.2);
-          }
-          main::-webkit-scrollbar-thumb {
-            background: #00bfff;
-            border-radius: 10px;
-          }
-          main::-webkit-scrollbar-thumb:hover {
-            background: #009acd;
-          }
-        `}</style>
-
-        <h2 className="mb-2 text-2xl sm:text-3xl lg:text-4xl font-black text-white title-glow">
-          أهلاً بعودتك يا رائد الفضاء!
-        </h2>
-        <p className="mb-6 sm:mb-8 text-base sm:text-lg text-gray-400">
-          مهمتك التالية في انتظارك. استعد للانطلاق.
-        </p>
-
-        <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-3">
-          {/* Left Column (Main Content) */}
-          <div className="space-y-6 sm:space-y-8 lg:col-span-2">
-            <div>
-              <h2 className="mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold text-white title-glow">
-                مهماتك الحالية (الكورسات)
-              </h2>
-              {enrollCourses?.data.length > 0 ? enrollCourses?.data.map((course, index) => (
-                <div key={course.id} className="overflow-hidden rounded-2xl glass-effect my-2">
-                  <button
-                    onClick={() =>
-                      setOpenCourse(openCourse === index ? null : index)
-                    }
-                    className="flex w-full items-center justify-between p-4 sm:p-6 text-right transition-colors hover:bg-white/5"
-                  >
-                    <div>
-                      <h3 className="text-lg sm:text-xl font-bold text-white">
-                        {course.title}
-                      </h3>
-                      <p className="text-sm text-gray-400">
-                        {formatted(course.enrolledAt)}
-                      </p>
+                <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-3">
+                    <div className="space-y-4 lg:col-span-2">
+                        <h2 className="text-3xl font-bold text-white title-glow mb-2">مهماتك الحالية (الكورسات)</h2>
+                        
+                        {/* --- 3. استبدال الأكورديون بالقائمة الجديدة --- */}
+                        {areCoursesLoading ? <ListSkeleton items={2} /> : (
+                            enrollCourses?.length > 0 ? (
+                                <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.1 } } }}>
+                                    {enrollCourses.map((course) => (
+                                        <div key={course.id} className="my-3"><CourseListItem course={course} /></div>
+                                    ))}
+                                </motion.div>
+                            ) : (
+                                <div className="glass-effect text-center p-12 rounded-2xl"><p className="text-gray-400">لم تشترك في أي كورس بعد. حان وقت الانطلاق!</p><Link to="/student/allcourses" className="inline-block mt-4 rounded-lg bg-purple-600 px-6 py-2 font-bold text-white transition-colors hover:bg-purple-500">اكتشف الكورسات</Link></div>
+                            )
+                        )}
                     </div>
-                    <svg
-                      className={`h-6 w-6 transform text-cyan-400 transition-transform duration-300 ${
-                        openCourse === index ? "rotate-180" : ""
-                      }`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M19 9l-7 7-7-7"
-                      ></path>
-                    </svg>
-                  </button>
-                  {openCourse === index && (
-                    <div className="animate-in slide-in-from-top-2 space-y-4 border-t border-white/10 px-4 sm:px-6 pb-4 sm:pb-6 duration-300">
-                      {course.units.map((unit) => (
-                        <div key={unit.id}>
-                          <p className="font-bold text-white">{unit.title}</p>
-                          <p className="text-sm text-green-400">
-                            {unit.description}
-                          </p>
+
+                    <div className="space-y-8">
+                        <div>
+                            <h2 className="text-3xl font-bold text-white title-glow mb-6">البيانات الواردة</h2>
+                            <div className="glass-effect rounded-2xl p-6 space-y-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800/50">
+                                {areNotificationsLoading ? <p className="text-gray-400 text-center py-8">جاري تحميل الإشعارات...</p> : (
+                                    notifications?.length > 0 ? notifications.map(item => (
+                                        <div key={item.id} className="flex items-start gap-3 border-b border-white/5 pb-3 last:border-b-0"><div className="h-fit rounded-full bg-purple-500/20 p-2"><Bell size={18} className="text-purple-400" /></div><div><p className="text-sm font-bold text-white">{item.title}</p><p className="text-xs text-gray-400">{item.message}</p><p className="text-xs text-gray-500 mt-1">{item.timeAgo}</p></div></div>
+                                    )) : <p className="text-gray-400 text-center py-8">لا توجد إشعارات جديدة.</p>
+                                )}
+                            </div>
                         </div>
-                      ))}
+                        
+                        <div className="glass-effect rounded-2xl p-6">
+                            <div className="flex justify-between items-center mb-4"><h3 className="text-2xl font-bold text-white title-glow flex items-center gap-2"><Crown size={24} className="text-yellow-400"/> أبطال المجرة</h3><Link to="/student/rewards" className="text-sm font-semibold text-cyan-400 hover:underline">عرض الكل</Link></div>
+                            <div className="space-y-2">
+                               {areTopStudentsLoading ? <ListSkeleton items={3} /> : (
+                                   topStudents?.length > 0 ? topStudents.slice(0, 5).map((student, index) => (
+                                       <LeaderboardItem key={student.id || index} student={student} rank={index + 1} />
+                                   )) : <p className="text-gray-400 text-center py-4">لا يوجد طلاب في لوحة الشرف بعد.</p>
+                               )}
+                            </div>
+                        </div>
                     </div>
-                  )}
                 </div>
-              )) : !coursesLoading && <p className="flex justify-center items-center mt-32">لا توجد كورسات</p>}
-            </div>
-          </div>
-
-          {/* Right Column (Sidebar Content) */}
-          <div className="space-y-6 sm:space-y-8">
-            <div>
-              <h2
-                className="mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold text-white"
-                style={{ textShadow: "0 0 8px rgba(0, 191, 255, 0.5)" }}
-              >
-                مركز القيادة
-              </h2>
-              <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-blue-900/40 to-gray-900/50 p-4 sm:p-6 text-center backdrop-blur-md">
-                <p className="text-gray-400">ترتيبك على المجرّة</p>
-                <p
-                  className={`text-4xl sm:text-6xl font-black ${
-                    userPoints < 200 ? "text-red-400" : "text-cyan-400"
-                  }`}
-                  style={
-                    userPoints >= 200
-                      ? { textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }
-                      : {}
-                  }
-                >
-                  {userScore?.data.rank}
-                </p>
-                <div className="my-4 h-px bg-white/10"></div>
-                <p className="text-center text-sm text-gray-300">
-                  نقاطك الحالية:{" "}
-                  <span
-                    className={`font-bold ${
-                      userPoints < 200 ? "text-red-400" : "text-white"
-                    }`}
-                  >
-                    {userScore?.data.score}
-                  </span>
-                </p>
-              </div>
-            </div>
-
-            {/* Priority Missions */}
-            <div>
-              <h2
-                className="mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold text-white"
-                style={{ textShadow: "0 0 8px rgba(0, 191, 255, 0.5)" }}
-              >
-                مهام ذات أولوية
-              </h2>
-              {userAssignments?.data?.map((item) => (
-                <div key={item.id} className="space-y-3 rounded-2xl border mb-2 border-white/5 bg-gradient-to-br from-blue-900/40 to-gray-900/50 p-4 backdrop-blur-md">
-                  <a
-                    href={item.files}
-                    className="block rounded-lg bg-yellow-500/10 p-3 transition-colors hover:bg-yellow-500/20"
-                  >
-                    <div className="mb-1  sm:items-center justify-between gap-2 sm:gap-0">
-                      <p className="text-sm font-bold text-yellow-300">
-                        {item.courseName}
-                      </p>
-                      <p className="rounded-full bg-yellow-900/50 px-2 py-1 font-mono text-xs text-yellow-300 my-2">
-                        ينتهي خلال {formatted(item.dueDate)}
-                      </p>
-                    </div>
-                    <p className="text-xs text-yellow-400/80 break-all">
-                      {item.assignmentDescription}
-                    </p>
-                  </a>
-                </div>
-              )) || <p>لا يوجد مهام</p>}
-            </div>
-
-            {/* Incoming Data */}
-            <div>
-              <h2
-                className="mb-4 sm:mb-6 text-2xl sm:text-3xl font-bold text-white"
-                style={{ textShadow: "0 0 8px rgba(0, 191, 255, 0.5)" }}
-              >
-                البيانات الواردة
-              </h2>
-              <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-blue-900/40 to-gray-900/50 p-4 backdrop-blur-md">
-                <div className="h-22 overflow-y-auto">
-                  {/* <div className="flex items-start"> */}
-                  {/* <div className="h-fit rounded-full bg-cyan-500/20 p-2">
-                      <svg
-                        className="h-5 w-5 text-cyan-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                        ></path>
-                      </svg>
-                    </div> */}
-                  {/* <div className="mr-3">
-                      <p className="text-sm font-bold text-white">
-                        تم رفع الدرس الثالث في{" "}
-                        <span className="text-cyan-400">الرياضيات</span>.
-                      </p>
-                      <p className="text-xs text-gray-400">منذ 3 ساعات</p>
-                    </div> */}
-                  {/* </div> */}
-                  {/* <div className="flex items-start">
-                    <div className="h-fit rounded-full bg-green-500/20 p-2">
-                      <svg
-                        className="h-5 w-5 text-green-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M9 12l2 2 4-4m6 6l-3.5-7L9 12l-4 8 4-4 2 2 4-4z"
-                        ></path>
-                      </svg>
-                    </div>
-                    <div className="mr-3">
-                      <p className="text-sm font-bold text-white">
-                        لقد صعدت للمركز السابع!
-                      </p>
-                      <p className="text-xs text-gray-400">بالأمس</p>
-                    </div>
-                  </div> */}
-                  {notifications.data.length > 0 ? notifications?.data.map((item) => (
-                    <div key={item.id} className="flex items-start">
-                      <div className="h-fit rounded-full bg-purple-500/20 p-2">
-                        <svg
-                          className="h-5 w-5 text-purple-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          ></path>
-                        </svg>
-                      </div>
-                      <div className="mr-3">
-                        <p className="text-sm font-bold text-white">
-                          {item.title} 
-                        </p>
-                        <p className="text-xs text-gray-400 my-2">
-                          {item.timeAgo} 
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {item.message} 
-                        </p>
-                      </div>
-                    </div>
-                  )) : <p>لا توجد بيانات</p>}
-                </div>
-                {/* <div className="mt-3 border-t border-white/10 pt-3">
-                  <Link
-                    to="#"
-                    className="block text-center text-sm font-bold text-cyan-400 hover:text-cyan-300"
-                  >
-                    عرض كل البيانات
-                  </Link>
-                </div> */}
-              </div>
-            </div>
-          </div>
+            </main>
         </div>
-      </main>
-    </div>
-  );
+    );
 }

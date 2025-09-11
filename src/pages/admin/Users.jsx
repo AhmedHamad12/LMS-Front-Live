@@ -1,13 +1,11 @@
-import axios from "../../api/axios";
+import axios from "axios";
 import React, { useState, useMemo, useEffect } from "react";
-import { Cookies } from "react-cookie";
 import { toast } from "react-hot-toast";
 
 const Users = () => {
   //TODO: replace with token logic
 
-  const cookies = new Cookies
-  const token = cookies.get('token')
+  
 
   const [users, setUsers] = useState([]);
   const [filter, setFilter] = useState("all");
@@ -32,14 +30,11 @@ const Users = () => {
     //TODO: apply react query later , 
     const fetchUsers = async () => {
       setloading(true);
-      
 
       try {
         const response = await toast.promise(
-          axios.get("/api/Account/GetAllUser", {
-            withCredentials:true, headers :{
-              'Authorization': `Bearer ${token}`
-            }
+          axios.get("http://lms278.runasp.net/api/Account/GetAllUser", {
+            withCredentials:true,
           }),
           {
             loading: "جاري جلب المستخدمين...",

@@ -1,7 +1,11 @@
 import axios from "axios";
+
 import { Cookies } from "react-cookie";
 
+
 export const BASE_URL = "https://api.elmohdra.com";
+
+
 
 // Global function to show unauthorized overlay - will be set by AuthContext
 let showUnauthorizedOverlay = null;
@@ -77,3 +81,4 @@ api.interceptors.response.use(
 );
 
 export default api;
+

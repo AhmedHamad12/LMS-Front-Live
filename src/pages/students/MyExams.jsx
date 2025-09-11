@@ -1,622 +1,212 @@
-import React, { useState, useEffect, useRef } from "react";
-import * as THREE from "three";
+import React, { useState, useMemo, lazy, Suspense, useEffect, useRef } from "react"; // <-- الخطوة 1: إضافة useRef
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from "@tanstack/react-query";
 import api from "../../api/axios";
 import toast from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
+import { File, Clock, CheckCircle, XCircle, Inbox, AlertTriangle, Hourglass, Calendar, CalendarOff } from "lucide-react";
+import Loading from "../../Components/Loading";
 
-const MyExams = () => {
-  const [filter, setFilter] = useState("new");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showStartModal, setShowStartModal] = useState(false);
-  const [showExamInterface, setShowExamInterface] = useState(false);
-  const [currentExam, setCurrentExam] = useState(null);
-  const [answers, setAnswers] = useState([]);
-  const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [loading, setloading] = useState(false);
-  const [questions, setQuestions] = useState([]);
-  const [attemptId, setAttemptId] = useState(null);
-  const [exams, setExams] = useState([]);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const canvasRef = useRef(null);
-  const mainContentRef = useRef(null);
+const StarfieldBackground = lazy(() => import('../../Components/StarfieldBackground'));
 
-  const [timeLeft, setTimeLeft] = useState(null); // seconds
-  const timerRef = useRef(null);
-
-  const fetchExams = async () => {
-    try {
-      setloading(true);
-      const response = await api.get("/api/Quiz/getQuizForStudent");
-      const formattedExams = response.data.map((exam) => ({
-        id: exam.id,
-        course: exam.courseName,
-        title: exam.title,
-        statusNum: exam.QuizAttemptStatus, // keep original number for sorting
-        status:
-          exam.QuizAttemptStatus === 1
-            ? "new"
-            : exam.QuizAttemptStatus === 2
-            ? "processing"
-            : exam.QuizAttemptStatus === 3
-            ? "graded"
-            : "missed",
-        questions: exam.questions,
-        time: exam.time,
-        points: exam.score,
-        deadline: new Date(exam.deadline).toLocaleString("ar-EG", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        rank: exam.rank,
-      }));
-      formattedExams.sort((a,b)=>a.statusNum-b.statusNum)
-      setExams(formattedExams);
-    } catch (error) {
-      
-    } finally {
-      setloading(false);
-    }
-  };
-
-  useEffect(() => {
-    const endExpiredQuizzes = async () => {
-      try {
-        await api.post("/api/Quiz/endExpiredQuizzesForStudent");
-      } catch (error) {
-        
-      }
-    };
-    endExpiredQuizzes();
-
-
-    fetchExams();
-  }, []);
-
-  useEffect(() => {
-    if (timeLeft === null) return;
-
-    if (timeLeft <= 3) {
-      clearInterval(timerRef.current);
-      if (showExamInterface) {
-        handleFinishExam(); // auto-submit only once
-      }
-      return;
-    }
-
-    timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
-
-    return () => clearInterval(timerRef.current);
-  }, [timeLeft, showExamInterface]);
-
-  const formatTime = (seconds) => {
-    const m = String(Math.floor(seconds / 60)).padStart(2, "0");
-    const s = String(seconds % 60).padStart(2, "0");
-    return `${m}:${s}`;
-  };
-
-  const handleAnswerSelect = (questionId, idx, text) => {
-    setSelectedAnswer(idx);
-
-    setAnswers((prev) => {
-      const existing = prev.find((ans) => ans.questionId === questionId);
-      if (existing) {
-        return prev.map((ans) =>
-          ans.questionId === questionId
-            ? { questionId, answerIndex: idx, answerText: text }
-            : ans
-        );
-      } else {
-        return [...prev, { questionId, answerIndex: idx, answerText: text }];
-      }
-    });
-  };
-
-  const selectedForThisQuestion =
-    questions.length > 0
-      ? answers.find((ans) => ans.questionId === questions[currentQuestionIndex]?.id)
-      : null;
-
-  const filteredExams = exams.filter(
-    (exam) => filter === "" || exam.status === filter
-  );
-
-  const prepareExam = (exam) => {
-    setCurrentExam(exam);
-    setShowStartModal(true);
-  };
-
-  const startExam = () => {
-    setShowStartModal(false);
-    setShowExamInterface(true);
-
-    const getExamQuestions = async () => {
-      try {
-        setloading(true);
-        const response = await api.get(`/api/Quiz/${currentExam.id}/questions`);
-        setQuestions(response.data);
-      } catch (error) {
-        toast.error("حدث خطأ ما");
-      } finally {
-        setloading(false);
-      }
-    };
-    getExamQuestions();
-
-    setTimeLeft(currentExam.time * 60);
-
-    const getAttemptId = async () => {
-      try {
-        const response = await api.post(
-          `/api/Quiz/${currentExam.id}/start`,
-          currentExam.id
-        );
-        setAttemptId(response.data.attemptId);
-      } catch (error) {
-        
-        toast.error(`${error.response?.data?.message || "خطأ"}`);
-        setQuestions([]);
-        setShowExamInterface(false);
-      }
-    };
-    getAttemptId();
-  };
-
-  const handleFinishExam = async () => {
-    if (isSubmitting) return;
-    if (!currentExam || !attemptId) return;
-
-    setIsSubmitting(true);
-    setShowExamInterface(false);
-
-    let formattedAnswers = {
-      quizId: currentExam.id,
-      submitAnswerResponseDtos: answers.map((ans) => ({
-        questionId: ans.questionId,
-        selectedOptionId: ans.answerIndex,
-        writtenText: ans.answerText || "",
-      })),
-    };
-
-    try {
-      await api.post("/api/Quiz/submit-answer", formattedAnswers);
-      await api.post(`/api/Quiz/attempts/${attemptId}/finish`);
-
-      fetchExams()
-      toast.success("تم إرسال الإجابات وإنهاء المحاولة بنجاح!");
-    } catch (error) {
-      toast.error("حدث خطأ أثناء إرسال الامتحان");
-      
-    } finally {
-      setCurrentQuestionIndex(0);
-      setAnswers([]);
-      setIsSubmitting(false);
-    }
-  };
-
-  const StatusBadge = ({ status }) => {
-    const statusConfig = {
-      new: { text: "جديد", classes: "text-yellow-300 bg-yellow-500/20" },
-      graded: { text: "تم التقييم", classes: "text-green-300 bg-green-500/20" },
-      missed: { text: "فائت", classes: "text-red-300 bg-red-500/20" },
-      processing: { text: "قيد المعالجة", classes: "text-blue-300 bg-blue-500/20" },
-
-    };
-
-    const config = statusConfig[status];
-    return (
-      <span
-        className={`text-xs font-bold px-2 py-1 rounded-full ${config.classes}`}
-      >
-        {config.text}
-      </span>
-    );
-  };
-
-  const ExamCard = ({ exam }) => (
-    <div
-      className={`backdrop-blur-lg bg-gradient-to-br from-slate-800/40 to-slate-900/50 border border-white/5 rounded-2xl p-6 flex flex-col justify-between transform hover:-translate-y-2 transition-transform duration-300 ${
-        exam.status === "missed" ? "border-red-500/30" : ""
-      }`}
-    >
-      <div>
-        <div className="flex justify-between items-start">
-          <p className="text-sm font-bold text-cyan-300">{exam.course}</p>
-          <StatusBadge status={exam.status} />
-        </div>
-        <h3 className="text-xl font-bold text-white mt-1 mb-4">{exam.title}</h3>
-        {exam.status === "new" && (
-          <div className="text-sm text-yellow-400 flex items-center gap-2 mb-4">
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-              ></path>
-            </svg>
-            <span>
-              متاح حتى: <span className="font-bold">{exam.deadline}</span>
-            </span>
-          </div>
-        )}
-        <div className="border-t border-b border-white/5 py-4 my-4 flex justify-around text-center text-xs">
-          <div>
-            <p className="font-bold text-lg text-white">{exam.questions}</p>
-            <p className="text-gray-400">سؤال</p>
-          </div>
-          <div>
-            <p className="font-bold text-lg text-white">{exam.time}</p>
-            <p className="text-gray-400">دقيقة</p>
-          </div>
-     
-        </div>
-        {exam.status === "graded" && (
-          <div className="backdrop-blur-lg bg-gradient-to-br from-slate-800/40 to-slate-900/50 border border-white/5 rounded-lg p-3 text-center mb-6">
-            <p className="text-sm text-gray-300">النتيجة</p>
-            <p className="text-2xl font-black text-green-400">{exam.score}</p>
-            <p className="text-xs text-green-400">ترتيبك: {exam.rank}</p>
-          </div>
-        )}
-      </div>
-     <div className="flex items-center justify-center text-center w-full ">
-     {
-          exam.status === "processing" &&   <div>
-          <p
-            className={` ${
-              exam.status === "missed" ? "text-red-400" : "text-white"
-            }`}
-          >
-            {/* {exam.points.slice(0,-2)} */}
-            {exam.points.substring(0,exam?.points?.length-2)}
-
-          </p>
-          
-        </div>
+// Countdown Timer and ExamCard components remain unchanged...
+const CountdownTimer = ({ targetDate, onComplete }) => {
+    const calculateTimeLeft = (difference) => {
+        if (difference > 0) {
+            return {
+                days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+                hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+                minutes: Math.floor((difference / 1000 / 60) % 60),
+                seconds: Math.floor((difference / 1000) % 60),
+            };
         }
-     </div>
-      {exam.status === "new" && (
-        <button
-          onClick={() => prepareExam(exam)}
-          className="w-full text-center block p-3 rounded-lg bg-cyan-500 text-black font-bold hover:bg-cyan-400 transition-colors"
-        >
-          ابدأ الامتحان
-        </button>
-      )}
-      {exam.status === "graded" && (
-        <button className="w-full text-center block p-3 rounded-lg bg-gray-700 text-white font-bold hover:bg-gray-600 transition-colors">
-          عرض التقرير
-        </button>
-      )}
-      {exam.status === "missed" && (
-        <button className="w-full text-center block p-3 rounded-lg bg-red-800/50 text-red-300 font-bold cursor-not-allowed">
-          فات الموعد
-        </button>
-      )}
-    </div>
-  );
+        return {};
+    };
 
-  const FilterButton = ({ value, children, isActive, onClick }) => (
-    <button
-      onClick={onClick}
-      className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${
-        isActive
-          ? "bg-cyan-500 text-black"
-          : "bg-white/10 text-white hover:bg-white/20"
-      }`}
-    >
-      {children}
-    </button>
-  );
+    const initialDifference = +new Date(targetDate) - +new Date();
+    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft(initialDifference));
 
-  const NavItem = ({ href, icon, label, isActive = false }) => (
-    <a
-      href={href}
-      className={`flex items-center justify-center lg:justify-start p-3 rounded-lg transition-colors ${
-        isActive
-          ? "bg-cyan-500/20 text-white font-bold"
-          : "text-gray-300 hover:bg-white/10"
-      }`}
-      title={label}
-    >
-      {icon}
-      <span className="hidden lg:inline mr-3">{label}</span>
-    </a>
-  );
+    useEffect(() => {
+        if (initialDifference <= 0) {
+            onComplete();
+            return;
+        }
+        const timer = setInterval(() => {
+            const difference = +new Date(targetDate) - +new Date();
+            if (difference > 0) {
+                setTimeLeft(calculateTimeLeft(difference));
+            } else {
+                setTimeLeft({});
+                clearInterval(timer);
+                onComplete();
+            }
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [targetDate, onComplete, initialDifference]);
 
-  return (
-    <div
-      className=" text-gray-100 min-h-screen overflow-hidden w-full"
-      style={{ fontFamily: "Cairo, sans-serif" }}
-    >
-      <canvas
-        ref={canvasRef}
-        className="fixed top-0 left-0 w-full h-screen -z-10"
-      />
+    const formatTime = () => {
+        const { days, hours, minutes, seconds } = timeLeft;
+        if (days === undefined) return "00:00";
+        const parts = [];
+        if (days > 0) parts.push(`${days}ي`);
+        if (hours > 0 || days > 0) parts.push(`${String(hours || 0).padStart(2, '0')}`);
+        parts.push(`${String(minutes || 0).padStart(2, '0')}`);
+        parts.push(`${String(seconds || 0).padStart(2, '0')}`);
+        return parts.join(':');
+    };
 
-      {/* Start Exam Modal */}
-      {showStartModal && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-          <div className="backdrop-blur-lg bg-gradient-to-br from-slate-800/40 to-slate-900/50 border border-yellow-500/30 rounded-2xl w-full max-w-lg text-center p-8 shadow-2xl shadow-yellow-500/10">
-            <svg
-              className="w-16 h-16 mx-auto text-yellow-400 mb-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              ></path>
-            </svg>
-            <h2 className="text-2xl font-bold text-white mb-2">
-              تنبيه قبل بدء الامتحان!
-            </h2>
-            <p className="text-gray-300 mb-6">
-              أنت على وشك بدء امتحان '{currentExam?.title}'.
-            </p>
-            <div className="backdrop-blur-lg bg-gradient-to-br from-slate-800/40 to-slate-900/50 border border-white/5 rounded-lg p-4 space-y-3 text-sm text-gray-300 mb-6">
-              <p>
-                » هذا الامتحان متاح حتى:{" "}
-                <span className="font-bold text-white">
-                  {currentExam?.deadline}
-                </span>
-                .
-              </p>
-              <p>
-                » مدة الامتحان الفعلية:{" "}
-                <span className="font-bold text-white">
-                  {currentExam?.time} دقيقة
-                </span>
-                .
-              </p>
-              <p>» لا يمكنك إيقاف المؤقت بعد البدء.</p>
+    return (
+        <div className="bg-black/20 p-4 rounded-lg text-center mb-4">
+            <p className="text-sm text-gray-300 flex items-center justify-center gap-2"><Hourglass size={14} /> يبدأ خلال</p>
+            <p className="text-3xl font-black text-yellow-400 font-mono tracking-wider">{formatTime()}</p>
+        </div>
+    );
+};
+
+const StartExamModal = ({ exam, onStart, onClose }) => (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+        <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="glass-effect rounded-2xl w-full max-w-lg text-center p-8 border border-yellow-500/30 shadow-2xl shadow-yellow-500/10">
+            <AlertTriangle className="w-16 h-16 mx-auto text-yellow-400 mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">تنبيه قبل بدء الامتحان!</h2>
+            <p className="text-gray-300 mb-6">أنت على وشك بدء امتحان '<span className="font-bold text-white">{exam?.title}</span>'.</p>
+            <div className="bg-black/20 rounded-lg p-4 space-y-3 text-sm text-gray-300 mb-6 text-right">
+                <p>» مدة الامتحان: <span className="font-bold text-white">{exam?.time} دقيقة</span>.</p>
+                <p>» لا يمكنك إيقاف المؤقت أو مغادرة الصفحة بعد البدء.</p>
+                <p className="text-yellow-400 font-bold">» تحذير: مغادرة صفحة الامتحان أو فتح تبويب جديد سيؤدي إلى إنهاء وتسليم الامتحان فورًا.</p>
             </div>
             <div className="flex justify-center gap-4">
-              <button
-                onClick={() => setShowStartModal(false)}
-                className="px-8 py-2 rounded-lg bg-white/10 text-gray-300 hover:bg-white/20 transition-colors font-bold"
-              >
-                إلغاء
-              </button>
-              <button
-                onClick={startExam}
-                className="px-8 py-2 rounded-lg bg-yellow-400 text-black hover:bg-yellow-300 transition-colors font-bold"
-              >
-                ابدأ الامتحان الآن
-              </button>
+                <button onClick={onClose} className="px-8 py-2 rounded-lg bg-white/10 text-gray-300 hover:bg-white/20 transition-colors font-bold">إلغاء</button>
+                <button onClick={onStart} className="px-8 py-2 rounded-lg bg-yellow-400 text-black hover:bg-yellow-300 transition-colors font-bold">تأكيد وبدء</button>
             </div>
-          </div>
+        </motion.div>
+    </motion.div>
+);
+
+const ExamCard = ({ exam, onStart }) => {
+    const now = useMemo(() => new Date(), []);
+    const startTime = useMemo(() => new Date(exam.startAt), [exam.startAt]);
+    const [isReady, setIsReady] = useState(() => now >= startTime);
+    const diffMinutes = useMemo(() => (startTime - now) / (1000 * 60), [startTime, now]);
+
+    const statusMap = {
+        new: { icon: <File size={14}/>, text: "جديد", color: "yellow" },
+        processing: { icon: <Clock size={14}/>, text: "قيد المعالجة", color: "blue" },
+        graded: { icon: <CheckCircle size={14}/>, text: "تم التقييم", color: "green" },
+        missed: { icon: <XCircle size={14}/>, text: "فائت", color: "red" },
+    };
+    const currentStatus = statusMap[exam.status] || statusMap.new;
+
+    const formatDate = (date) => new Date(date).toLocaleString("ar-EG", {
+        day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Cairo'
+    });
+
+    return (
+        <motion.div layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className={`glass-effect rounded-2xl p-6 flex flex-col justify-between transform hover:-translate-y-2 transition-transform duration-300 border ${exam.status === "missed" ? "border-red-500/30" : "border-white/10"}`}>
+            <div>
+                <div className="flex justify-between items-start">
+                    <p className="text-sm font-bold text-cyan-300">{exam.course}</p>
+                    <span className={`text-xs font-bold px-3 py-1 rounded-full flex items-center gap-2 text-${currentStatus.color}-300 bg-${currentStatus.color}-500/20`}>
+                        {currentStatus.icon} {currentStatus.text}
+                    </span>
+                </div>
+                <h3 className="text-xl font-bold text-white mt-1 mb-2">{exam.title}</h3>
+                <div className="space-y-2 text-sm text-gray-400 mb-4 border-b border-white/5 pb-4">
+                    <div className="flex items-center gap-2"><Calendar size={16} className="text-cyan-400" /><span>يبدأ في:</span><span className="font-bold text-white/90">{formatDate(exam.startAt)}</span></div>
+                    <div className="flex items-center gap-2"><CalendarOff size={16} className="text-red-400" /><span>ينتهي في:</span><span className="font-bold text-white/90">{formatDate(exam.deadline)}</span></div>
+                </div>
+                {exam.status === "graded" && (<div className="bg-black/20 p-4 rounded-lg text-center mb-6"><p className="text-sm text-gray-300">النتيجة</p><p className="text-3xl font-black text-green-400">{exam.score} <span className="text-lg">/ {exam.totalScore}</span></p><p className="text-xs text-green-400">ترتيبك: #{exam.rank}</p></div>)}
+                {exam.status === "missed" && (<div className="bg-black/20 p-4 rounded-lg text-center mb-6"><p className="text-sm text-gray-300">النتيجة</p><p className="text-3xl font-black text-red-400">0 <span className="text-lg">/ {exam.totalScore}</span></p></div>)}
+                {exam.status === "new" && !isReady && diffMinutes <= 30 && (<CountdownTimer targetDate={exam.startAt} onComplete={() => setIsReady(true)} />)}
+                <div className="border-t border-white/5 pt-4 mt-4 flex justify-around text-center">
+                    <div><p className="font-bold text-lg text-white">{exam.questions}</p><p className="text-xs text-gray-400">سؤال</p></div>
+                    <div><p className="font-bold text-lg text-white">{exam.time}</p><p className="text-xs text-gray-400">دقيقة</p></div>
+                    {(exam.status === 'graded' || exam.status === 'missed') && (<div><p className="font-bold text-lg text-white">{exam.totalScore}</p><p className="text-xs text-gray-400">نقطة</p></div>)}
+                </div>
+            </div>
+            <div className="mt-6">
+                {exam.status === "new" && (isReady ? (<button onClick={onStart} className="w-full text-center block p-3 rounded-lg bg-cyan-500 text-black font-bold hover:bg-cyan-400 transition-colors">ابدأ الامتحان</button>) : (<button disabled className="w-full text-center block p-3 rounded-lg bg-gray-700 text-gray-400 font-bold cursor-not-allowed">{diffMinutes > 30 ? `لم يبدأ بعد` : 'انتظر...'}</button>))}
+                {exam.status === "graded" && <button className="w-full text-center block p-3 rounded-lg bg-gray-700 text-white font-bold hover:bg-gray-600 transition-colors">عرض التقرير</button>}
+                {exam.status === "missed" && <button onClick={() => toast.error("لقد فاتك موعد هذا الامتحان.")} className="w-full text-center block p-3 rounded-lg bg-red-800/50 text-red-300 font-bold hover:bg-red-800/80 transition-colors">فات الموعد</button>}
+                {exam.status === "processing" && <button disabled className="w-full text-center block p-3 rounded-lg bg-blue-800/50 text-blue-300 font-bold cursor-not-allowed">جاري التصحيح</button>}
+            </div>
+        </motion.div>
+    );
+};
+
+const MyExams = () => {
+    const [filter, setFilter] = useState("all");
+    const [showStartModal, setShowStartModal] = useState(false);
+    const [currentExam, setCurrentExam] = useState(null);
+    const navigate = useNavigate();
+    const mainContentRef = useRef(null); // <-- الخطوة 2: إنشاء الـ ref
+
+    const { data: exams, isLoading, refetch } = useQuery({
+        queryKey: ["studentExams"],
+        queryFn: async () => {
+            try {
+                await api.post("/api/Quiz/endExpiredQuizzesForStudent");
+                const response = await api.get("/api/Quiz/getQuizForStudent");
+                const statusMap = ["new", "processing", "graded", "missed"];
+                return response.data.map(exam => {
+                    const deadlineUTC = exam.deadline.endsWith('Z') ? exam.deadline : exam.deadline + 'Z';
+                    const startAtUTC = exam.startAt.endsWith('Z') ? exam.startAt : exam.startAt + 'Z';
+                    return {
+                        id: exam.id, course: exam.courseName, title: exam.title, statusNum: exam.quizAttemptStatus,
+                        status: statusMap[exam.quizAttemptStatus - 1] || 'new', questions: exam.questions,
+                        time: exam.time, score: exam.score, totalScore: "100",
+                        deadline: new Date(deadlineUTC), startAt: new Date(startAtUTC), rank: exam.rank,
+                    };
+                }).sort((a, b) => a.statusNum - b.statusNum);
+            } catch (error) {
+                if (error.response && error.response.status === 404) return [];
+                throw error;
+            }
+        },
+        refetchOnWindowFocus: true,
+    });
+
+    const filteredExams = useMemo(() => {
+        if (!exams) return [];
+        if (filter === "all") return exams;
+        return exams.filter(exam => exam.status === filter);
+    }, [exams, filter]);
+
+    const handleStartClick = (exam) => {
+        setCurrentExam(exam);
+        setShowStartModal(true);
+    };
+
+    const handleConfirmStart = () => {
+        setShowStartModal(false);
+        navigate(`/student/exam/${currentExam.id}`);
+    };
+
+    if (isLoading && !exams) return <Loading message="جاري تجهيز غرفة الامتحانات..." />;
+    
+    const filterButtons = [{ key: "all", label: "الكل" }, { key: "new", label: "جديدة" }, { key: "processing", label: "قيد المعالجة" }, { key: "graded", label: "منجزة" }, { key: "missed", label: "فائتة" }];
+
+    return (
+        <div className="text-gray-100 min-h-screen overflow-hidden w-full" style={{ fontFamily: "Cairo, sans-serif" }} dir="rtl">
+            {/* الخطوة 3: تمرير الـ ref لمكون الخلفية */}
+            <Suspense fallback={<div className="fixed inset-0 bg-black -z-10" />}><StarfieldBackground mainContentRef={mainContentRef} /></Suspense>
+            <AnimatePresence>
+                {showStartModal && <StartExamModal exam={currentExam} onStart={handleConfirmStart} onClose={() => setShowStartModal(false)} />}
+            </AnimatePresence>
+            {/* الخطوة 4: ربط الـ ref بالعنصر الرئيسي */}
+            <main ref={mainContentRef} className="flex-1 max-h-screen p-4 sm:p-8 overflow-y-auto scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-black/20">
+                <h1 className="text-4xl font-black text-white mb-2 title-glow">غرفة الامتحانات</h1>
+                <p className="text-gray-400 text-lg mb-8">استعد لاختبار قدراتك في ساحة التحدي.</p>
+                <div className="flex items-center gap-2 sm:gap-4 mb-8 flex-wrap">
+                    {filterButtons.map(btn => (<button key={btn.key} onClick={() => setFilter(btn.key)} className={`relative rounded-lg px-4 py-2 text-sm font-bold transition-colors ${filter === btn.key ? "text-white" : "text-gray-400 hover:text-white"}`}>{filter === btn.key && <motion.div layoutId="exam-filter-pill" className="absolute inset-0 bg-cyan-500/20 border border-cyan-500 rounded-lg" />}<span className="relative z-10">{btn.label}</span></button>))}
+                </div>
+                <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                    <AnimatePresence>
+                        {filteredExams.length > 0 ? (filteredExams.map(exam => <ExamCard key={exam.id} exam={exam} onStart={() => handleStartClick(exam)} />)) : (<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="md:col-span-2 xl:col-span-3 text-center py-16"><Inbox size={56} className="w-16 h-16 mx-auto text-gray-600 mb-4" /><h3 className="text-xl font-bold text-white">لا توجد امتحانات في هذا التصنيف</h3><p className="text-gray-400">استعد جيدًا للمهام القادمة!</p></motion.div>)}
+                    </AnimatePresence>
+                </motion.div>
+            </main>
         </div>
-      )}
-
-      {/* Exam Interface */}
-      {showExamInterface && (
-  <div className="fixed inset-0 bg-black z-40 flex flex-col overflow-auto">
-    <header className="p-4 flex-shrink-0 backdrop-blur-lg bg-gradient-to-br from-slate-800/40 to-slate-900/50 border border-white/5 flex justify-between items-center border-b border-white/5">
-      <div>
-        <p className="text-sm text-cyan-300">{currentExam?.course}</p>
-        <h2 className="text-xl font-bold text-white">{currentExam?.title}</h2>
-      </div>
-      <div className="text-center">
-        <p className="text-sm text-red-400">الوقت المتبقي</p>
-        <p className="text-2xl font-bold font-mono">
-  {timeLeft !== null ? formatTime(timeLeft) : `${currentExam?.time}:00`}
-</p>
-
-      </div>
-    </header>
-
-    <div className="flex-grow p-8 flex flex-col items-center justify-center">
-      <div className="w-full max-w-4xl">
-        {questions.length > 0 && (
-          <>
-            <div className="flex justify-between items-center mb-4">
-              <p className="font-bold">
-                السؤال {currentQuestionIndex + 1} من {questions.length}
-              </p>
-              <div className="w-1/2 h-2 bg-gray-700 rounded-full">
-                <div
-                  className="h-2 bg-cyan-400 rounded-full"
-                  style={{
-                    width: `${((currentQuestionIndex + 1) / questions.length) * 100}%`,
-                  }}
-                ></div>
-              </div>
-            </div>
-
-            <div className="backdrop-blur-lg bg-gradient-to-br from-slate-800/40 to-slate-900/50 border border-white/5 p-8 rounded-lg">
-              <p className="text-xl font-bold leading-relaxed mb-8">
-                {questions[currentQuestionIndex].text}
-              </p>
-
-              {/* optional image */}
-              {questions[currentQuestionIndex].imageUrl && (
-                <img
-                  src={questions[currentQuestionIndex].imageUrl}
-                  alt="question"
-                  className="mb-6 rounded-lg"
-                />
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {questions[currentQuestionIndex].options.map((opt, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() =>
-                      handleAnswerSelect(
-                        questions[currentQuestionIndex].id,
-                        idx,
-                        opt.text
-                      )
-                    }
-                    
-                    className={`p-4 rounded-lg border text-right transition-colors ${
-                      selectedForThisQuestion?.answerIndex === idx
-                        ? "bg-cyan-500/20 border-cyan-500"
-                        : "border-gray-600 hover:bg-cyan-500/10 hover:border-cyan-500/40"
-                    }`}
-                    
-                  >
-                    {opt.text}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-
-    <footer className="p-4 flex-shrink-0 backdrop-blur-lg bg-gradient-to-br from-slate-800/40 to-slate-900/50 border border-white/5 flex justify-center items-center border-t gap-5 border-white/5">
-      <button
-        onClick={() => handleFinishExam()}
-        className="px-6 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500 transition-colors font-bold"
-      >
-        إنهاء وتسليم الإجابات
-      </button>
-
-      <button
-        disabled={currentQuestionIndex === questions.length - 1}
-        onClick={() =>
-          setCurrentQuestionIndex((prev) => Math.min(prev + 1, questions.length - 1))
-        }
-        className="px-6 py-2 rounded-lg bg-cyan-500 text-black hover:bg-cyan-400 transition-colors font-bold disabled:opacity-50"
-      >
-        السؤال التالي
-      </button>
-      <button
-        disabled={currentQuestionIndex === 0}
-        onClick={() =>
-          setCurrentQuestionIndex((prev) => Math.min(prev - 1, questions.length - 1))
-        }
-        className="px-6 py-2 rounded-lg bg-cyan-500 text-black hover:bg-cyan-400 transition-colors font-bold disabled:opacity-50"
-      >
-        السؤال السابق
-      </button>
-    </footer>
-  </div>
-)}
-
-      <div className="flex h-screen w-full">
-        {/* Main Content */}
-        <main
-          ref={mainContentRef}
-          className="flex-1 p-8 overflow-y-auto"
-          style={{
-            scrollbarWidth: "thin",
-            scrollbarColor: "#00BFFF rgba(0,0,0,0.2)",
-          }}
-        >
-          <style jsx>{`
-            main::-webkit-scrollbar {
-              width: 6px;
-            }
-            main::-webkit-scrollbar-track {
-              background: rgba(0, 0, 0, 0.2);
-            }
-            main::-webkit-scrollbar-thumb {
-              background: #00bfff;
-              border-radius: 10px;
-            }
-            main::-webkit-scrollbar-thumb:hover {
-              background: #009acd;
-            }
-          `}</style>
-
-          <p
-            className="text-4xl font-black text-white mb-2"
-            style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
-          >
-             الامتحانات
-          </p>
-          <p className="text-gray-400 text-lg mb-8">
-            استعد لاختبار قدراتك في الامتحانات .
-          </p>
-
-          {/* Filter Buttons */}
-          <div className="flex items-center gap-4 mb-8 flex-wrap">
-            <FilterButton
-              value="new"
-              isActive={filter === "new"}
-              onClick={() => setFilter("new")}
-            >
-              امتحانات جديدة
-            </FilterButton>
-            <FilterButton
-              value="graded"
-              isActive={filter === "graded"}
-              onClick={() => setFilter("graded")}
-            >
-                         
-              امتحانات منجزة
-            </FilterButton>
-            <FilterButton
-              value="processing"
-              isActive={filter === "processing"}
-              onClick={() => setFilter("processing")}
-            > 
-              امتحانات قيد المعالجة
-            </FilterButton>
-            <FilterButton
-              value="missed"
-              isActive={filter === "missed"}
-              onClick={() => setFilter("missed")}
-            >
-              امتحانات فائتة
-            </FilterButton>
-            <FilterButton
-              value=""
-              isActive={filter === ""}
-              onClick={() => setFilter("")}
-            >
-              الكل
-            </FilterButton>
-          </div>
-
-          {/* Exams Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            {filteredExams.map((exam) => (
-              <ExamCard key={exam.id} exam={exam} />
-            ))}
-
-            {/* No results message */}
-            {filteredExams.length === 0 && (
-              <div className="md:col-span-2 xl:col-span-3 text-center py-16">
-                <svg
-                  className="w-16 h-16 mx-auto text-gray-600 mb-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
-                  ></path>
-                </svg>
-                <h3 className="text-xl font-bold text-white">
-                  لا توجد امتحانات في هذا التصنيف
-                </h3>
-                <p className="text-gray-400">استعد جيدًا للمهام القادمة!</p>
-              </div>
-            )}
-          </div>
-        </main>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default MyExams;

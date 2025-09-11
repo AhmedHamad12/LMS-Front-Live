@@ -1,342 +1,143 @@
-import React, { useState, useEffect, useRef } from "react";
-import * as THREE from "three";
-
+import React, { useRef, Suspense, lazy } from "react";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import { useParams, Link } from "react-router-dom";
 import { Cookies } from "react-cookie";
-import { useParams } from "react-router-dom";
+import axios from "../../api/axios";
+import Loading from "../../Components/Loading";
+import { Helmet } from "react-helmet-async";
+import { motion } from "framer-motion";
+import { BookOpen, PlayCircle, CheckCircle, Info, XCircle } from "lucide-react";
 
-const CourseData = () => {
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
+// Lazy load the heavy 3D background
+const StarfieldBackground = lazy(() => import('../../Components/StarfieldBackground'));
 
-  const { courseId } = useParams();
+// --- Helper Components ---
 
-  const cookies = new Cookies();
-  const token = cookies.get("token");
-
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [courseUnitImage, setCourseUnitImage] = useState(null);
-  const [durationInMinutes, setDurationInMinutes] = useState(60);
-
-  const fetchCourse = () => {
-    return axios
-      .get(`http://lms278.runasp.net/api/Course/IsAllowed/${courseId}`, {
-        headers: {
-          accept: "*/*",
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  };
-
-  // const fetchCourses = (teacherID) => {
-  //   return axios
-  //     .get(`http://lms278.runasp.net/api/Course/${teacherID}`, {
-  //       headers: {
-  //         accept: "/",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     })
-  //     .catch((error) => {
-  //       console.error("User data fetch error:", error);
-  //     });
-  // };
-
-  const { data: courses } = useQuery({
-    queryKey: ["get-courses"],
-    queryFn: fetchCourse,
-  });
-
-  // const teacherID = user?.data?.teacherId;
-
-  // const { data: courses } = useQuery({
-  //   queryKey: ["courses", teacherID],
-  //   queryFn: () => fetchCourses(teacherID),
-  //   enabled: !!teacherID, // only after the teacherID has been retrieved fetch the details
-  // });
-
-  const fetchUser = () => {
-    return axios
-      .get("http://lms278.runasp.net/api/Account/GetCurrentUser", {
-        headers: {
-          accept: "text/plain",
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .catch((error) => {
-        console.error("User data fetch error:", error);
-      });
-  };
-
-  const { data: user } = useQuery({
-    queryKey: ["user"],
-    queryFn: fetchUser,
-  });
-
-  console.log(user);
-  // console.log(user);
-  console.log(courses);
-
-  const canvasRef = useRef(null);
-  const mainContentRef = useRef(null);
-  const sceneRef = useRef(null);
-  const rendererRef = useRef(null);
-  const cameraRef = useRef(null);
-  const starFieldsRef = useRef([]);
-  // Three.js setup
-  useEffect(() => {
-    if (!canvasRef.current) return;
-
-    // Scene setup
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
-    );
-    camera.position.z = 5;
-
-    const renderer = new THREE.WebGLRenderer({
-      canvas: canvasRef.current,
-      alpha: true,
-    });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-
-    // Store refs
-    sceneRef.current = scene;
-    cameraRef.current = camera;
-    rendererRef.current = renderer;
-
-    // Create starfield function
-    const createStarfield = (count, size, color) => {
-      const geometry = new THREE.BufferGeometry();
-      const positions = new Float32Array(count * 3);
-      for (let i = 0; i < count; i++) {
-        positions[i * 3 + 0] = (Math.random() - 0.5) * 200;
-        positions[i * 3 + 1] = (Math.random() - 0.5) * 200;
-        positions[i * 3 + 2] = (Math.random() - 0.5) * 200;
-      }
-      geometry.setAttribute(
-        "position",
-        new THREE.BufferAttribute(positions, 3)
-      );
-      const material = new THREE.PointsMaterial({
-        size: size,
-        color: color,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        transparent: true,
-        opacity: 0.7,
-      });
-      const starfield = new THREE.Points(geometry, material);
-      scene.add(starfield);
-      return starfield;
-    };
-
-    // Create starfields
-    const starsFar = createStarfield(8000, 0.05, 0x888888);
-    const starsMid = createStarfield(5000, 0.1, 0xbbbbbb);
-    const starsClose = createStarfield(1500, 0.15, 0xffffff);
-
-    starFieldsRef.current = [starsFar, starsMid, starsClose];
-
-    // Animation loop
-    const clock = new THREE.Clock();
-    const animate = () => {
-      const elapsedTime = clock.getElapsedTime();
-      starsFar.rotation.y = elapsedTime * 0.01;
-      starsMid.rotation.y = elapsedTime * 0.02;
-      starsClose.rotation.y = elapsedTime * 0.03;
-
-      renderer.render(scene, camera);
-      requestAnimationFrame(animate);
-    };
-
-    animate();
-
-    // Cleanup
-    return () => {
-      if (renderer) {
-        renderer.dispose();
-      }
-    };
-  }, []);
-
-  // Handle scroll for camera movement
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!mainContentRef.current || !cameraRef.current) return;
-
-      const scrollY = mainContentRef.current.scrollTop;
-      const docHeight =
-        mainContentRef.current.scrollHeight -
-        mainContentRef.current.clientHeight;
-      const scrollPercent = docHeight > 0 ? scrollY / docHeight : 0;
-
-      cameraRef.current.position.z = 5 - scrollPercent * 10;
-    };
-
-    const mainContent = mainContentRef.current;
-    if (mainContent) {
-      mainContent.addEventListener("scroll", handleScroll);
-      return () => mainContent.removeEventListener("scroll", handleScroll);
-    }
-  }, []);
-
-  // Handle window resize
-  useEffect(() => {
-    const handleResize = () => {
-      if (cameraRef.current && rendererRef.current) {
-        cameraRef.current.aspect = window.innerWidth / window.innerHeight;
-        cameraRef.current.updateProjectionMatrix();
-        rendererRef.current.setSize(window.innerWidth, window.innerHeight);
-        rendererRef.current.setPixelRatio(window.devicePixelRatio);
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // Handle click outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (userMenuOpen && !e.target.closest(".user-menu")) {
-        setUserMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, [userMenuOpen]);
-
-  return (
-    <div
-      className="text-gray-100 font-[Cairo] h-screen overflow-hidden w-full"
-      dir="rtl"
+const LessonListItem = ({ lesson }) => (
+    <Link 
+        // 1. الرابط الآن يوجه لصفحة الدرس المنفصلة
+        to={`/student/lesson/${lesson.id}`} 
+        state={{ lessonId: lesson.id }} // تمرير ID الدرس للصفحة التالية
+        className="block"
     >
-      <canvas
-        ref={canvasRef}
-        className="fixed top-0 left-0 w-full h-full -z-10"
-      />
-
-      <div className="flex h-screen">
-        {/* Main Content */}
-        <main
-          ref={mainContentRef}
-          className="flex-1 p-8 overflow-y-auto"
-          style={{
-            scrollbarWidth: "thin",
-            scrollbarColor: "#00BFFF rgba(0,0,0,0.2)",
-          }}
+        <motion.div 
+            whileHover={{ scale: 1.02, backgroundColor: "rgba(0, 191, 255, 0.1)" }}
+            className="flex items-center justify-between p-4 rounded-lg bg-[#0d0d21]/50 transition-colors"
         >
-          <main>
-            <header className="flex justify-between items-center mb-6">
-              <div>
-                <h1
-                  className="text-4xl font-black text-white mb-2"
-                  style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
-                >
-                  إضافة فصل جديد
-                </h1>
-                <p className="text-gray-400 text-lg">
-                  أضف فصول جديدة للكورس الخاص بك.
-                </p>
-              </div>
-            </header>
-
-            <div className="space-y-6">
-              <div className="bg-gradient-to-r from-slate-900/40 to-slate-800/50 backdrop-blur-2xl border border-white/5 rounded-2xl p-6">
-                <label className="block text-lg font-bold text-white mb-3">
-                  عنوان الفصل
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                  placeholder="أدخل عنوان الفصل"
-                  className="w-full p-3 rounded-lg text-lg bg-black/20 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:bg-black/40 focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(0,191,255,0.3)] transition-all"
-                />
-              </div>
-
-              <div className="bg-gradient-to-r from-slate-900/40 to-slate-800/50 backdrop-blur-2xl border border-white/5 rounded-2xl p-6">
-                <label className="block text-lg font-bold text-white mb-3">
-                  وصف الفصل
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  required
-                  placeholder="أدخل وصف الفصل"
-                  rows={4}
-                  className="w-full p-3 rounded-lg text-lg bg-black/20 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:bg-black/40 focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(0,191,255,0.3)] transition-all"
-                />
-              </div>
-
-              <div className="bg-gradient-to-r from-slate-900/40 to-slate-800/50 backdrop-blur-2xl border border-white/5 rounded-2xl p-6">
-                <h3 className="text-lg font-bold text-white mb-4">
-                  ارفق صورة للفصل
-                </h3>
-                <div className="mt-1 flex justify-center px-6 pt-10 pb-10 border-2 border-dashed border-gray-600 rounded-lg hover:border-cyan-500 transition-colors">
-                  <div className="space-y-2 text-center">
-                    <svg
-                      className="mx-auto h-12 w-12 text-gray-500"
-                      stroke="currentColor"
-                      fill="none"
-                      viewBox="0 0 48 48"
-                    >
-                      <path
-                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <div className="flex text-sm text-gray-400 justify-center">
-                      <label className="relative cursor-pointer bg-gray-800/50 rounded-md px-3 py-1 font-medium text-cyan-400 hover:text-cyan-300 transition-colors">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) =>
-                            setCourseUnitImage(e.target.files[0])
-                          }
-                        />
-                      </label>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      PNG, JPG, GIF up to 10MB
-                    </p>
-                  </div>
+            <div className="flex items-center gap-4">
+                <PlayCircle className="text-cyan-400 flex-shrink-0" size={24} />
+                <div>
+                    <p className="font-bold text-white">{lesson.title}</p>
+                    <p className="text-sm text-gray-400">{lesson.summary}</p>
                 </div>
-              </div>
-
-              <div className="bg-gradient-to-r from-slate-900/40 to-slate-800/50 backdrop-blur-2xl border border-white/5 rounded-2xl p-6">
-                <label className="block text-lg font-bold text-white mb-3">
-                  مدة الفصل (بالدقائق)
-                </label>
-                <input
-                  type="number"
-                  value={durationInMinutes}
-                  onChange={(e) => setDurationInMinutes(e.target.value)}
-                  required
-                  min="1"
-                  max="480"
-                  placeholder="أدخل مدة الفصل بالدقائق"
-                  className="w-full p-3 rounded-lg text-lg bg-black/20 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:bg-black/40 focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(0,191,255,0.3)] transition-all"
-                />
-              </div>
             </div>
-          </main>
-        </main>
-      </div>
-    </div>
-  );
-};
+            {lesson.isCompleted && <CheckCircle size={20} className="text-green-500 flex-shrink-0" />}
+        </motion.div>
+    </Link>
+);
 
-export default CourseData;
+const UnitCard = ({ unit, unitIndex }) => (
+    <motion.div
+        variants={{
+            hidden: { opacity: 0, y: 30 },
+            visible: { opacity: 1, y: 0 }
+        }}
+        className="mb-6 bg-[#05050d]/50 py-4 px-6 border border-cyan-400/20 rounded-xl glass-effect"
+    >
+        <div className="border-b border-cyan-400/20 pb-3 mb-3">
+            <h2 className="text-2xl font-black text-cyan-400">الباب {unitIndex + 1}: {unit.title}</h2>
+            <p className="text-gray-400 mt-1">{unit.description}</p>
+        </div>
+        <div className="space-y-3">
+            {unit.lessons.length > 0 ? (
+                unit.lessons.map(lesson => <LessonListItem key={lesson.id} lesson={lesson} />)
+            ) : (
+                <p className="text-center text-gray-500 py-4">لا توجد دروس في هذا الباب بعد.</p>
+            )}
+        </div>
+    </motion.div>
+);
+
+
+// --- المكون الرئيسي ---
+export default function CourseData() {
+    const { courseId } = useParams();
+    const cookies = new Cookies();
+    const token = cookies.get("token");
+    const mainContentRef = useRef(null);
+
+    const { data: courseData, isLoading, isError } = useQuery({
+        queryKey: ["courseContent", courseId],
+        queryFn: async () => {
+            // 2. استخدام نفس رابط الـ API الذي كان يعمل معك 100%
+            const { data } = await axios.get(`/api/StudentCourse/${courseId}/full`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            return data;
+        },
+        refetchOnWindowFocus: false,
+    });
+
+    if (isLoading) return <Loading message="جاري تحميل محتويات الكورس..." />;
+
+    if (isError || !courseData) return (
+        <div className="flex flex-col items-center justify-center h-screen bg-black text-white text-center">
+            <XCircle size={64} className="text-red-500 mb-4"/>
+            <h2 className="text-3xl font-bold mb-2">خطأ في الوصول للكورس</h2>
+            <p className="text-gray-400 mb-6">إما أن هذا الكورس غير موجود، أو أن اشتراكك قد انتهى.</p>
+            <Link to="/student/my-courses" className="px-6 py-2 bg-cyan-500 text-black font-bold rounded-lg hover:bg-cyan-400 transition-colors">
+                العودة إلى كورساتي
+            </Link>
+        </div>
+    );
+
+    const { course, units } = courseData;
+
+    return (
+        <div className="min-h-screen text-gray-100 bg-black font-[Cairo]">
+            <Helmet>
+                <title>{course?.title || "محتويات الكورس"}</title>
+            </Helmet>
+            <Suspense fallback={<div className="fixed inset-0 bg-black -z-10" />}>
+                <StarfieldBackground mainContentRef={mainContentRef} />
+            </Suspense>
+            
+            <main ref={mainContentRef} className="h-screen overflow-y-auto p-4 sm:p-8">
+                <div className="max-w-4xl mx-auto">
+                    <motion.header 
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-center mb-12"
+                    >
+                        <div className="w-24 h-24 mx-auto mb-4 rounded-full border-4 border-cyan-500/30 p-2">
+                           <BookOpen className="w-full h-full text-cyan-400" />
+                        </div>
+                        <h1 className="text-4xl sm:text-5xl font-black text-white title-glow">{course.title}</h1>
+                        <p className="text-lg text-gray-400 mt-4">{course.description}</p>
+                    </motion.header>
+                    
+                    <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        variants={{
+                            visible: { transition: { staggerChildren: 0.1 } },
+                            hidden: {}
+                        }}
+                    >
+                        {units && units.length > 0 ? (
+                            units.map((unit, index) => (
+                                <UnitCard key={unit.id} unit={unit} unitIndex={index} />
+                            ))
+                        ) : (
+                            <div className="glass-effect text-center p-12 rounded-2xl">
+                                <Info size={48} className="mx-auto text-gray-600 mb-4"/>
+                                <h3 className="text-xl font-bold text-white">الكورس فارغ حالياً</h3>
+                                <p className="text-gray-400">لم يتم إضافة أي وحدات أو دروس لهذا الكورس بعد.</p>
+                            </div>
+                        )}
+                    </motion.div>
+                </div>
+            </main>
+        </div>
+    );
+}

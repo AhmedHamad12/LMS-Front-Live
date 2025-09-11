@@ -5,6 +5,20 @@ import { IoLogOutOutline } from "react-icons/io5";
 const Sidebar = () => {
   const [open, setOpen] = useState(false);
 
+
+  const cookies = new Cookies
+  const allCookies = cookies.getAll();
+  const navigate = useNavigate()
+  const handleLogout = ()=>{
+    Object.keys(allCookies).forEach(cookieName => {
+      cookies.remove(cookieName);
+    });
+    
+
+    navigate("/")
+  }
+
+
   const navLinks = [
     {
       name: "الرئيسية",

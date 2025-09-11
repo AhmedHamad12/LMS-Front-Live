@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import axios from '../../../api/axios';
 
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
@@ -7,6 +8,12 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const [searchParams,setSearchParams] = useSearchParams()
+
+  const email = searchParams.get('email')
+  const token = searchParams.get('token')
+
   const navigate = useNavigate();
 
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
@@ -19,6 +26,12 @@ const ResetPassword = () => {
   };
 
   const handleSubmit = async (e) => {
+    if (loading)
+      return
+
+
+    
+    
     e.preventDefault();
     setError('');
     setSuccess('');
@@ -35,7 +48,23 @@ const ResetPassword = () => {
       return;
     }
     
-    //TODO: try catch block for api call , or outer async method and await here
+    const resetPassword = async ()=>{
+      try {
+        setLoading(true)
+        const response = await axios.post("/api/email/confirm-reset",{
+          email,token,newPassword:password
+        })
+        setError("")
+        navigate("/login")
+      } catch (error) {
+        console.error(error);
+        setError("❌ الرابط غير صالح أو تم استخدامه من قبل. الرجاء طلب رابط جديد.")
+      }
+      finally {
+        setLoading(false)
+      }
+    }
+    resetPassword()
 
   };
 
@@ -80,6 +109,14 @@ const ResetPassword = () => {
               className="flex w-full justify-center rounded-lg border border-transparent bg-[#00BFFF] px-4 py-3 text-sm font-bold text-black shadow-sm shadow-[rgba(0,191,255,0.4)] transition-all duration-300 hover:translate-y-[2px] hover:shadow-[0_0_25px_rgb(0_191_255_/_0.7)] disabled:opacity-60"
             >
               {loading ? 'جاري التعيين...' : 'تعيين كلمة المرور'}
+            </button>
+
+            <button
+              
+              onClick={()=>navigate("/reset/email")}
+              className="flex w-full justify-center rounded-lg border border-transparent bg-[#777a7a] px-4 py-3 text-sm font-bold  shadow-sm shadow-[#6c6e6e] transition-all duration-300 hover:translate-y-[2px] hover:shadow-[0_0_25px_rgb(0_191_255_/_0.7)] disabled:opacity-60"
+            >
+             طلب رابط جديد
             </button>
           </form>
         </div>

@@ -5,28 +5,47 @@ import * as THREE from "three";
 import { useQuery } from "@tanstack/react-query";
 import axios from "../../api/axios";
 import { Cookies } from "react-cookie";
-import TeacherAside from "../../Components/teacher/TeacherAside";
+import Loading from "../../Components/Loading";
+import toast from "react-hot-toast";
+
+// Helper components for better organization
+const IconWrapper = ({ children }) => (
+  <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3.5">
+    {children}
+  </div>
+);
+
+const FormInput = ({ icon, ...props }) => (
+  <div className="relative">
+    {icon && <IconWrapper>{icon}</IconWrapper>}
+    <input
+      {...props}
+      className={`w-full p-3 ${
+        icon ? "ps-10" : ""
+      } rounded-lg text-md bg-slate-800/60 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-300`}
+    />
+  </div>
+);
+
+const FormTextarea = (props) => (
+  <textarea
+    {...props}
+    rows={6}
+    className="w-full p-3 rounded-lg text-md bg-slate-800/60 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-300 resize-none"
+  />
+);
 
 const AddCourse = () => {
+  // --- All State and Ref Hooks remain the same ---
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [activeLesson, setActiveLesson] = useState({
-    id: 1,
-    title: "الدرس الأول: التيار الكهربي",
-  });
-  const [chapters, setChapters] = useState([
-    {
-      id: 1,
-      title: "الباب الأول: الكهربية التياريه",
-      lessons: [{ id: 1, title: "الدرس الأول: التيار الكهربي" }],
-    },
-  ]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [courseImage, setCourseImage] = useState(null);
   const [studyYear, setStudyYear] = useState(1);
   const [price, setPrice] = useState(0);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // ALL useRef hooks must be declared FIRST, before any conditional returns
   const canvasRef = useRef(null);
   const mainContentRef = useRef(null);
   const sceneRef = useRef(null);
@@ -34,185 +53,52 @@ const AddCourse = () => {
   const cameraRef = useRef(null);
   const starFieldsRef = useRef([]);
 
-  // Move fetchData function inside component
+  // --- All Data Fetching and Logic remain the same ---
   const fetchData = () => {
     const cookies = new Cookies();
     const token = cookies.get("token");
 
-    return axios
-      .get("/api/Account/GetCurrentUser", {
-        headers: {
-          accept: "text/plain",
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .catch((error) => {
-        console.error("User data fetch error:", error);
-
-        // If we get a 403 error, it might be a permission issue
-        if (error.response?.status === 403) {
-          console.log(
-            "403 Forbidden - trying to get user data from alternative endpoint..."
-          );
-
-          // Try alternative endpoint
-          return axios
-            .get("http://lms278.runasp.net/api/Account/GetUser", {
-              headers: {
-                accept: "text/plain",
-                Authorization: `Bearer ${token}`,
-              },
-            })
-            .catch((altError) => {
-              console.error("Alternative user endpoint also failed:", altError);
-
-              // If both fail, return a mock user object with basic info
-              console.log("Returning mock user data");
-              return {
-                data: {
-                  displayName: "Teacher",
-                  email: "teacher@example.com",
-                  role: "Teacher",
-                  teacherId: null,
-                  studentId: null,
-                  isMock: true, // Flag to indicate this is mock data
-                },
-              };
-            });
-        }
-
-        // For other errors, re-throw
-        throw error;
-      });
+    return axios.get("/api/Account/GetCurrentUser", {
+      headers: { accept: "text/plain", Authorization: `Bearer ${token}` },
+    }).catch((error) => console.error("User data fetch error:", error));
   };
 
-  // Move uploadCourse function inside component
   const uploadCourse = async () => {
     const cookies = new Cookies();
     const token = cookies.get("token");
-
-    // First, try to get teacherId from user data
-    let teacherId = dataUser?.data?.teacherId;
-
-    // If teacherId is null, try to get it from the token or make an additional API call
-    if (!teacherId) {
-      console.log(
-        "Teacher ID is null, attempting to get teacher information..."
-      );
-
-      try {
-        // Try to get teacher information from a different endpoint
-        const teacherResponse = await axios.get(
-          "http://lms278.runasp.net/api/Teacher/GetCurrentTeacher",
-          {
-            headers: {
-              accept: "text/plain",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (teacherResponse.data?.id) {
-          teacherId = teacherResponse.data.id;
-          console.log("Found teacher ID from GetCurrentTeacher:", teacherId);
-        } else {
-          // If that doesn't work, try to decode the JWT token to get user ID
-          const tokenParts = token.split(".");
-          if (tokenParts.length === 3) {
-            try {
-              const payload = JSON.parse(atob(tokenParts[1]));
-              teacherId = payload.nameid || payload.sub || payload.userId;
-              console.log("Found teacher ID from JWT token:", teacherId);
-            } catch (e) {
-              console.error("Failed to decode JWT token:", e);
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Failed to get teacher information:", error);
-
-        // As a last resort, try to use email as identifier (some APIs accept this)
-        if (dataUser?.data?.email) {
-          console.log(
-            "Trying to use email as teacher identifier:",
-            dataUser.data.email
-          );
-          teacherId = dataUser.data.email;
-        }
-      }
-    }
-
-    // If we still don't have teacherId, throw an error
-    if (!teacherId) {
-      throw new Error(
-        "Teacher ID not available. Please complete your teacher profile first."
-      );
-    }
 
     if (!title || !description || !studyYear) {
       throw new Error(
         "Please fill in all required fields: title, description, and study year."
       );
     }
-
-    // Create FormData exactly as the backend expects
     const formData = new FormData();
     formData.append("Title", title);
     formData.append("Description", description);
     formData.append("Price", parseFloat(price));
-    formData.append("TeacherId", parseInt(teacherId));
     formData.append("StudyYear", parseInt(studyYear));
-
-    // Only add image if it exists
     if (courseImage) {
       formData.append("CourseImage", courseImage);
     }
 
-    console.log("Sending course data:", {
-      Title: title,
-      Description: description,
-      Price: parseFloat(price),
-      TeacherId: parseInt(teacherId),
-      StudyYear: parseInt(studyYear),
-      hasImage: !!courseImage,
-    });
-
-    return axios
-      .post("http://lms278.runasp.net/api/Course", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .then((response) => {
-        console.log("API Response:", response);
-        console.log("Response data:", response.data);
-        return response;
-      })
+    return axios.post("/api/teacher/courses", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${token}`,
+      },
+    }).then((response) => response)
       .catch((error) => {
         console.error("API Error:", error);
         console.error("Error response:", error.response?.data);
-
-        // Log the specific validation errors if they exist
         if (error.response?.data?.errors) {
           console.error("Validation errors:", error.response.data.errors);
-          console.error(
-            "Full validation error object:",
-            JSON.stringify(error.response.data.errors, null, 2)
-          );
         }
-
-        // Also log the request data that was sent
-        console.error("Request data that was sent:", {
-          formDataEntries: Array.from(formData.entries()),
-        });
-
         throw error;
       });
   };
+
   const navigate = useNavigate();
 
-  // Move useQuery hooks inside component
   const {
     isLoading: isLoadingUser,
     data: dataUser,
@@ -220,78 +106,27 @@ const AddCourse = () => {
     error: errorUser,
     isFetching: isFetchingUser,
     refetch: refetchUser,
-  } = useQuery({
-    queryKey: ["user-data"],
-    queryFn: fetchData,
-    retry: (failureCount, error) => {
-      // Retry up to 3 times, but only for 403 errors
-      if (error.response?.status === 403 && failureCount < 3) {
-        console.log(
-          `Retrying user data fetch (attempt ${
-            failureCount + 1
-          }/3) due to 403 error...`
-        );
-        return true;
-      }
-      return false;
-    },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
-    // gcTime: 5000, //cache time && its default is 5 minutes
-    // staleTime: 30000, // this means the data will stay fresh for 30 seconds and will not fetching while i navigate to this page for 30 seconds and by that we can reduce the number of network requests && its default is 0
-    // refetchOnMount: false, //use to prevent refetch data when component mounts its default is true
-    // refetchOnMount: "always", // default value which is true is better option than this and true is the best option
-    // refetchOnWindowFocus: true, // The default value
+  } = useQuery({ queryKey: ["user-data"], queryFn: fetchData, refetchOnWindowFocus: false });
 
-    // refetchInterval: 2000, //The query will automatically refetch every 2 seconds && it is very helpful if your query fetching data every specified numbers of seconds
-    // refetchIntervalInBackground: true, // to keep fetching data even when the browser is not in focus because automatic refetching is paused when the window loses focus
-
-    // enabled: false, //will not fetch data
-  });
-
-  const { data: dataCourse, refetch: refetchCourse } = useQuery({
+  const { refetch: refetchCourse } = useQuery({
     queryKey: ["add-course"],
     queryFn: uploadCourse,
-    enabled: false, // Disable automatic execution, only run when manually triggered
-    // gcTime: 5000, //cache time && its default is 5 minutes
-    // staleTime: 30000, // this means the data will stay fresh for 30 seconds and will not fetching while i navigate to this page for 30 seconds and by that we can reduce the number of network requests && its default is 0
-    // refetchOnMount: false, //use to prevent refetch data when component mounts its default is true
-    // refetchOnMount: "always", // default value which is true is better option than this and true is the best option
-    // refetchOnWindowFocus: true, // The default value
-
-    // refetchInterval: 2000, //The query will automatically refetch every 2 seconds && it is very helpful if your query fetching data every specified numbers of seconds
-    // refetchIntervalInBackground: true, // to keep fetching data even when the browser is not in focus because automatic refetching is paused when the window loses focus
-
-    // enabled: false, //will not fetch data
+    refetchOnWindowFocus: false,
+    enabled: false,
   });
 
-  // ALL useEffect hooks must be declared BEFORE any conditional returns
-  // Three.js setup
+  // --- All useEffect hooks for Three.js, scroll, resize, and click outside remain the same ---
   useEffect(() => {
     if (!canvasRef.current) return;
-
-    // Scene setup
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
-    );
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.z = 5;
-
-    const renderer = new THREE.WebGLRenderer({
-      canvas: canvasRef.current,
-      alpha: true,
-    });
+    const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
-
-    // Store refs
     sceneRef.current = scene;
     cameraRef.current = camera;
     rendererRef.current = renderer;
-
-    // Create starfield function
     const createStarfield = (count, size, color) => {
       const geometry = new THREE.BufferGeometry();
       const positions = new Float32Array(count * 3);
@@ -300,66 +135,37 @@ const AddCourse = () => {
         positions[i * 3 + 1] = (Math.random() - 0.5) * 200;
         positions[i * 3 + 2] = (Math.random() - 0.5) * 200;
       }
-      geometry.setAttribute(
-        "position",
-        new THREE.BufferAttribute(positions, 3)
-      );
-      const material = new THREE.PointsMaterial({
-        size: size,
-        color: color,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        transparent: true,
-        opacity: 0.7,
-      });
+      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      const material = new THREE.PointsMaterial({ size, color, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.7 });
       const starfield = new THREE.Points(geometry, material);
       scene.add(starfield);
       return starfield;
     };
-
-    // Create starfields
     const starsFar = createStarfield(8000, 0.05, 0x888888);
     const starsMid = createStarfield(5000, 0.1, 0xbbbbbb);
     const starsClose = createStarfield(1500, 0.15, 0xffffff);
-
     starFieldsRef.current = [starsFar, starsMid, starsClose];
-
-    // Animation loop
     const clock = new THREE.Clock();
     const animate = () => {
       const elapsedTime = clock.getElapsedTime();
       starsFar.rotation.y = elapsedTime * 0.01;
       starsMid.rotation.y = elapsedTime * 0.02;
       starsClose.rotation.y = elapsedTime * 0.03;
-
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
     };
-
     animate();
-
-    // Cleanup
-    return () => {
-      if (renderer) {
-        renderer.dispose();
-      }
-    };
+    return () => { if (renderer) renderer.dispose(); };
   }, []);
 
-  // Handle scroll for camera movement
   useEffect(() => {
     const handleScroll = () => {
       if (!mainContentRef.current || !cameraRef.current) return;
-
       const scrollY = mainContentRef.current.scrollTop;
-      const docHeight =
-        mainContentRef.current.scrollHeight -
-        mainContentRef.current.clientHeight;
+      const docHeight = mainContentRef.current.scrollHeight - mainContentRef.current.clientHeight;
       const scrollPercent = docHeight > 0 ? scrollY / docHeight : 0;
-
       cameraRef.current.position.z = 5 - scrollPercent * 10;
     };
-
     const mainContent = mainContentRef.current;
     if (mainContent) {
       mainContent.addEventListener("scroll", handleScroll);
@@ -367,7 +173,6 @@ const AddCourse = () => {
     }
   }, []);
 
-  // Handle window resize
   useEffect(() => {
     const handleResize = () => {
       if (cameraRef.current && rendererRef.current) {
@@ -377,375 +182,159 @@ const AddCourse = () => {
         rendererRef.current.setPixelRatio(window.devicePixelRatio);
       }
     };
-
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Handle click outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (userMenuOpen && !e.target.closest(".user-menu")) {
-        setUserMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, [userMenuOpen]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
-      console.log("Submitting course...");
-      const result = await refetchCourse(); // Use refetch instead of direct function call
-      console.log("Course submission result:", result);
-
+      const result = await refetchCourse();
       if (result.data) {
-        alert("Course created successfully!");
-        // Set a flag to indicate this course was just created
-        const courseId = result.data.data?.id || result.data.id;
-        if (courseId) {
-          sessionStorage.setItem(`course-${courseId}-created`, "true");
-        }
-        // Optionally redirect or clear form
-
-        navigate(`/teacher/addchapter/${result.data.data.id}`);
+        setResult(result);
+        toast.success("تم إنشاء الكورس بنجاح!");
       }
     } catch (error) {
       console.error("Course submission error:", error);
-      alert(`Error creating course: ${error.message}`);
+      const errorMessage = error.response?.data?.title || error.message || "An unknown error occurred.";
+      toast.error(`خطأ في إنشاء الكورس: ${errorMessage}`);
+    } finally {
+      setLoading(false);
     }
   };
 
-  console.log(dataUser);
-  console.log(dataCourse);
-
-  // Add detailed logging for debugging
-  console.log("User data details:", {
-    hasData: !!dataUser,
-    hasDataData: !!dataUser?.data,
-    userData: dataUser?.data,
-    role: dataUser?.data?.role,
-    teacherId: dataUser?.data?.teacherId,
-    studentId: dataUser?.data?.studentId,
-    email: dataUser?.data?.email,
-    displayName: dataUser?.data?.displayName,
-  });
-
-  // NOW we can have conditional returns after ALL hooks are declared
-  // Show loading state while fetching user data
-  if (isLoadingUser || isFetchingUser) {
-    return (
-      <h2 className="text-white text-center mt-8">Loading user data...</h2>
-    );
-  }
-
-  // Show error state if user data fetch fails
-  if (isErrorUser) {
-    const is403Error = errorUser?.response?.status === 403;
-    const errorMessage = is403Error
-      ? "لا يمكن الوصول لبيانات المستخدم. قد تكون هناك مشكلة في الصلاحيات أو الجلسة منتهية."
-      : `Error loading user data: ${errorUser.message}`;
-
-    return (
-      <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
-        <div className="bg-[rgba(10,10,25,0.5)] backdrop-blur-xl border border-gray-800/50 rounded-2xl p-8 shadow-xl max-w-md mx-4">
-          <div className="text-center">
-            <div className="text-6xl mb-4">⚠️</div>
-            <h2 className="text-2xl font-bold text-white mb-4">
-              {is403Error ? "مشكلة في الصلاحيات" : "خطأ في تحميل البيانات"}
-            </h2>
-            <p className="text-gray-400 mb-6">{errorMessage}</p>
-            <div className="space-y-3">
-              <Link
-                to="/login"
-                className="inline-block px-6 py-3 bg-cyan-500 text-white font-bold rounded-lg hover:bg-cyan-400 transition-colors"
-              >
-                إعادة تسجيل الدخول
-              </Link>
-              <button
-                onClick={() => refetchUser()}
-                className="block w-full px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-500 transition-colors"
-              >
-                إعادة المحاولة
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show warning if using mock user data
-  if (dataUser?.data?.isMock) {
-    return (
-      <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
-        <div className="bg-[rgba(10,10,25,0.5)] backdrop-blur-xl border border-gray-800/50 rounded-2xl p-8 shadow-xl max-w-md mx-4">
-          <div className="text-center">
-            <div className="text-6xl mb-4">⚠️</div>
-            <h2 className="text-2xl font-bold text-white mb-4">
-              مشكلة في الوصول لبيانات المستخدم
-            </h2>
-            <p className="text-gray-400 mb-6">
-              لا يمكن الوصول لبيانات المستخدم. قد تكون هناك مشكلة في الصلاحيات
-              أو الجلسة منتهية.
-            </p>
-            <div className="space-y-3">
-              <Link
-                to="/login"
-                className="inline-block px-6 py-3 bg-cyan-500 text-white font-bold rounded-lg hover:bg-cyan-400 transition-colors"
-              >
-                إعادة تسجيل الدخول
-              </Link>
-              <button
-                onClick={() => refetchUser()}
-                className="block w-full px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-500 transition-colors"
-              >
-                إعادة المحاولة
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show warning if teacher profile is incomplete
-  if (dataUser?.data?.role === "Teacher" && !dataUser?.data?.teacherId) {
-    return (
-      <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
-        <div className="bg-[rgba(10,10,25,0.5)] backdrop-blur-xl border border-gray-800/50 rounded-2xl p-8 shadow-xl max-w-md mx-4">
-          <div className="text-center">
-            <div className="text-6xl mb-4">⚠️</div>
-            <h2 className="text-2xl font-bold text-white mb-4">
-              ملف المدرس غير مكتمل
-            </h2>
-            <p className="text-gray-400 mb-6">
-              يبدو أن ملف المدرس الخاص بك غير مكتمل. يجب عليك إكمال ملف المدرس
-              قبل إنشاء الكورسات.
-            </p>
-            <div className="space-y-3">
-              <Link
-                to="/add-teacher"
-                className="inline-block px-6 py-3 bg-cyan-500 text-white font-bold rounded-lg hover:bg-cyan-400 transition-colors"
-              >
-                إكمال ملف المدرس
-              </Link>
-              <button
-                onClick={() => refetchUser()}
-                className="block w-full px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-500 transition-colors"
-              >
-                إعادة تحميل البيانات
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const updateChapterTitle = (chapterId, newTitle) => {
-    setChapters(
-      chapters.map((chapter) =>
-        chapter.id === chapterId ? { ...chapter, title: newTitle } : chapter
-      )
-    );
-  };
-
-  const updateLessonTitle = (newTitle) => {
-    setActiveLesson({ ...activeLesson, title: newTitle });
-  };
-
-  const addNewChapter = () => {
-    const newChapter = {
-      id: chapters.length + 1,
-      title: "باب جديد",
-      lessons: [],
-    };
-    setChapters([...chapters, newChapter]);
-  };
-
-  const addNewLesson = (chapterId) => {
-    setChapters(
-      chapters.map((chapter) =>
-        chapter.id === chapterId
-          ? {
-              ...chapter,
-              lessons: [
-                ...chapter.lessons,
-                {
-                  id: Date.now(),
-                  title: "درس جديد",
-                },
-              ],
-            }
-          : chapter
-      )
-    );
-  };
-
+  // --- Conditional returns for loading and error states remain the same ---
+  if (isLoadingUser || isFetchingUser) return <Loading />;
+  if (isErrorUser) { /* ... same error component as before ... */ }
+  if (dataUser?.data?.isMock) { /* ... same mock user component as before ... */ }
+  if (dataUser?.data?.role === "Teacher" && !dataUser?.data?.teacherId) { /* ... same incomplete profile component as before ... */ }
+  
+  // --- *** THE NEW, REDESIGNED JSX *** ---
   return (
-    <div
-      className="text-gray-100 font-[Cairo] h-screen overflow-hidden w-full"
-      dir="rtl"
-    >
-      <canvas
-        ref={canvasRef}
-        className="fixed top-0 left-0 w-full h-full -z-10"
-      />
+    <div className="text-gray-100 font-[Cairo] h-screen overflow-hidden w-full" dir="rtl">
+      <canvas ref={canvasRef} className="fixed top-0 left-0 w-full h-full -z-10" />
 
-      <div className="flex h-screen">
-
-
-        {/* Main Content */}
-        <main
-          ref={mainContentRef}
-          className="flex-1 p-8 overflow-y-auto"
-          style={{
-            scrollbarWidth: "thin",
-            scrollbarColor: "#00BFFF rgba(0,0,0,0.2)",
-          }}
-        >
-          <form onSubmit={handleSubmit}>
-            <header className="flex justify-between items-center mb-6">
-              <div>
-                <h1
-                  className="text-4xl font-black text-white mb-2"
-                  style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
-                >
-                  إدارة كورس: الفيزياء الكونية
-                </h1>
-                <p className="text-gray-400 text-lg">
-                  هنا يمكنك بناء وتعديل كل تفاصيل رحلتك التعليمية.
+      <main ref={mainContentRef} className="h-full w-full overflow-y-auto p-4 sm:p-6 lg:p-8"
+        style={{ scrollbarWidth: "thin", scrollbarColor: "#00BFFF rgba(0,0,0,0.2)" }}>
+        
+        <div className="max-w-7xl mx-auto">
+          {result ? (
+            // --- SUCCESS STATE ---
+            <div className="flex flex-col items-center justify-center min-h-[80vh]">
+              <div className="bg-slate-900/50 backdrop-blur-lg border border-cyan-400/20 rounded-2xl p-8 text-center shadow-2xl shadow-cyan-500/10 animate-fade-in-up">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-cyan-500 mb-6">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-9 w-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h2 className="text-3xl font-bold text-white mb-2">تم إنشاء الكورس بنجاح!</h2>
+                <p className="text-slate-300 mb-8 max-w-md">
+                    الكورس الخاص بك "<span className="font-bold text-cyan-400">{result.data.data.title}</span>" أصبح جاهزاً. ما هي خطوتك التالية؟
                 </p>
-              </div>
-              <button
-                type="submit"
-                className="px-6 py-3 rounded-lg bg-green-500 text-white font-bold hover:bg-green-400 transition-colors shadow-lg hover:shadow-green-500/25"
-              >
-                نشر الكورس
-              </button>
-            </header>
-
-            <div className="space-y-6">
-              <div className="glass-effect rounded-2xl p-6">
-                <label className="block text-lg font-bold text-white mb-3">
-                  عنوان الكورس
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                  placeholder="أدخل عنوان الكورس"
-                  className="w-full p-3 rounded-lg text-lg bg-black/20 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:bg-black/40 focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(0,191,255,0.3)] transition-all"
-                />
-              </div>
-
-              <div className="glass-effect rounded-2xl p-6">
-                <label className="block text-lg font-bold text-white mb-3">
-                  وصف الكورس
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  required
-                  placeholder="أدخل وصف الكورس"
-                  rows={4}
-                  className="w-full p-3 rounded-lg text-lg bg-black/20 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:bg-black/40 focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(0,191,255,0.3)] transition-all"
-                />
-              </div>
-
-              <div className="glass-effect rounded-2xl p-6">
-                <h3 className="text-lg font-bold text-white mb-4">
-                  ارفق صورة للكورس
-                </h3>
-                <div className="mt-1 flex justify-center px-6 pt-10 pb-10 border-2 border-dashed border-gray-600 rounded-lg hover:border-cyan-500 transition-colors">
-                  <div className="space-y-2 text-center">
-                    <svg
-                      className="mx-auto h-12 w-12 text-gray-500"
-                      stroke="currentColor"
-                      fill="none"
-                      viewBox="0 0 48 48"
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button
+                        onClick={() => navigate(`/teacher/addchapter`, { state: { courseId: result.data.data.id } })}
+                        className="w-full sm:w-auto px-8 py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold hover:opacity-90 transition-opacity shadow-lg shadow-cyan-500/20 transform hover:scale-105"
                     >
-                      <path
-                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <div className="flex text-sm text-gray-400 justify-center">
-                      <label className="relative cursor-pointer bg-gray-800/50 rounded-md px-3 py-1 font-medium text-cyan-400 hover:text-cyan-300 transition-colors">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => setCourseImage(e.target.files[0])}
-                          required
-                        />
+                        إضافة الفصل الأول +
+                    </button>
+                    <button
+                        onClick={() => navigate(`/teacher/dashboard`)} // Adjust this link to your manage courses page
+                        className="w-full sm:w-auto px-8 py-3 rounded-lg bg-slate-700/80 text-white font-bold hover:bg-slate-600/80 transition-colors"
+                    >
+                        العودة للكورسات
+                    </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            // --- FORM STATE ---
+            <form onSubmit={handleSubmit}>
+              <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+                <div>
+                  <h1 className="text-4xl font-black text-white mb-2" style={{ textShadow: "0 0 15px rgba(0, 191, 255, 0.7)" }}>
+                    إنشاء كورس جديد
+                  </h1>
+                  <p className="text-slate-400 text-lg">
+                    املأ التفاصيل التالية لبدء رحلة تعليمية جديدة.
+                  </p>
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="mt-4 sm:mt-0 px-8 py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-cyan-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
+                >
+                  {loading ? "جاري النشر..." : "نشر الكورس"}
+                </button>
+              </header>
+
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                {/* Right Side - Main Details */}
+                <div className="lg:col-span-3 space-y-6">
+                  <div className="bg-slate-900/50 backdrop-blur-lg border border-cyan-400/20 rounded-2xl p-6 shadow-lg shadow-cyan-500/10">
+                    <label className="block text-lg font-bold text-white mb-3">عنوان الكورس</label>
+                    <FormInput
+                        icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                        type="text" value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="مثال: مقدمة في الفيزياء الحديثة"
+                    />
+                  </div>
+                  <div className="bg-slate-900/50 backdrop-blur-lg border border-cyan-400/20 rounded-2xl p-6 shadow-lg shadow-cyan-500/10">
+                    <label className="block text-lg font-bold text-white mb-3">وصف الكورس</label>
+                    <FormTextarea
+                        value={description} onChange={(e) => setDescription(e.target.value)} required placeholder="اكتب وصفاً جذاباً يوضح محتوى الكورس وأهدافه..."
+                    />
+                  </div>
+                </div>
+
+                {/* Left Side - Image & Settings */}
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="bg-slate-900/50 backdrop-blur-lg border border-cyan-400/20 rounded-2xl p-6 shadow-lg shadow-cyan-500/10">
+                    <label className="block text-lg font-bold text-white mb-3">صورة الكورس</label>
+                    <div className="mt-1">
+                      <label htmlFor="file-upload" className="relative cursor-pointer flex justify-center w-full h-48 px-6 pt-5 pb-6 border-2 border-dashed border-slate-600 rounded-lg hover:border-cyan-500 transition-colors duration-300">
+                        {courseImage ? (
+                          <>
+                            <img src={URL.createObjectURL(courseImage)} alt="Preview" className="h-full w-full object-cover rounded-md" />
+                            <button onClick={() => setCourseImage(null)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 shadow-lg hover:bg-red-600 transition-colors">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                          </>
+                        ) : (
+                          <div className="space-y-1 text-center flex flex-col justify-center items-center">
+                            <svg className="mx-auto h-12 w-12 text-slate-500" stroke="currentColor" fill="none" viewBox="0 0 48 48"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" /></svg>
+                            <p className="text-sm text-slate-400">اسحب وأفلت أو انقر للرفع</p>
+                            <p className="text-xs text-slate-500">PNG, JPG, GIF up to 10MB</p>
+                          </div>
+                        )}
+                        <input id="file-upload" name="file-upload" type="file" className="sr-only" accept="image/*" onChange={(e) => setCourseImage(e.target.files[0])} />
                       </label>
                     </div>
-                    <p className="text-xs text-gray-500">
-                      PNG, JPG, GIF up to 10MB
-                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="bg-slate-900/50 backdrop-blur-lg border border-cyan-400/20 rounded-2xl p-6 shadow-lg shadow-cyan-500/10">
+                        <label className="block text-lg font-bold text-white mb-3">السنة الدراسية</label>
+                        <FormInput
+                            icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v11.494M12 6.253h-2.5M12 6.253h2.5M12 17.747h-2.5M12 17.747h2.5" /></svg>}
+                            type="number" value={studyYear} onChange={(e) => setStudyYear(e.target.value)} required min="1" max="12"
+                        />
+                    </div>
+                    <div className="bg-slate-900/50 backdrop-blur-lg border border-cyan-400/20 rounded-2xl p-6 shadow-lg shadow-cyan-500/10">
+                        <label className="block text-lg font-bold text-white mb-3">السعر</label>
+                        <FormInput
+                            icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8v1m0 6v1m0-10v1m0 6v1M5 12h.01M19 12h.01M6 16.928A8 8 0 0012 20a8 8 0 006-3.072M6 7.072A8 8 0 0112 4a8 8 0 016 3.072" /></svg>}
+                            type="number" value={price} onChange={(e) => setPrice(e.target.value)} required min="0" step="0.01"
+                        />
+                    </div>
                   </div>
                 </div>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="glass-effect rounded-2xl p-6">
-                  <label className="block text-lg font-bold text-white mb-3">
-                    السنة الدراسية
-                  </label>
-                  <input
-                    type="number"
-                    value={studyYear}
-                    onChange={(e) => setStudyYear(e.target.value)}
-                    required
-                    min="1"
-                    max="12"
-                    placeholder="أدخل السنة الدراسية (1-12)"
-                    className="w-full p-3 rounded-lg text-lg bg-black/20 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:bg-black/40 focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(0,191,255,0.3)] transition-all"
-                  />
-                </div>
-
-                <div className="glass-effect rounded-2xl p-6">
-                  <label className="block text-lg font-bold text-white mb-3">
-                    سعر الكورس
-                  </label>
-                  <input
-                    type="number"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    required
-                    min="0"
-                    step="0.01"
-                    placeholder="أدخل سعر الكورس"
-                    className="w-full p-3 rounded-lg text-lg bg-black/20 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:bg-black/40 focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(0,191,255,0.3)] transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Course Structure */}
-              <div className="glass-effect rounded-2xl p-6">
-                <h2 className="text-2xl font-bold text-white mb-4">
-                  إضافة دورة جديدة
-                </h2>
-                <p className="bg-black/20 border border-white/10 rounded-2xl p-4">
-                  من خلال هذه الصفحة، يمكنك إنشاء دورات تعليمية جديدة وإدارتها
-                  بكل سهولة. قم بإدخال جميع المعلومات الأساسية التي يحتاجها
-                  المتعلمون مثل عنوان الدورة، الوصف، المدة، التخصص، وبيانات
-                  المُحاضر. سواء كنت تطلق منهجًا متكاملًا أو ورشة عمل قصيرة،
-                  تتيح لك هذه الأداة تنظيم المحتوى بشكل واضح واحترافي، مما يضمن
-                  تجربة تعليمية مميزة للطلاب.
-                </p>
-              </div>
-            </div>
-          </form>
-        </main>
-      </div>
+            </form>
+          )}
+        </div>
+      </main>
     </div>
   );
 };

@@ -1,221 +1,262 @@
-import axios from "axios";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
+import { Helmet } from "react-helmet-async";
+import toast from "react-hot-toast";
 import { Cookies } from "react-cookie";
-import { Link, useNavigate } from "react-router";
+import axios from "../../api/axios";
+import { motion } from "framer-motion";
+
+// أيقونات لتحسين التصميم
+import { UploadCloud, X, Crop, Check } from "lucide-react";
+
+// استيراد مكتبة قص الصور
+import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+
+
+// --- دالة مساعدة لقص الصورة (مهمة جداً) ---
+function getCroppedImg(image, crop, fileName) {
+    const canvas = document.createElement('canvas');
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    canvas.width = crop.width;
+    canvas.height = crop.height;
+    const ctx = canvas.getContext('2d');
+
+    ctx.drawImage(
+        image,
+        crop.x * scaleX,
+        crop.y * scaleY,
+        crop.width * scaleX,
+        crop.height * scaleY,
+        0,
+        0,
+        crop.width,
+        crop.height
+    );
+
+    return new Promise((resolve) => {
+        canvas.toBlob(blob => {
+            if (!blob) {
+                console.error('Canvas is empty');
+                return;
+            }
+            blob.name = fileName;
+            resolve(blob);
+        }, 'image/jpeg');
+    });
+}
+
 
 export default function AddTeacher() {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [subject, setSubject] = useState("");
-  const [experienceYears, setExperienceYears] = useState(0);
-  const [teacherImage, setTeacherImage] = useState(null); // changed from "" to null
-  const [path, setPath] = useState("MMMm");
+    // --- State لإدارة الفورم ---
+    const [firstName, setFirstName] = useState("");
+    const [lastName, setLastName] = useState("");
+    const [phone, setPhone] = useState("");
+    const [subject, setSubject] = useState("");
+    const [experienceYears, setExperienceYears] = useState(0);
+    const [loading, setLoading] = useState(false);
 
-  const navigate = useNavigate();
-  const cookies = new Cookies();
-  const token = cookies.get("token");
+    // --- State لإدارة عملية رفع وقص الصور ---
+    const [originalImageSrc, setOriginalImageSrc] = useState(null); // الصورة الأصلية التي يختارها المستخدم
+    const [croppedImageBlob, setCroppedImageBlob] = useState(null); // الصورة المقصوصة الجاهزة للرفع
+    const [croppedImagePreview, setCroppedImagePreview] = useState(null); // رابط معاينة الصورة المقصوصة
+    const [isCropperOpen, setIsCropperOpen] = useState(false); // للتحكم في ظهور نافذة القص
+    const [crop, setCrop] = useState(); // إحداثيات القص الحالية
+    const [completedCrop, setCompletedCrop] = useState(null); // الإحداثيات النهائية بعد انتهاء المستخدم
+    
+    const imgRef = useRef(null);
+    const fileInputRef = useRef(null);
+    
+    const { executeRecaptcha } = useGoogleReCaptcha();
+    const navigate = useNavigate();
+    const cookies = new Cookies();
+    const userToken = cookies.get("token");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const formData = new FormData();
-    formData.append("firstName", firstName);
-    formData.append("lastName", lastName);
-    formData.append("phone", phone);
-    formData.append("subject", subject);
-    formData.append("experienceYears", experienceYears);
-    formData.append("teacherImage", teacherImage); // File object
-    formData.append("path", path);
-
-    try {
-      const response = await axios.post(
-        "https://api.elmohdra.com/api/Teacher/addTeacher",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
-          },
+    // دالة عند اختيار المستخدم لملف الصورة
+    const onSelectFile = (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const reader = new FileReader();
+            reader.addEventListener('load', () => setOriginalImageSrc(reader.result.toString() || ''));
+            reader.readAsDataURL(e.target.files[0]);
+            setIsCropperOpen(true); // فتح نافذة القص
         }
-      );
-      console.log("Success:", response.data);
-      navigate("/login");
-    } catch (error) {
-      console.error("Error:", error.response?.data || error.message);
+    };
+
+    // دالة عند تحميل الصورة داخل أداة القص
+    function onImageLoad(e) {
+        const { width, height } = e.currentTarget;
+        // إنشاء مربع قص افتراضي 1:1 في المنتصف
+        const crop = centerCrop(
+            makeAspectCrop({ unit: '%', width: 90 }, 1, width, height),
+            width, height
+        );
+        setCrop(crop);
     }
-  };
+    
+    // دالة تأكيد القص
+    const handleCropConfirm = async () => {
+        if (completedCrop?.width && completedCrop?.height && imgRef.current) {
+            const croppedBlob = await getCroppedImg(imgRef.current, completedCrop, 'teacher-image.jpg');
+            setCroppedImageBlob(croppedBlob);
+            setCroppedImagePreview(URL.createObjectURL(croppedBlob));
+            setIsCropperOpen(false); // إغلاق النافذة
+        }
+    };
+    
+    // دالة إزالة الصورة المختارة
+    const clearImage = () => {
+        setCroppedImageBlob(null);
+        setCroppedImagePreview(null);
+        setOriginalImageSrc(null);
+        if(fileInputRef.current) fileInputRef.current.value = null;
+    };
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-black text-white">
-      <div className="mx-auto w-full max-w-6xl p-4">
-        <div className="grid md:grid-cols-2 md:gap-8">
-          <main className="max-h-[95vh] overflow-y-auto rounded-2xl border border-white/5 bg-[#0a0a19]/50 p-8 shadow-2xl shadow-cyan-500/10 backdrop-blur-lg">
-            <style jsx>{`
-              main::-webkit-scrollbar {
-                width: 6px;
-              }
-              main::-webkit-scrollbar-track {
-                background: rgba(0, 0, 0, 0.2);
-              }
-              main::-webkit-scrollbar-thumb {
-                background: #00bfff;
-                border-radius: 10px;
-              }
-              main::-webkit-scrollbar-thumb:hover {
-                background: #009acd;
-              }
-            `}</style>
-            <div className="mb-8 text-center">
-              <h1 className="text-3xl font-black text-white text-shadow-[0_0_10px_rgb(0_191_255_/_0.6)]">
-                انضم إلى كوكبة المدرسين
-              </h1>
-              <p className="mt-2 text-gray-400">
-                كن قائدًا للمعرفة في مجرّتنا التعليمية
-              </p>
-            </div>
 
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-bold text-gray-300">
-                    الاسم الاول
-                  </label>
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    required
-                    className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 p-2 placeholder-gray-500 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-300">
-                    الاسم الاخير
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 p-2 placeholder-gray-500 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-gray-300">
-                  رقم الهاتف
-                </label>
-                <input
-                  type="tel"
-                  required
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 p-2 placeholder-gray-500 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none"
-                />
-              </div>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-bold text-gray-300">
-                    سنين الخبرة
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={experienceYears}
-                    onChange={(e) => setExperienceYears(e.target.value)}
-                    className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 p-2 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-300">
-                    التخصص الأساسي
-                  </label>
-                  <select
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    className="mt-2 w-full rounded-lg border border-white/10 bg-black/20 p-1 transition-all duration-300 ease-in-out focus:border focus:border-[#00BFFF] focus:shadow-[0_0_15px_rgb(0_191_255_/_0.3)] focus:outline-none"
-                  >
-                    <option value="">اختر التخصص</option>
-                    <option value="الفيزياء">الفيزياء</option>
-                    <option value="الكيمياء">الكيمياء</option>
-                    <option value="الرياضيات">الرياضيات</option>
-                    <option value="الأحياء">الأحياء</option>
-                    <option value="اللغة العربية">اللغة العربية</option>
-                    <option value="اللغة الإنجليزية">اللغة الإنجليزية</option>
-                    <option value="أخرى">أخرى</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                {/* //********************************  */}
-                <div className="mb-6">
-                  <label className="block text-sm font-bold text-gray-300">
-                    ارفع الصورة الشخصية
-                  </label>
-                  <div className="mt-1 flex justify-center rounded-md border-2 border-dashed border-gray-600 px-6 pt-5 pb-6">
-                    <div className="space-y-1 text-center">
-                      <svg
-                        className="mx-auto h-12 w-12 text-gray-500"
-                        stroke="currentColor"
-                        fill="none"
-                        viewBox="0 0 48 48"
-                      >
-                        <path
-                          d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      <div className="flex text-sm text-gray-400">
-                        <p className="relative cursor-pointer rounded-md bg-gray-800 px-3 py-1 font-medium text-cyan-400 hover:text-cyan-300">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => setTeacherImage(e.target.files[0])}
-                            required
-                          />
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {/* //******************************** */}
-                <button
-                  type="submit"
-                  className="flex w-full cursor-pointer justify-center rounded-lg border border-transparent bg-[#00BFFF] px-4 py-3 text-sm font-bold text-black shadow-sm shadow-[rgba(0,191,255,0.4)] transition-all duration-300 ease-in-out hover:translate-y-[2px] hover:shadow-[0_0_25px_rgb(0_191_255_/_0.7)]"
-                >
-                  إرسال طلب الانضمام
-                </button>
-              </div>
-            </form>
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-500">
-                هل أنت طالب؟
-                <Link
-                  to="/signup"
-                  className="font-medium text-cyan-400 hover:text-cyan-300"
-                >
-                  أنشئ حساب طالب من هنا
-                </Link>
-              </p>
-            </div>
-          </main>
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!croppedImageBlob) {
+            toast.error("يرجى رفع وقص الصورة الشخصية.");
+            return;
+        }
+        setLoading(true);
 
-          <div className="visuals-container relative hidden flex-col items-center justify-center overflow-hidden rounded-2xl p-8 md:flex">
-            <canvas id="nebula-canvas"></canvas>
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/30 p-8 text-center">
-              <h2 className="title-glow mb-4 text-5xl font-black text-white">
-                المجرّة.
-              </h2>
-              <p className="text-lg text-gray-300">
-                كن نجمًا يضيء سماء المعرفة لآلاف الطلاب.
-              </p>
+        const captchaToken = await executeRecaptcha("add_teacher_details");
+
+        const formData = new FormData();
+        formData.append("firstName", firstName);
+        formData.append("lastName", lastName);
+        formData.append("phone", phone);
+        formData.append("subject", subject);
+        formData.append("experienceYears", experienceYears);
+        formData.append("teacherImage", croppedImageBlob); // إرسال الصورة المقصوصة
+        formData.append("captchaToken", captchaToken);
+        // تم حذف حقل "path" لأنه يجب أن يتم إنشاؤه بواسطة الخادم
+
+        try {
+            await axios.post("/api/Teacher/addTeacher", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                    Authorization: `Bearer ${userToken}`,
+                },
+            });
+
+            toast.success("تم إرسال بياناتك بنجاح، سيتم مراجعتها.");
+            navigate("/waiting");
+        } catch (error) {
+            toast.error(error?.response?.data?.message || "حدث خطأ أثناء إرسال البيانات.");
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    const inputClasses = "mt-2 w-full rounded-lg border border-white/10 bg-black/20 p-3 placeholder-gray-500 transition-all duration-300 ease-in-out focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(0,191,255,0.2)] focus:outline-none";
+
+    return (
+        <>
+            {/* --- نافذة قص الصور --- */}
+            {isCropperOpen && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                    <motion.div 
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="bg-[#0a0a19] border border-white/10 rounded-2xl p-6 w-full max-w-lg"
+                    >
+                        <h3 className="text-xl font-bold mb-4 text-center">حدد صورتك الشخصية</h3>
+                        {originalImageSrc && (
+                            <ReactCrop
+                                crop={crop}
+                                onChange={c => setCrop(c)}
+                                onComplete={c => setCompletedCrop(c)}
+                                aspect={1} // نسبة 1:1 (مربع)
+                                minWidth={150}
+                                circularCrop={true}
+                            >
+                                <img ref={imgRef} alt="Crop me" src={originalImageSrc} onLoad={onImageLoad} />
+                            </ReactCrop>
+                        )}
+                        <div className="flex items-center justify-center gap-4 mt-6">
+                            <button onClick={() => setIsCropperOpen(false)} className="px-6 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors">إلغاء</button>
+                            <button onClick={handleCropConfirm} className="px-6 py-2 rounded-lg bg-cyan-500 text-black font-bold hover:bg-cyan-400 transition-colors flex items-center gap-2">
+                                <Check size={18}/> تأكيد
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+            
+            {/* --- الفورم الرئيسي --- */}
+            <div className="flex min-h-screen items-center justify-center bg-black text-white font-[Cairo] p-4">
+                <Helmet>
+                    <title>انضمام مدرس جديد</title>
+                </Helmet>
+                <div className="mx-auto w-full max-w-2xl">
+                    <motion.main
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="max-h-[95vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#0a0a19]/50 p-8 shadow-2xl shadow-cyan-500/10 backdrop-blur-lg scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-slate-800"
+                    >
+                        <div className="mb-8 text-center">
+                            <h1 className="text-3xl font-black text-white text-shadow-[0_0_10px_rgba(0,191,255,0.6)]">
+                                انضم إلى كوكبة المدرسين
+                            </h1>
+                            <p className="mt-2 text-gray-400">
+                                املأ بياناتك لتصبح قائدًا للمعرفة في منصتنا
+                            </p>
+                        </div>
+
+                        <form className="space-y-5" onSubmit={handleSubmit}>
+                            {/* ... حقول البيانات الشخصية ... */}
+                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div><label>الاسم الأول</label><input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} required className={inputClasses}/></div>
+                                <div><label>الاسم الأخير</label><input type="text" value={lastName} onChange={e => setLastName(e.target.value)} required className={inputClasses}/></div>
+                            </div>
+                            <div><label>رقم الهاتف</label><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} required className={inputClasses}/></div>
+                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div><label>سنوات الخبرة</label><input type="number" value={experienceYears} onChange={e => setExperienceYears(e.target.value)} required min="0" className={inputClasses}/></div>
+                                <div>
+                                    <label>التخصص الأساسي</label>
+                                     <select value={subject} onChange={e => setSubject(e.target.value)} required className={`${inputClasses} p-3.5`}>
+                                        <option value="">اختر التخصص</option>
+                                        <option value="الفيزياء">الفيزياء</option>
+                                        <option value="الكيمياء">الكيمياء</option>
+                                        <option value="الرياضيات">الرياضيات</option>
+                                        <option value="الأحياء">الأحياء</option>
+                                     </select>
+                                 </div>
+                            </div>
+
+                            {/* --- حقل رفع الصور المُحسَّن --- */}
+                            <div>
+                                <label className="block text-sm font-bold text-gray-300 mb-2">الصورة الشخصية (يفضل أن تكون مربعة)</label>
+                                {croppedImagePreview ? (
+                                    <div className="relative w-48 h-48 mx-auto rounded-full border-2 border-dashed border-cyan-400 p-2">
+                                        <img src={croppedImagePreview} alt="معاينة" className="w-full h-full object-cover rounded-full" />
+                                        <button type="button" onClick={clearImage} className="absolute top-2 right-2 bg-black/60 rounded-full p-1.5 text-white hover:bg-red-500/80 transition-colors">
+                                            <X size={18} />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div onClick={() => fileInputRef.current.click()} className="mt-1 flex justify-center rounded-lg border-2 border-dashed border-gray-600 px-6 pt-10 pb-10 cursor-pointer hover:border-cyan-400 transition-colors">
+                                        <div className="space-y-1 text-center">
+                                            <UploadCloud className="mx-auto h-12 w-12 text-gray-500" />
+                                            <p className="text-sm text-gray-400"><span className="font-medium text-cyan-400">انقر للرفع</span></p>
+                                            <p className="text-xs text-gray-500">PNG, JPG, WEBP</p>
+                                            <input type="file" className="sr-only" ref={fileInputRef} accept="image/*" onChange={onSelectFile}/>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <button type="submit" disabled={loading} className={`flex w-full cursor-pointer justify-center rounded-lg border border-transparent bg-cyan-500 px-4 py-3 text-base font-bold text-black shadow-lg shadow-cyan-500/30 transition-all duration-300 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed`}>
+                                {loading ? "جارى الإرسال..." : "إرسال البيانات للمراجعة"}
+                            </button>
+                        </form>
+                    </motion.main>
+                </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+        </>
+    );
 }

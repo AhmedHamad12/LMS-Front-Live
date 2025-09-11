@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import axios from '../../api/axios';
@@ -11,10 +11,8 @@ import { Cookies } from 'react-cookie';
 
 // --- Helper Components ---
 
-// تم تحسين StatCard بإضافة تأثير بسيط عند الـ hover
 const StatCard = ({ icon, label, value }) => (
     <div className="glass-effect p-4 rounded-xl flex items-center gap-4 border border-transparent hover:border-cyan-500/50 transition-colors duration-300">
-        {/* لاحظ أنه تم حذف object-top من هنا لأنه لا يؤثر على div */}
         <div className="bg-cyan-500/10 p-3 rounded-lg text-cyan-400">
             {icon}
         </div>
@@ -26,7 +24,7 @@ const StatCard = ({ icon, label, value }) => (
 );
 
 // --- MODIFIED CourseCard Component ---
-const CourseCard = ({ course }) => {
+const CourseCard = ({ course, isEnrolled }) => {
     const navigate = useNavigate();
     const cookies = new Cookies();
     const token = cookies.get("token");
@@ -34,6 +32,13 @@ const CourseCard = ({ course }) => {
     const handleButtonClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
+
+        if (isEnrolled) {
+            // <-- المسار الصحيح الذي طلبته
+            navigate(`/student/course/data/${course.id}`);
+            return;
+        }
+        
         if (!token) {
             toast.error("يجب عليك تسجيل الدخول أولاً");
             navigate('/login');
@@ -43,17 +48,16 @@ const CourseCard = ({ course }) => {
     };
 
     return (
-        <Link to={`/coursepreview/${course.id}`} key={course.id} className="block">
+        // <-- المسار الصحيح الذي طلبته للـ Link
+        <Link to={isEnrolled ? `/student/course/data/${course.id}` : `/coursepreview/${course.id}`} key={course.id} className="block">
             <motion.div
                 variants={{
                     hidden: { opacity: 0, y: 20 },
                     visible: { opacity: 1, y: 0 }
                 }}
-                // تم تحسين التأثير عند الـ hover
                 className="glass-effect rounded-2xl overflow-hidden flex flex-col group border border-white/10 h-full transform hover:-translate-y-2 transition-all duration-300 hover:border-cyan-400/30"
             >
                 <div className="overflow-hidden h-48">
-                    {/* 1. تطبيق object-top هنا لحل مشكلة قص صورة الكورس */}
                     <img src={course.image} alt={course.title} className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300" />
                 </div>
                 <div className="p-6 flex flex-col flex-grow">
@@ -63,9 +67,13 @@ const CourseCard = ({ course }) => {
                         <p className="text-2xl font-black text-cyan-400">{course.price} <span className="text-sm">ج.م</span></p>
                         <button 
                             onClick={handleButtonClick} 
-                            className="px-6 py-2 rounded-lg bg-cyan-500 text-black font-bold transition-colors hover:bg-cyan-400 relative z-10"
+                            className={`px-6 py-2 rounded-lg font-bold transition-colors relative z-10 ${
+                                isEnrolled 
+                                ? 'bg-green-600 text-white hover:bg-green-500' 
+                                : 'bg-cyan-500 text-black hover:bg-cyan-400'
+                            }`}
                         >
-                            عرض الكورس
+                            {isEnrolled ? "الذهاب للكورس" : "عرض الكورس"}
                         </button>
                     </div>
                 </div>
@@ -78,8 +86,10 @@ const CourseCard = ({ course }) => {
 // --- Main Teacher Profile Component ---
 export default function TeacherPublicProfile() {
     const { teacherId } = useParams();
+    const cookies = new Cookies();
+    const token = cookies.get("token");
 
-    const { data: teacherData, isLoading, isError } = useQuery({
+    const { data: teacherData, isLoading: isLoadingTeacher, isError } = useQuery({
         queryKey: ['teacherProfile', teacherId],
         queryFn: async () => {
             const response = await axios.get(`/api/Teacher/TeacherProfile?teacherId=${teacherId}`);
@@ -88,9 +98,21 @@ export default function TeacherPublicProfile() {
         enabled: !!teacherId,
         refetchOnWindowFocus: false,
     });
+    
+    const { data: myCoursesData, isLoading: isLoadingMyCourses } = useQuery({
+        queryKey: ['myCourses'],
+        queryFn: () => axios.get('/api/StudentCourse/MyCourses', { headers: { Authorization: `Bearer ${token}` } }),
+        enabled: !!token, 
+        refetchOnWindowFocus: false,
+    });
 
-    if (isLoading) {
-        return <Loading message="جاري تحميل بيانات المدرس..." />;
+    const enrolledCourseIds = useMemo(() => {
+        if (!myCoursesData?.data) return new Set();
+        return new Set(myCoursesData.data.map(course => course.id));
+    }, [myCoursesData]);
+
+    if (isLoadingTeacher || isLoadingMyCourses) {
+        return <Loading message="جاري تحميل البيانات..." />;
     }
 
     if (isError) {
@@ -108,7 +130,6 @@ export default function TeacherPublicProfile() {
 
     return (
         <div className="min-h-screen bg-black text-gray-100 relative" style={{ fontFamily: "Cairo, sans-serif" }}>
-            {/* عنصر للخلفية المتدرجة والـ Glow */}
             <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-cyan-900/50 to-transparent -z-0"></div>
             
             <Helmet>
@@ -123,7 +144,6 @@ export default function TeacherPublicProfile() {
                     transition={{ duration: 0.5 }}
                     className="flex flex-col items-center gap-8 mb-16 text-center"
                 >
-                    {/* 2. تطبيق object-top هنا لحل مشكلة قص صورة المدرس الرئيسية */}
                     <img src={teacherData.path} alt={`${teacherData.firstName} ${teacherData.lastName}`} className="w-48 h-48 rounded-full border-4 border-cyan-500/50 object-cover object-top shadow-2xl shadow-cyan-500/30" />
                     <div className="flex-grow">
                         <h1 className="text-5xl lg:text-6xl font-black text-white title-glow">{teacherData.firstName} {teacherData.lastName}</h1>
@@ -154,7 +174,11 @@ export default function TeacherPublicProfile() {
                         }}
                     >
                         {teacherData.courses.map(course => (
-                            <CourseCard key={course.id} course={course} />
+                            <CourseCard 
+                                key={course.id} 
+                                course={course} 
+                                isEnrolled={enrolledCourseIds.has(course.id)} 
+                            />
                         ))}
                     </motion.div>
                 </div>

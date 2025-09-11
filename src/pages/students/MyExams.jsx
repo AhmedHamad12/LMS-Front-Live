@@ -153,7 +153,7 @@ const MyExams = () => {
                     return {
                         id: exam.id, course: exam.courseName, title: exam.title, statusNum: exam.quizAttemptStatus,
                         status: statusMap[exam.quizAttemptStatus - 1] || 'new', questions: exam.questions,
-                        time: exam.time, score: exam.score, totalScore: exam.points ?? 0,
+                        time: exam.time, score: exam.score, totalScore: "100",
                         deadline: new Date(deadlineUTC), startAt: new Date(startAtUTC), rank: exam.rank,
                     };
                 }).sort((a, b) => a.statusNum - b.statusNum);

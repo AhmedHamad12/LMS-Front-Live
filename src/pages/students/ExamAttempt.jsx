@@ -39,7 +39,6 @@ const ExamAttempt = () => {
     const { examId } = useParams();
     const navigate = useNavigate();
 
-    // State Management
     const [examDetails, setExamDetails] = useState(null);
     const [questions, setQuestions] = useState([]);
     const [attemptId, setAttemptId] = useState(null);
@@ -53,30 +52,25 @@ const ExamAttempt = () => {
     });
     const [timeLeft, setTimeLeft] = useState(null);
 
-    // --- NEW: Correct Exam Initialization Flow ---
     useEffect(() => {
         const initializeExam = async () => {
             try {
-                // 1. Start the attempt and get the attemptId
                 const startResponse = await api.post(`/api/Quiz/${examId}/start`);
                 const newAttemptId = startResponse.data.attemptId;
                 setAttemptId(newAttemptId);
 
-                // 2. If start is successful, fetch questions and details
                 const questionsPromise = api.get(`/api/Quiz/${examId}/questions`);
-                const detailsPromise = api.get(`/api/Quiz/${examId}/detailsForStudent`);
+                const detailsPromise = api.get(`/api/Quiz/GetQuizById${examId}`);
                 
                 const [questionsRes, detailsRes] = await Promise.all([questionsPromise, detailsPromise]);
                 
                 setQuestions(questionsRes.data);
                 setExamDetails(detailsRes.data);
-                setTimeLeft(detailsRes.data.time * 60);
-
+                setTimeLeft(detailsRes.data.timeLimitMinutes * 60);
             } catch (error) {
-                // This will catch errors if the exam is expired, already taken, etc.
                 const errorMessage = error.response?.data?.message || "لا يمكنك دخول هذا الامتحان حاليًا.";
                 toast.error(errorMessage);
-                navigate('/student/myexams'); // Redirect back if cannot start
+                navigate('/student/myexams');
             } finally {
                 setIsLoading(false);
             }
@@ -85,12 +79,10 @@ const ExamAttempt = () => {
         initializeExam();
     }, [examId, navigate]);
 
-    // Save answers to localStorage whenever they change
     useEffect(() => {
         localStorage.setItem(`examAttempt_${examId}`, JSON.stringify(answers));
     }, [answers, examId]);
 
-    // Exam Timer Logic
     useEffect(() => {
         if (timeLeft === null || timeLeft <= 0) {
             if (timeLeft !== null) handleFinishExam();
@@ -100,7 +92,6 @@ const ExamAttempt = () => {
         return () => clearInterval(timerId);
     }, [timeLeft]);
 
-    // Auto-submit on tab change
     useEffect(() => {
         const handleVisibilityChange = () => {
             if (document.hidden) {
@@ -115,7 +106,7 @@ const ExamAttempt = () => {
     const handleAnswerSelect = (questionId, option) => {
         setAnswers(prev => {
             const existingIndex = prev.findIndex(a => a.questionId === questionId);
-            const newAnswer = { questionId, selectedOptionId: option.id };
+            const newAnswer = { questionId, selectedOptionId: option.optionId };
             if (existingIndex > -1) {
                 const updated = [...prev];
                 updated[existingIndex] = newAnswer;
@@ -124,12 +115,9 @@ const ExamAttempt = () => {
             return [...prev, newAnswer];
         });
     };
-    
-    // --- NEW: Correct Submission Flow ---
+
     const handleFinishExam = useCallback(async () => {
         if (!examDetails || !attemptId) return;
-
-        // Prevent multiple submissions
         if (window.isSubmitting) return;
         window.isSubmitting = true;
 
@@ -144,9 +132,7 @@ const ExamAttempt = () => {
             }))
         };
         try {
-            // 1. Submit answers
             await api.post("/api/Quiz/submit-answer", formattedAnswers);
-            // 2. Finish the attempt
             await api.post(`/api/Quiz/attempts/${attemptId}/finish`);
             
             localStorage.removeItem(`examAttempt_${examId}`);
@@ -158,7 +144,6 @@ const ExamAttempt = () => {
             window.isSubmitting = false;
         }
     }, [answers, examDetails, attemptId, examId, navigate]);
-
 
     const selectedAnswerId = useMemo(() => 
         answers.find(a => a.questionId === questions?.[currentQuestionIndex]?.id)?.selectedOptionId,
@@ -217,10 +202,10 @@ const ExamAttempt = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {currentQuestion?.options.map(opt => (
                                         <button 
-                                            key={opt.id} 
+                                            key={opt.optionId} 
                                             onClick={() => handleAnswerSelect(currentQuestion.id, opt)} 
                                             className={`p-4 rounded-lg border text-right transition-colors duration-200
-                                                ${selectedAnswerId === opt.id 
+                                                ${selectedAnswerId === opt.optionId
                                                     ? "bg-cyan-500/20 border-cyan-500" 
                                                     : "border-gray-600 hover:bg-cyan-500/10 hover:border-cyan-500/40"
                                                 }`}

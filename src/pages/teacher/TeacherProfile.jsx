@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { Helmet } from 'react-helmet-async';
 import Loading from '../../Components/Loading';
-import { Star, Users, BookOpen, XCircle } from 'lucide-react';
+import { Star, Users, BookOpen, XCircle, Info } from 'lucide-react';
 import { Cookies } from 'react-cookie';
 
 // --- Helper Components ---
@@ -23,22 +23,25 @@ const StatCard = ({ icon, label, value }) => (
     </div>
 );
 
-// --- MODIFIED CourseCard Component ---
-const CourseCard = ({ course, isEnrolled }) => {
+const getYearName = (year) => {
+    const years = {
+        1: 'الصف الأول الثانوي',
+        2: 'الصف الثاني الثانوي',
+        3: 'الصف الثالث الثانوي'
+    };
+    return years[year] || `عام دراسي ${year}`;
+};
+
+const CourseCard = ({ course, isEnrolled, isForMyYear }) => {
     const navigate = useNavigate();
     const cookies = new Cookies();
     const token = cookies.get("token");
 
-    const handleButtonClick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+    const isClickable = isForMyYear || isEnrolled;
 
-        if (isEnrolled) {
-            // <-- المسار الصحيح الذي طلبته
-            navigate(`/student/course/data/${course.id}`);
-            return;
-        }
-        
+    let buttonText = "عرض الكورس";
+    let buttonClass = "bg-cyan-500 text-black hover:bg-cyan-400";
+    let buttonAction = () => {
         if (!token) {
             toast.error("يجب عليك تسجيل الدخول أولاً");
             navigate('/login');
@@ -47,18 +50,30 @@ const CourseCard = ({ course, isEnrolled }) => {
         }
     };
 
+    if (isEnrolled) {
+        buttonText = "الذهاب للكورس";
+        buttonClass = "bg-green-600 text-white hover:bg-green-500";
+        buttonAction = () => navigate(`/student/course/data/${course.id}`);
+    } else if (!isForMyYear) {
+        buttonText = "لصف دراسي آخر";
+        buttonClass = "bg-gray-500 text-gray-300 cursor-not-allowed";
+        buttonAction = () => {};
+    }
+    
+    const WrapperComponent = isClickable ? Link : 'div';
+    const wrapperProps = isClickable ? { to: isEnrolled ? `/student/course/data/${course.id}` : `/coursepreview/${course.id}` } : {};
+
     return (
-        // <-- المسار الصحيح الذي طلبته للـ Link
-        <Link to={isEnrolled ? `/student/course/data/${course.id}` : `/coursepreview/${course.id}`} key={course.id} className="block">
+        <WrapperComponent {...wrapperProps} className="block h-full">
             <motion.div
-                variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 }
-                }}
-                className="glass-effect rounded-2xl overflow-hidden flex flex-col group border border-white/10 h-full transform hover:-translate-y-2 transition-all duration-300 hover:border-cyan-400/30"
+                variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+                className={`glass-effect rounded-2xl overflow-hidden flex flex-col group border border-white/10 h-full transition-all duration-300 ${isClickable ? 'transform hover:-translate-y-2 hover:border-cyan-400/30' : 'grayscale opacity-60'}`}
             >
-                <div className="overflow-hidden h-48">
-                    <img src={course.image} alt={course.title} className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300" />
+                <div className="relative overflow-hidden h-48">
+                    <img src={course.image || '/default-course-image.png'} alt={course.title} className={`w-full h-full object-cover object-top ${isClickable ? 'group-hover:scale-105' : ''} transition-transform duration-300`} />
+                    <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
+                        {getYearName(course.studyYear)}
+                    </div>
                 </div>
                 <div className="p-6 flex flex-col flex-grow">
                     <h3 className="text-xl font-bold text-white mb-2">{course.title}</h3>
@@ -66,19 +81,20 @@ const CourseCard = ({ course, isEnrolled }) => {
                     <div className="flex justify-between items-center mt-auto pt-4">
                         <p className="text-2xl font-black text-cyan-400">{course.price} <span className="text-sm">ج.م</span></p>
                         <button 
-                            onClick={handleButtonClick} 
-                            className={`px-6 py-2 rounded-lg font-bold transition-colors relative z-10 ${
-                                isEnrolled 
-                                ? 'bg-green-600 text-white hover:bg-green-500' 
-                                : 'bg-cyan-500 text-black hover:bg-cyan-400'
-                            }`}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                buttonAction();
+                            }}
+                            disabled={!isClickable && !isEnrolled}
+                            className={`px-6 py-2 rounded-lg font-bold transition-colors relative z-10 ${buttonClass}`}
                         >
-                            {isEnrolled ? "الذهاب للكورس" : "عرض الكورس"}
+                            {buttonText}
                         </button>
                     </div>
                 </div>
             </motion.div>
-        </Link>
+        </WrapperComponent>
     );
 };
 
@@ -89,6 +105,7 @@ export default function TeacherPublicProfile() {
     const cookies = new Cookies();
     const token = cookies.get("token");
 
+    // --- Data Fetching ---
     const { data: teacherData, isLoading: isLoadingTeacher, isError } = useQuery({
         queryKey: ['teacherProfile', teacherId],
         queryFn: async () => {
@@ -103,47 +120,44 @@ export default function TeacherPublicProfile() {
         queryKey: ['myCourses'],
         queryFn: () => axios.get('/api/StudentCourse/MyCourses', { headers: { Authorization: `Bearer ${token}` } }),
         enabled: !!token, 
-        refetchOnWindowFocus: false,
     });
+
+    const { data: studentProfileData, isLoading: isLoadingStudent } = useQuery({
+        queryKey: ['studentProfile'],
+        queryFn: () => axios.get('/api/Student/getStudentById', { headers: { Authorization: `Bearer ${token}` } }),
+        enabled: !!token,
+        // <-- هذا هو التعديل. سيجبر المكتبة على تحديث البيانات دائمًا في الخلفية
+        staleTime: 0, 
+    });
+
+    // --- Memoized Data Processing ---
 
     const enrolledCourseIds = useMemo(() => {
         if (!myCoursesData?.data) return new Set();
         return new Set(myCoursesData.data.map(course => course.id));
     }, [myCoursesData]);
 
-    if (isLoadingTeacher || isLoadingMyCourses) {
+    const studentYear = studentProfileData?.studentYears;
+    
+    // --- Render Logic ---
+    const isLoading = (token && (isLoadingTeacher || isLoadingMyCourses || isLoadingStudent)) || (!token && isLoadingTeacher);
+    
+    if (isLoading) {
         return <Loading message="جاري تحميل البيانات..." />;
     }
-
+    
     if (isError) {
-        return (
-            <div className="flex flex-col items-center justify-center h-screen bg-black text-white text-center">
-                <XCircle size={64} className="text-red-500 mb-4" />
-                <h2 className="text-3xl font-bold mb-2">حدث خطأ</h2>
-                <p className="text-gray-400 mb-6">لم نتمكن من العثور على بيانات هذا المدرس.</p>
-                <Link to="/" className="px-6 py-2 bg-cyan-500 text-black font-bold rounded-lg hover:bg-cyan-400 transition-colors">
-                    العودة للرئيسية
-                </Link>
-            </div>
-        );
+        return ( <div className="flex flex-col items-center justify-center h-screen bg-black text-white text-center"><XCircle size={64} className="text-red-500 mb-4" /><h2 className="text-3xl font-bold mb-2">حدث خطأ</h2><p className="text-gray-400 mb-6">لم نتمكن من العثور على بيانات هذا المدرس.</p><Link to="/" className="px-6 py-2 bg-cyan-500 text-black font-bold rounded-lg hover:bg-cyan-400 transition-colors">العودة للرئيسية</Link></div> );
     }
 
     return (
         <div className="min-h-screen bg-black text-gray-100 relative" style={{ fontFamily: "Cairo, sans-serif" }}>
             <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-cyan-900/50 to-transparent -z-0"></div>
-            
             <Helmet>
                 <title>{teacherData?.firstName} {teacherData?.lastName}</title>
             </Helmet>
-            
             <main className="container mx-auto p-4 sm:p-6 lg:p-8 relative z-10">
-                {/* --- Profile Header (Hero Section) --- */}
-                <motion.div 
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="flex flex-col items-center gap-8 mb-16 text-center"
-                >
+                <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="flex flex-col items-center gap-8 mb-16 text-center">
                     <img src={teacherData.path} alt={`${teacherData.firstName} ${teacherData.lastName}`} className="w-48 h-48 rounded-full border-4 border-cyan-500/50 object-cover object-top shadow-2xl shadow-cyan-500/30" />
                     <div className="flex-grow">
                         <h1 className="text-5xl lg:text-6xl font-black text-white title-glow">{teacherData.firstName} {teacherData.lastName}</h1>
@@ -155,8 +169,7 @@ export default function TeacherPublicProfile() {
                         </div>
                     </div>
                 </motion.div>
-
-                {/* --- Courses Section --- */}
+                
                 <div>
                     <div className="text-center mb-10">
                         <h2 className="text-3xl font-bold text-white inline-block relative title-glow">
@@ -164,22 +177,30 @@ export default function TeacherPublicProfile() {
                             <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-2/3 h-1 bg-cyan-500 rounded-full"></span>
                         </h2>
                     </div>
+
                     <motion.div 
                         className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8"
                         initial="hidden"
                         animate="visible"
-                        variants={{
-                            visible: { transition: { staggerChildren: 0.1 } },
-                            hidden: {}
-                        }}
+                        variants={{ visible: { transition: { staggerChildren: 0.1 } }, hidden: {} }}
                     >
-                        {teacherData.courses.map(course => (
-                            <CourseCard 
-                                key={course.id} 
-                                course={course} 
-                                isEnrolled={enrolledCourseIds.has(course.id)} 
-                            />
-                        ))}
+                        {teacherData?.courses?.map(course => {
+                            let isForMyYear = false;
+                            if (!token) {
+                                isForMyYear = true;
+                            } else if (studentYear !== undefined && studentYear !== null) {
+                                isForMyYear = (course.studyYear == studentYear);
+                            }
+                            
+                            return (
+                                <CourseCard 
+                                    key={course.id} 
+                                    course={course} 
+                                    isEnrolled={enrolledCourseIds.has(course.id)} 
+                                    isForMyYear={isForMyYear}
+                                />
+                            );
+                        })}
                     </motion.div>
                 </div>
             </main>

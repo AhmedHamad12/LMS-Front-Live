@@ -1,5 +1,5 @@
 // src/pages/students/CoursePlayerPage.jsx
-
+ 
 import React, { useState, useEffect, useMemo, lazy, Suspense, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 // <-- الخطوة 1: تحديث سطر الاستيراد

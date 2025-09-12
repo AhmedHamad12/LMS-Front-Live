@@ -11,7 +11,7 @@ import { AuthProvider } from "./contexts/AuthContext.jsx";
 import { useAuth } from "./hooks/useAuth";
 import { setUnauthorizedHandler } from "./api/axios";
 import UnauthorizedOverlay from "./Components/Auth/UnauthorizedOverlay";
-
+import QuizReportPage from "./pages/students/QuizReportPage.jsx";
 // UI & Components
 import BackgroundAnimation from "./Components/BackgroundAnimation";
 import ProtectedRoute from "./Components/ProtectedRoute";
@@ -168,6 +168,7 @@ function App() {
                 <Route path="exam/:examId" element={<ExamAttempt />} />
                 <Route path="prize" element={<Prize />} />
                 <Route path="teachers" element={<AllTeachers />} />
+                <Route path="quiz/report/:attemptId" element={<QuizReportPage />} />
                  <Route path="leaderboard" element={<LeaderboardPage />} />
               </Route>
 

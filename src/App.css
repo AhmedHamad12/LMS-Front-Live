@@ -4,6 +4,7 @@
   padding: 2rem;
   text-align: center;
 }
+
 /* Custom Scrollbar for Webkit Browsers (Chrome, Safari, Edge) */
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px; /* عرض شريط التمرير */

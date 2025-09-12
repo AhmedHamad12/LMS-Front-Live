@@ -79,7 +79,7 @@ const CourseCard = ({ course }) => {
                             {renewSubscriptionMutation.isPending ? 'لحظات...' : 'جدد اشتراكك'}
                         </button>
                     ) : (
-                        <Link to={`/student/courseview/${course.id}`} className="w-full flex items-center justify-center gap-2 rounded-lg bg-slate-700 px-6 py-3 text-base font-bold text-white transition-all hover:bg-slate-600 hover:text-cyan-300">
+                        <Link to={`/student/course/data/${course.id}`} className="w-full flex items-center justify-center gap-2 rounded-lg bg-slate-700 px-6 py-3 text-base font-bold text-white transition-all hover:bg-slate-600 hover:text-cyan-300">
                             متابعة التعلم <ArrowLeft size={20} />
                         </Link>
                     )}

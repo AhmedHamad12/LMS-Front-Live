@@ -203,8 +203,8 @@ function LessonData() {
             <div className="lg:col-span-1 space-y-6">
                 <div className="bg-slate-900/50 backdrop-blur-lg border border-slate-700/50 rounded-2xl p-6 shadow-lg">
                     <div className="flex items-start justify-between gap-4">
-                        <div>
-                           <h1 className="text-2xl font-bold text-white leading-tight">{lesson?.title}</h1>
+                        <div className="w-[70%]">
+                           <h1 className="text-2xl w-[100%] font-bold text-white leading-tight truncate">{lesson?.title}</h1>
                            <p className="text-sm text-slate-400 mt-2">{formatted(lesson?.createdAt)}</p>
                         </div>
                         {/* **MODIFIED:** Conditional rendering for progress circle */}

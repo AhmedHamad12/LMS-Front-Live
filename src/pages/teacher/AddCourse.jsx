@@ -318,7 +318,7 @@ const AddCourse = () => {
                         <label className="block text-lg font-bold text-white mb-3">السنة الدراسية</label>
                         <FormInput
                             icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v11.494M12 6.253h-2.5M12 6.253h2.5M12 17.747h-2.5M12 17.747h2.5" /></svg>}
-                            type="number" value={studyYear} onChange={(e) => setStudyYear(e.target.value)} required min="1" max="12"
+                            type="number" value={studyYear} onChange={(e) => setStudyYear(e.target.value)} required min="1" max="3"
                         />
                     </div>
                     <div className="bg-slate-900/50 backdrop-blur-lg border border-cyan-400/20 rounded-2xl p-6 shadow-lg shadow-cyan-500/10">

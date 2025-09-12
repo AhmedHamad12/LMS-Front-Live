@@ -61,9 +61,9 @@ const Users = () => {
       id="main-content"
       className="flex-1 p-8 overflow-y-auto custom-scrollbar"
     >
-      <h1 className="text-4xl font-black text-white mb-2 title-glow">
+      <p className="text-4xl font-black text-white mb-2 title-glow">
         إدارة المستخدمين
-      </h1>
+      </p>
       <p className="text-gray-400 text-lg mb-8">
         تحكم كامل في جميع أفراد طاقم المجرّة.
       </p>

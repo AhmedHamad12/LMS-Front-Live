@@ -204,12 +204,12 @@ const Earn = () => {
           `}</style>
 
           {/* Header */}
-          <h1
+          <p
             className="text-4xl font-black text-white mb-2"
             style={{ textShadow: "0 0 10px rgba(0, 191, 255, 0.6)" }}
           >
             خزنة الأرباح
-          </h1>
+          </p>
           <p className="text-gray-400 text-lg mb-8">
             تابع نتائج استثماراتك المعرفية بدقة وشفافية.
           </p>

@@ -6,7 +6,7 @@ import HighestRevenue from "../../Components/admin/HighestRevenue";
 const Reports = () => {
   return (
     <main id="main-content" className="flex-1 p-8 overflow-y-auto custom-scrollbar">
-      <h1 className="text-4xl font-black text-white mb-2 title-glow">التقارير والتحليلات</h1>
+      <p className="text-4xl font-black text-white mb-2 title-glow">التقارير والتحليلات</p>
       <p className="text-gray-400 text-lg mb-8">نظرة شاملة على أداء وصحة المجرّة.</p>
 
       <ReportsSummary />

@@ -64,18 +64,18 @@ api.interceptors.response.use(
       responseData: error?.response?.data
     });
     
-    if (status === 401) {
-      console.error("401 Unauthorized error detected");
-      // Show unauthorized overlay if handler is available
-      if (showUnauthorizedOverlay) {
-        const message = error?.response?.data?.message || 
-          "لا يمكن الوصول لبيانات المستخدم. قد تكون هناك مشكلة في الصلاحيات أو الجلسة منتهية.";
+    // if (status === 401) {
+    //   console.error("401 Unauthorized error detected");
+    //   // Show unauthorized overlay if handler is available
+    //   if (showUnauthorizedOverlay) {
+    //     const message = error?.response?.data?.message || 
+    //       "لا يمكن الوصول لبيانات المستخدم. قد تكون هناك مشكلة في الصلاحيات أو الجلسة منتهية.";
         
-        showUnauthorizedOverlay(message);
-      } else {
-        console.warn("showUnauthorizedOverlay handler not set");
-      }
-    }
+    //     showUnauthorizedOverlay(message);
+    //   } else {
+    //     console.warn("showUnauthorizedOverlay handler not set");
+    //   }
+    // }
     return Promise.reject(error);
   }
 );

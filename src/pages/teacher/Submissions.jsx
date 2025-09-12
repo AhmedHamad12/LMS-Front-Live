@@ -94,12 +94,12 @@ const Submissions = () => {
       <div className="p-8 max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="mb-8">
-          <h1 
+          <p
             className="text-5xl font-black text-white mb-4"
             style={{ textShadow: "0 0 12px rgba(0, 191, 255, 0.6)" }}
           >
             تقارير الاختبار
-          </h1>
+          </p>
           <p className="text-gray-400 text-lg">
             تابع أداء الطلاب في الاختبار رقم {quizId}
           </p>

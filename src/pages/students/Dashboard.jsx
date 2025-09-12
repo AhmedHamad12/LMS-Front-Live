@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import Loading from "../../Components/Loading";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import { Award, Star, FileText, Bell, Crown, ArrowLeft } from "lucide-react";
+import { Award, Star, FileText, Bell, Crown, ArrowLeft, BookOpen } from "lucide-react";
 
 const StarfieldBackground = lazy(() => import('../../Components/StarfieldBackground'));
 
@@ -15,10 +15,28 @@ const StatCardSkeleton = () => ( <div className="glass-effect p-6 rounded-2xl an
 const ListSkeleton = ({ items = 3 }) => ( <div className="space-y-4">{Array.from({ length: items }).map((_, i) => ( <div key={i} className="glass-effect p-4 rounded-2xl flex items-center gap-4 animate-pulse"><div className="w-16 h-16 bg-slate-700 rounded-lg flex-shrink-0"></div><div className="flex-1 space-y-2"><div className="h-5 w-3/4 bg-slate-700 rounded"></div><div className="h-4 w-1/2 bg-slate-700 rounded"></div></div></div> ))}</div> );
 
 // --- Helper Components ---
-const StatCard = ({ icon, title, value, subtext, colorClass, link }) => ( <Link to={link}><motion.div variants={{hidden:{opacity:0,y:20},visible:{opacity:1,y:0}}} whileHover={{y:-5,scale:1.02}} className={`glass-effect p-6 rounded-2xl flex flex-col justify-between h-full border ${colorClass} transition-colors hover:bg-slate-800/50`}><div className="flex justify-between items-start"><p className="font-bold text-white text-lg">{title}</p>{icon}</div><div><p className="text-4xl font-black text-white mt-2">{value}</p>{subtext && <p className="text-sm text-gray-400">{subtext}</p>}</div></motion.div></Link> );
+const StatCard = ({ icon, title, value, subtext, colorClass, link }) => {
+    const content = (
+        <motion.div 
+            variants={{hidden:{opacity:0,y:20},visible:{opacity:1,y:0}}} 
+            whileHover={link ? {y:-5,scale:1.02} : {}} 
+            className={`glass-effect p-6 rounded-2xl flex flex-col justify-between h-full border ${colorClass} ${link ? 'transition-colors hover:bg-slate-800/50' : ''}`}
+        >
+            <div className="flex justify-between items-start">
+                <p className="font-bold text-white text-lg">{title}</p>
+                {icon}
+            </div>
+            <div>
+                <p className="text-4xl font-black text-white mt-2">{value}</p>
+                {subtext && <p className="text-sm text-gray-400">{subtext}</p>}
+            </div>
+        </motion.div>
+    );
+    return link ? <Link to={link}>{content}</Link> : <div>{content}</div>;
+};
+
 const LeaderboardItem = ({ student, rank }) => { const rankColors = { 1: "bg-yellow-500/20 border-yellow-400 text-yellow-400 shadow-lg shadow-yellow-500/10", 2: "bg-slate-500/20 border-slate-400 text-slate-300", 3: "bg-orange-700/20 border-orange-500 text-orange-400", }; const rankClass = rankColors[rank] || "bg-cyan-900/40 border-transparent"; return ( <div className={`flex items-center justify-between rounded-lg p-3 transition-all duration-300 border ${rankClass}`}><div className="flex items-center gap-4"><span className={`text-xl font-bold w-8 text-center`}>{rank}</span><span className="font-bold text-white">{student.firstName} {student.lastName}</span></div><div className="flex items-center gap-2 text-cyan-300"><span className="font-bold">{student.score}</span><Star size={16}/></div></div> ); };
 
-// --- 1. مكون جديد لعرض الكورس في القائمة ---
 const CourseListItem = ({ course }) => (
     <Link to={`/student/course/data/${course.id}`}>
         <motion.div
@@ -42,6 +60,11 @@ const CourseListItem = ({ course }) => (
     </Link>
 );
 
+const getYearName = (year) => {
+    const years = { 1: 'الصف الأول الثانوي', 2: 'الصف الثاني الثانوي', 3: 'الصف الثالث الثانوي' };
+    return years[year] || 'غير محدد';
+};
+
 
 // --- Main Dashboard Component ---
 export default function Dashboard() {
@@ -49,7 +72,7 @@ export default function Dashboard() {
     const cookies = new Cookies();
     const token = cookies.get("token");
 
-    const STALE_TIME = 5 * 60 * 1000; // 5 minutes
+    const STALE_TIME = 5 * 60 * 1000;
 
     const useStudentData = (endpoint, queryKey) => {
         return useQuery({
@@ -64,21 +87,21 @@ export default function Dashboard() {
         });
     };
 
-    const { data: userScore, isLoading: isScoreLoading } = useStudentData("/api/Student/GetStudentRankAndScore", "studentScore");
-    const { data: userAssignments, isLoading: areAssignmentsLoading } = useStudentData(`/api/Assignment/GetAssignmentsForStudent?category=1`, "studentAssignments");
-    
-    // --- 2. تغيير رابط الـ API هنا لنسخة أسرع ---
+    // ---!!! التعديل هنا: تم دمج استدعاءات الـ API ---
+    // هذا هو المصدر الوحيد لبيانات الطالب الآن
+    const { data: studentProfile, isLoading: isProfileLoading } = useStudentData('/api/Student/getStudentById', "studentProfile");
+
     const { data: enrollCourses, isLoading: areCoursesLoading } = useStudentData(`/api/StudentCourse/MyCourses`, "studentCourses");
-    
     const { data: topStudents, isLoading: areTopStudentsLoading } = useStudentData('/api/LandingPadge/TopStudents', "topStudents");
     
+    // ملاحظة: هذا الاستدعاء يفترض أن getStudentById يرجع حقل `id` للطالب
     const { data: notifications, isLoading: areNotificationsLoading } = useQuery({
-        queryKey: ["studentNotifications", userScore?.id],
+        queryKey: ["studentNotifications", studentProfile?.id],
         queryFn: async () => {
-            const { data } = await axios.get(`/api/Notification/student/${userScore.id}`, { headers: { Authorization: `Bearer ${token}` } });
+            const { data } = await axios.get(`/api/Notification/student/${studentProfile.id}`, { headers: { Authorization: `Bearer ${token}` } });
             return data;
         },
-        enabled: !!userScore?.id,
+        enabled: !!studentProfile?.id,
         refetchOnWindowFocus: false,
         staleTime: STALE_TIME,
     });
@@ -91,20 +114,22 @@ export default function Dashboard() {
             </Suspense>
 
             <main ref={mainContentRef} className="flex-1 h-screen overflow-y-auto p-4 sm:p-6 lg:p-8 scrollbar-thin scrollbar-thumb-cyan-500 scrollbar-track-black/20">
-                <h2 className="mb-2 text-3xl sm:text-4xl font-black text-white title-glow">أهلاً بعودتك، {userScore?.firstName || 'يا رائد الفضاء'}!</h2>
+                {/* --- التعديل هنا: استخدام studentProfile لعرض الاسم --- */}
+                <h2 className="mb-2 text-3xl sm:text-4xl font-black text-white title-glow">أهلاً بعودتك، {studentProfile?.firstName || 'يا رائد الفضاء'}!</h2>
                 <p className="mb-8 text-lg text-gray-400">مهمتك التالية في انتظارك. استعد للانطلاق.</p>
 
-                <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mb-8" initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.1 } }}}>
-                    {isScoreLoading ? <StatCardSkeleton /> : <StatCard icon={<Award size={24} className="text-cyan-400" />} title="ترتيبك في المجرة" value={`#${userScore?.rank || 'N/A'}`} colorClass="border-cyan-500/30" link="/student/rewards" />}
-                    {isScoreLoading ? <StatCardSkeleton /> : <StatCard icon={<Star size={24} className="text-yellow-400" />} title="نقاط الخبرة (XP)" value={userScore?.score || 0} colorClass="border-yellow-500/30" link="/student/rewards" />}
-                    {areAssignmentsLoading ? <StatCardSkeleton /> : <StatCard icon={<FileText size={24} className="text-purple-400" />} title="مهام جديدة" value={userAssignments?.length || 0} subtext="في انتظار إنجازك" colorClass="border-purple-500/30" link="/student/mytasks" />}
+                <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 mb-8" initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.1 } }}}>
+                    {/* --- التعديل هنا: جميع البطاقات تستخدم `studentProfile` كمصدر للبيانات --- */}
+                    {isProfileLoading ? <StatCardSkeleton /> : <StatCard icon={<Award size={24} className="text-cyan-400" />} title="ترتيبك في المجرة" value={`#${studentProfile?.rank || 'N/A'}`} colorClass="border-cyan-500/30" link="/student/rewards" />}
+                    {isProfileLoading ? <StatCardSkeleton /> : <StatCard icon={<Star size={24} className="text-yellow-400" />} title="نقاط الخبرة (XP)" value={studentProfile?.score || 0} colorClass="border-yellow-500/30" link="/student/rewards" />}
+                    {isProfileLoading ? <StatCardSkeleton /> : <StatCard icon={<FileText size={24} className="text-purple-400" />} title="مهام جديدة" value={studentProfile?.newSubmitedAssignmentCount ?? 0} subtext="في انتظار إنجازك" colorClass="border-purple-500/30" link="/student/mytasks" />}
+                    {isProfileLoading ? <StatCardSkeleton /> : <StatCard icon={<BookOpen size={24} className="text-green-400" />} title="عامك الدراسي" value={getYearName(studentProfile?.studentYears)} colorClass="border-green-500/30" />}
                 </motion.div>
 
                 <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-3">
                     <div className="space-y-4 lg:col-span-2">
                         <h2 className="text-3xl font-bold text-white title-glow mb-2">مهماتك الحالية (الكورسات)</h2>
                         
-                        {/* --- 3. استبدال الأكورديون بالقائمة الجديدة --- */}
                         {areCoursesLoading ? <ListSkeleton items={2} /> : (
                             enrollCourses?.length > 0 ? (
                                 <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.1 } } }}>

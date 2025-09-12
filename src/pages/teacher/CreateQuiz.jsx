@@ -16,8 +16,8 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 // --- Constants and Styles ---
 const TARGET_TYPE_OPTIONS = [
   { label: "كورس", value: 1 },
-  { label: "وحدة", value: 2 },
-  { label: "درس", value: 3 },
+  { label: "وحدة", value: 3 },
+  { label: "درس", value: 2},
 ];
 
 const customSelectStyles = {

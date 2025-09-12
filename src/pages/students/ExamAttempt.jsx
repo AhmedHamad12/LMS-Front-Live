@@ -137,7 +137,7 @@ const ExamAttempt = () => {
             
             localStorage.removeItem(`examAttempt_${examId}`);
             toast.success("تم تسليم الامتحان بنجاح!", { id: toastId });
-            navigate('/student/my-exams');
+            navigate('/student/myexams');
         } catch (error) {
             toast.error("حدث خطأ أثناء التسليم.", { id: toastId });
         } finally {

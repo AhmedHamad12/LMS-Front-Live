@@ -4,68 +4,17 @@ import { useQuery } from '@tanstack/react-query';
 import axios from '../../api/axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
-import { toast } from 'react-toastify';
-import Cookies from 'js-cookie';
+import { toast } from 'react-hot-toast'; // تم تغيير المكتبة لتتناسب مع باقي المشروع
+import { Cookies } from 'react-cookie'; // تم استبدال js-cookie
+import { jwtDecode } from 'jwt-decode'; // لاستخلاص الدور من التوكن
 
 import Loading from '../../Components/Loading';
 import { XCircle, Clock, BookOpen, Layers, Users, Play, Lock, Tag, ChevronDown, X } from 'lucide-react';
 
 // --- Helper Components ---
-const Stat = ({ icon, label, value }) => (
-    <div className="flex items-center gap-3">
-        {icon}
-        <span className="text-white"><span className="font-bold">{value}</span> {label}</span>
-    </div>
-);
-
-const LessonItem = ({ lesson, onClick }) => {
-    const isClickable = lesson.isFreePreview;
-    return (
-        <button
-            onClick={() => onClick(lesson)}
-            disabled={!isClickable}
-            className={`w-full flex items-center justify-between p-3 rounded-lg text-right transition-colors ${isClickable ? 'cursor-pointer hover:bg-slate-800/50' : 'cursor-not-allowed'}`}
-        >
-            <div className="flex items-center gap-4">
-                {lesson.isFreePreview 
-                    ? <Play size={20} className="text-cyan-400 flex-shrink-0" />
-                    : <Lock size={20} className="text-gray-500 flex-shrink-0" />
-                }
-                <p className={isClickable ? "text-gray-200" : "text-gray-600"}>{lesson.title}</p>
-            </div>
-            <div className="flex items-center gap-4">
-                {lesson.isFreePreview && (
-                    <span className="text-xs font-bold text-cyan-400 bg-cyan-500/10 px-2 py-1 rounded">معاينة مجانية</span>
-                )}
-                <p className="text-xs text-gray-400 tabular-nums">{Math.floor(lesson.durationSeconds / 60)}:{String(lesson.durationSeconds % 60).padStart(2, '0')}</p>
-            </div>
-        </button>
-    );
-};
-
-const UnitAccordionItem = ({ unit, index, onLessonClick }) => {
-    const [isOpen, setIsOpen] = useState(index === 0);
-    return (
-        <div className="glass-effect rounded-xl border border-white/10 overflow-hidden">
-            <button onClick={() => setIsOpen(!isOpen)} className="w-full flex items-center justify-between p-4 text-right bg-slate-800/20 hover:bg-slate-800/50 transition-colors">
-                <div>
-                    <h3 className="font-bold text-lg text-white">{unit.title}</h3>
-                    <p className="text-sm text-gray-400">{unit.description}</p>
-                </div>
-                <ChevronDown size={24} className={`text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}/>
-            </button>
-            <AnimatePresence>
-                {isOpen && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="overflow-hidden">
-                        <div className="border-t border-white/10 p-2">
-                            {unit.lessons.map(lesson => <LessonItem key={lesson.id} lesson={lesson} onClick={onLessonClick} />)}
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
-    );
-};
+const Stat = ({ icon, label, value }) => ( <div className="flex items-center gap-3"> {icon} <span className="text-white"><span className="font-bold">{value}</span> {label}</span> </div> );
+const LessonItem = ({ lesson, onClick }) => { const isClickable = lesson.isFreePreview; return ( <button onClick={() => onClick(lesson)} disabled={!isClickable} className={`w-full flex items-center justify-between p-3 rounded-lg text-right transition-colors ${isClickable ? 'cursor-pointer hover:bg-slate-800/50' : 'cursor-not-allowed'}`} > <div className="flex items-center gap-4"> {lesson.isFreePreview ? <Play size={20} className="text-cyan-400 flex-shrink-0" /> : <Lock size={20} className="text-gray-500 flex-shrink-0" />} <p className={isClickable ? "text-gray-200" : "text-gray-600"}>{lesson.title}</p> </div> <div className="flex items-center gap-4"> {lesson.isFreePreview && ( <span className="text-xs font-bold text-cyan-400 bg-cyan-500/10 px-2 py-1 rounded">معاينة مجانية</span> )} <p className="text-xs text-gray-400 tabular-nums">{Math.floor(lesson.durationSeconds / 60)}:{String(lesson.durationSeconds % 60).padStart(2, '0')}</p> </div> </button> ); };
+const UnitAccordionItem = ({ unit, index, onLessonClick }) => { const [isOpen, setIsOpen] = useState(index === 0); return ( <div className="glass-effect rounded-xl border border-white/10 overflow-hidden"> <button onClick={() => setIsOpen(!isOpen)} className="w-full flex items-center justify-between p-4 text-right bg-slate-800/20 hover:bg-slate-800/50 transition-colors"> <div> <h3 className="font-bold text-lg text-white">{unit.title}</h3> <p className="text-sm text-gray-400">{unit.description}</p> </div> <ChevronDown size={24} className={`text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}/> </button> <AnimatePresence> {isOpen && ( <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="overflow-hidden"> <div className="border-t border-white/10 p-2"> {unit.lessons.map(lesson => <LessonItem key={lesson.id} lesson={lesson} onClick={onLessonClick} />)} </div> </motion.div> )} </AnimatePresence> </div> ); };
 
 
 export default function CoursePreview() {
@@ -77,7 +26,21 @@ export default function CoursePreview() {
     const [playingVideoTitle, setPlayingVideoTitle] = useState('');
     const [isEnrolling, setIsEnrolling] = useState(false);
     const [courseCoupon, setCourseCoupon] = useState("");
-    const token = Cookies.get('token'); 
+    
+    const cookies = new Cookies();
+    const token = cookies.get('token'); 
+
+    // --- التعديل هنا: إضافة منطق التعرف على دور المستخدم ---
+    const userRole = useMemo(() => {
+        if (!token) return null;
+        try {
+            const decodedToken = jwtDecode(token);
+            return decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+        } catch (error) {
+            console.error("Invalid token:", error);
+            return null;
+        }
+    }, [token]);
 
     const { data, isLoading, isError } = useQuery({
         queryKey: ['coursePreview', courseId],
@@ -114,15 +77,22 @@ export default function CoursePreview() {
         }
     };
     
+    // --- التعديل هنا: إضافة التحقق من دور المستخدم قبل الاشتراك ---
     const handleEnrollment = async () => {
         if (!token) {
             toast.error("يرجى تسجيل الدخول أولاً للمتابعة.");
             navigate('/login');
             return;
         }
+
+        if (userRole === 'Teacher') {
+            toast.error("لا يمكن للمدرسين الاشتراك في الكورسات. يرجى تسجيل الدخول بحساب طالب.");
+            return;
+        }
+
         setIsEnrolling(true);
         try {
-            const response = await axios.post(`/api/StudentCourse/Enroll?courseId=${courseId}`, { courseId, couponCode: courseCoupon || null }, { withCredentials: true });
+            const response = await axios.post(`/api/StudentCourse/Enroll?courseId=${courseId}`, { courseId, couponCode: courseCoupon || null }, { headers: { Authorization: `Bearer ${token}` } });
             if (response.data?.url) {
                 window.location.href = response.data.url;
             } else {
@@ -139,42 +109,14 @@ export default function CoursePreview() {
     if (isLoading) return <Loading message="جاري تحضير الكورس..." />;
     if (isError || !data) return ( <div className="flex flex-col items-center justify-center h-screen bg-black text-white"><XCircle size={64} className="text-red-500 mb-4" /><h2 className="text-3xl font-bold">هذا الكورس غير متوفر حاليًا</h2><Link to="/" className="mt-6 px-6 py-2 bg-cyan-500 text-black font-bold rounded-lg hover:bg-cyan-400 transition-colors">العودة للرئيسية</Link></div> );
 
+    const isTeacher = userRole === 'Teacher';
+
     return (
         <div className="min-h-screen bg-black text-white" style={{ fontFamily: "Cairo, sans-serif" }}>
             <Helmet><title>{course.title}</title></Helmet>
             
             <AnimatePresence>
-                {playingVideoUrl && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
-                        onClick={() => setPlayingVideoUrl(null)}
-                    >
-                        <motion.div
-                            initial={{ scale: 0.8, y: 50 }}
-                            animate={{ scale: 1, y: 0 }}
-                            exit={{ scale: 0.8, y: 50 }}
-                            className="relative z-10 w-full max-w-4xl"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div className="flex justify-between items-center mb-2 px-2">
-                                <h2 className="text-xl font-bold text-white">{playingVideoTitle}</h2>
-                                <button onClick={() => setPlayingVideoUrl(null)} className="p-2 rounded-full text-white hover:bg-white/10 transition-colors"><X size={24} /></button>
-                            </div>
-                            <div className="aspect-video w-full rounded-lg overflow-hidden bg-black border border-cyan-500/20 shadow-2xl shadow-cyan-500/20">
-                                <iframe 
-                                    src={playingVideoUrl}
-                                    className="w-full h-full border-0"
-                                    allow="autoplay; fullscreen; picture-in-picture"
-                                    allowFullScreen
-                                    title={playingVideoTitle}
-                                ></iframe>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
+                {playingVideoUrl && ( <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm" onClick={() => setPlayingVideoUrl(null)} > <motion.div initial={{ scale: 0.8, y: 50 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.8, y: 50 }} className="relative z-10 w-full max-w-4xl" onClick={(e) => e.stopPropagation()} > <div className="flex justify-between items-center mb-2 px-2"> <h2 className="text-xl font-bold text-white">{playingVideoTitle}</h2> <button onClick={() => setPlayingVideoUrl(null)} className="p-2 rounded-full text-white hover:bg-white/10 transition-colors"><X size={24} /></button> </div> <div className="aspect-video w-full rounded-lg overflow-hidden bg-black border border-cyan-500/20 shadow-2xl shadow-cyan-500/20"> <iframe src={playingVideoUrl} className="w-full h-full border-0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title={playingVideoTitle} ></iframe> </div> </motion.div> </motion.div> )}
             </AnimatePresence>
 
             <div className="relative h-[60vh] md:h-[70vh] flex items-center justify-center text-center p-4">
@@ -208,8 +150,21 @@ export default function CoursePreview() {
                                 </div>
                                 <div className="p-6">
                                     {isFreeCourse ? ( <p className="text-4xl font-black text-center mb-4 text-green-400">مجاني</p> ) : ( <p className="text-4xl font-black text-center mb-4">{course.price} <span className="text-lg">ج.م</span></p> )}
-                                    {!isFreeCourse && ( <div className="relative mb-4"><Tag className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400" size={20} /><input type="text" placeholder="عندك كود خصم؟" value={courseCoupon} onChange={(e) => setCourseCoupon(e.target.value)} className="w-full bg-gray-900/50 border border-white/20 rounded-lg py-3 pr-4 pl-10 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 outline-none transition"/></div> )}
-                                    <button onClick={handleEnrollment} className="w-full block text-center rounded-lg bg-cyan-500 px-8 py-4 text-lg font-bold text-black transition-all duration-300 hover:bg-cyan-400 hover:scale-105 disabled:bg-gray-600 disabled:scale-100 disabled:cursor-wait" disabled={isEnrolling}>{isEnrolling ? 'لحظات من فضلك...' : (isFreeCourse ? 'ابدأ التعلم الآن' : 'اشترك الآن')}</button>
+                                    {!isFreeCourse && !isTeacher && ( <div className="relative mb-4"><Tag className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400" size={20} /><input type="text" placeholder="عندك كود خصم؟" value={courseCoupon} onChange={(e) => setCourseCoupon(e.target.value)} className="w-full bg-gray-900/50 border border-white/20 rounded-lg py-3 pr-4 pl-10 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 outline-none transition"/></div> )}
+                                    
+                                    {/* --- التعديل هنا: تغيير شكل ومحتوى الزر للمدرس --- */}
+                                    <button 
+                                        onClick={handleEnrollment} 
+                                        className={`w-full block text-center rounded-lg px-8 py-4 text-lg font-bold transition-all duration-300 disabled:scale-100 
+                                            ${isTeacher 
+                                                ? 'bg-gray-600 text-gray-300 cursor-not-allowed' 
+                                                : 'bg-cyan-500 text-black hover:bg-cyan-400 hover:scale-105 disabled:bg-gray-600 disabled:cursor-wait'
+                                            }`}
+                                        disabled={isEnrolling || isTeacher}
+                                    >
+                                        {isEnrolling ? 'لحظات من فضلك...' : (isTeacher ? 'غير متاح للمدرسين' : (isFreeCourse ? 'ابدأ التعلم الآن' : 'اشترك الآن'))}
+                                    </button>
+
                                     <div className="space-y-3 mt-6 pt-6 border-t border-white/10 text-sm text-gray-300">
                                         <h4 className="font-bold text-white text-base mb-2">هذا الكورس يتضمن:</h4>
                                         <Stat icon={<Layers size={20} className="text-cyan-400"/>} label="وحدة" value={stats.unitsCount} />

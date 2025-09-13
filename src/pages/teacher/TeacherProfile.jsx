@@ -1,14 +1,14 @@
-import React, { useState, useMemo, lazy, Suspense, useEffect } from 'react'; 
+import React, { useMemo, lazy, Suspense } from 'react'; 
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import axios from '../../api/axios';
 import toast from 'react-hot-toast';
-import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import Loading from '../../Components/Loading';
 import { Star, Users, BookOpen, XCircle } from 'lucide-react';
 import { Cookies } from 'react-cookie';
 import { jwtDecode } from "jwt-decode";
+import { motion } from 'framer-motion';
 
 const StarfieldBackground = lazy(() => import('../../Components/StarfieldBackground'));
 
@@ -32,10 +32,8 @@ const getYearName = (year) => {
     return years[year] || `عام دراسي ${year}`; 
 };
 
-const CourseCard = ({ course, isEnrolled, isForMyYear, userRole }) => {
+const CourseCard = ({ course, isEnrolled, userRole }) => {
     const navigate = useNavigate();
-    const isActionable = isEnrolled || (isForMyYear && userRole !== 'Teacher');
-
     let buttonText = "عرض التفاصيل";
     let buttonClass = "bg-cyan-500 text-black hover:bg-cyan-400";
     let buttonAction = () => navigate(`/coursepreview/${course.id}`);
@@ -48,22 +46,20 @@ const CourseCard = ({ course, isEnrolled, isForMyYear, userRole }) => {
         buttonText = "لا يمكن الاشتراك";
         buttonClass = "bg-gray-500 text-gray-300 cursor-not-allowed";
         buttonAction = () => toast("لا يمكن للمدرسين الاشتراك في الكورسات.", { icon: 'ℹ️' });
-    } else if (!isForMyYear && userRole === 'Student') {
-        buttonText = "غير متاح لعامك الدراسي";
-        buttonClass = "bg-gray-500 text-gray-300 cursor-not-allowed";
-        buttonAction = () => toast.error("هذا الكورس غير متاح لعامك الدراسي الحالي.");
     }
+    // For students, always allow viewing details if not enrolled
+    // Remove the restriction for !isForMyYear
 
     return ( 
         <motion.div 
             variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} 
-            className={`glass-effect rounded-2xl overflow-hidden flex flex-col group border border-white/10 h-full transition-all duration-300 ${isActionable ? 'transform hover:-translate-y-2 hover:border-cyan-400/30' : ''}`}
+            className={`glass-effect rounded-2xl overflow-hidden flex flex-col group border border-white/10 h-full transition-all duration-300 transform hover:-translate-y-2 hover:border-cyan-400/30`}
         > 
             <div className="relative overflow-hidden h-48"> 
                 <img 
                     src={course.image || '/default-course-image.png'} 
                     alt={course.title} 
-                    className={`w-full h-full object-cover object-top ${isActionable ? 'group-hover:scale-105' : ''} transition-transform duration-300`} 
+                    className={`w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300`} 
                 /> 
                 <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
                     {getYearName(course.studyYear)}
@@ -97,7 +93,9 @@ export default function TeacherPublicProfile() {
         try {
             const decodedToken = jwtDecode(token);
             return decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || null;
-        } catch (error) { return null; }
+        } catch {
+            return null;
+        }
     }, [token]);
 
     const { data: teacherData, isLoading: isLoadingTeacher, isError } = useQuery({
@@ -127,7 +125,6 @@ export default function TeacherPublicProfile() {
         return new Set(myCoursesData.data.map(course => course.id));
     }, [myCoursesData]);
 
-    const studentYear = studentProfileData?.studentYears;
     const isLoading = isLoadingTeacher || (!!token && userRole === 'Student' && isLoadingStudent);
     
     if (isLoading) return <Loading message="جاري تحميل البيانات..." />;
@@ -190,23 +187,11 @@ export default function TeacherPublicProfile() {
                         variants={{ visible: { transition: { staggerChildren: 0.1 } }, hidden: {} }}
                     >
                         {teacherData?.courses?.map(course => {
-                            let isForMyYear;
-                            if (userRole === 'Student') {
-                                if (studentProfileData && studentYear != null) {
-                                    isForMyYear = (String(course.studyYear) === String(studentYear));
-                                } else {
-                                    isForMyYear = false;
-                                }
-                            } else {
-                                isForMyYear = true;
-                            }
-                            
                             return (
                                 <CourseCard 
                                     key={course.id} 
                                     course={course} 
                                     isEnrolled={enrolledCourseIds.has(course.id)} 
-                                    isForMyYear={isForMyYear}
                                     userRole={userRole}
                                 />
                             );

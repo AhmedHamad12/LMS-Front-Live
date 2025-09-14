@@ -220,16 +220,26 @@ export default function AddTeacher() {
                                     <label>التخصص الأساسي</label>
                                      <select value={subject} onChange={e => setSubject(e.target.value)} required className={`${inputClasses} p-3.5`}>
                                         <option value="">اختر التخصص</option>
-                                        <option value="اللغة العربية">اللغة العربية</option>
-                                        <option value="اللغة الاجنبية الاولة">اللغة الاجنبية الاولة</option>
-                                        <option value="الكيمياء">الكيمياء</option>
-                                        <option value="الفيزياء">الفيزياء</option>
-                                        <option value="الأحياء">الأحياء</option>
-                                        <option value="الرياضيات">الرياضيات</option>
-                                        <option value="الجغرافيا والتاريخ">الجغرافيا والتاريخ</option>
-                                        <option value="الفلسفة">الفلسفة</option>
-                                        <option value="علم النفس والمنطق">علم النفس والمنطق</option>
-                                     </select>
+                                        <option value="arabic">اللغة العربية</option>
+                                        <option value="first_foreign_language">اللغة الاجنبية الأولى</option>
+                                        <option value="second_foreign_language">اللغة الاجنبية الثانية</option>
+                                        <option value="chemistry">الكيمياء</option>
+                                        <option value="physics">الفيزياء</option>
+                                        <option value="biology">الأحياء</option>
+                                        <option value="geology_environment">الجيولوجيا والعلوم البيئية</option>
+                                        <option value="pure_math">الرياضيات البحتة</option>
+                                        <option value="applied_math">الرياضيات التطبيقية</option>
+                                        <option value="math">الرياضيات</option>
+                                        <option value="psychology_logic">علم النفس والمنطق</option>
+                                        <option value="philosophy">الفلسفة</option>
+                                        <option value="geography_history">الجغرافيا والتاريخ</option>
+                                        <option value="economics_statistics">الاقتصاد والإحصاء</option>
+                                        <option value="it">تكنولوجيا المعلومات</option>
+                                        <option value="integrated_science">العلوم المتكاملة</option>
+                                        <option value="national_education">التربية الوطنية</option>
+                                        <option value="religion">التربية الدينية</option>
+                                        <option value="esp">اللغة الإنجليزية المتخصصة</option>
+                                    </select>
                                  </div>
                             </div>
 

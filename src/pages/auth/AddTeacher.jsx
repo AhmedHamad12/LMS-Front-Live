@@ -220,10 +220,15 @@ export default function AddTeacher() {
                                     <label>التخصص الأساسي</label>
                                      <select value={subject} onChange={e => setSubject(e.target.value)} required className={`${inputClasses} p-3.5`}>
                                         <option value="">اختر التخصص</option>
-                                        <option value="الفيزياء">الفيزياء</option>
+                                        <option value="اللغة العربية">اللغة العربية</option>
+                                        <option value="اللغة الاجنبية الاولة">اللغة الاجنبية الاولة</option>
                                         <option value="الكيمياء">الكيمياء</option>
-                                        <option value="الرياضيات">الرياضيات</option>
+                                        <option value="الفيزياء">الفيزياء</option>
                                         <option value="الأحياء">الأحياء</option>
+                                        <option value="الرياضيات">الرياضيات</option>
+                                        <option value="الجغرافيا والتاريخ">الجغرافيا والتاريخ</option>
+                                        <option value="الفلسفة">الفلسفة</option>
+                                        <option value="علم النفس والمنطق">علم النفس والمنطق</option>
                                      </select>
                                  </div>
                             </div>

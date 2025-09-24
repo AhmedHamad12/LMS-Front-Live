@@ -80,6 +80,7 @@ import AllTeachers from "./pages/students/Teachers.jsx";
 import MyTeacherProfile from "./pages/teacher/profile.jsx";
 import MyStudentProfile from "./pages/students/Profile";
 import CoursePlayerPage from "./pages/students/Course";
+import StudentProfileCompletionGuard from "./Components/StudentProfileCompletionGuard.jsx";
 // Wire auth context with axios
 
 const AuthInitializer = () => {
@@ -155,8 +156,9 @@ function App() {
               <Route path="/reset-password" element={<ResetPassword />} />
 
               {/* Students */}
-              <Route path="course" element={<Course />} />
-              <Route path="/student" element={<Students />}>
+                <Route element={<StudentProfileCompletionGuard />}>
+                <Route path="course" element={<Course />} />
+                <Route path="/student" element={<Students />}>
                 <Route path="allcourses" element={<AllCourses />} />
                 <Route path="course/data/:courseId" element={<CoursePlayerPage />} />
                 <Route path="mytasks" element={<MyTasks />} />
@@ -170,6 +172,7 @@ function App() {
                 <Route path="teachers" element={<AllTeachers />} />
                 <Route path="quiz/report/:attemptId" element={<QuizReportPage />} />
                  <Route path="leaderboard" element={<LeaderboardPage />} />
+                 </Route>
               </Route>
 
               {/* Auth */}

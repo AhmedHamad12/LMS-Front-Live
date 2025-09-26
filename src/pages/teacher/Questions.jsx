@@ -321,10 +321,10 @@ const Questions = () => {
     }
     
     // Validate question text
-    if (!newQuestion.text.trim()) {
-      setValidationError("يجب إدخال نص السؤال.");
-      return;
-    }
+    // if (!newQuestion.text.trim()) {
+    //   setValidationError("يجب إدخال نص السؤال.");
+    //   return;
+    // }
     
     // Validate question text length
     if (newQuestion.text.trim().length < 5) {
@@ -547,7 +547,7 @@ const Questions = () => {
                     </div>
                     <div>
                       <label className="block text-slate-300 mb-2 font-semibold">
-                        نص السؤال *
+                        نص السؤال 
                       </label>
                       <textarea
                         rows="3"
@@ -556,7 +556,7 @@ const Questions = () => {
                         onChange={(e) =>
                           handleInputChange("text", e.target.value)
                         }
-                        required
+                        placeholder="اكتب نص السؤال هنا..."
                       />
                     </div>
                     <div>

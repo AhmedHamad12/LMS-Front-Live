@@ -327,10 +327,16 @@ const Questions = () => {
     // }
     
     // Validate question text length
-    if (newQuestion.text.trim().length < 5) {
-      setValidationError("نص السؤال يجب أن يكون 5 أحرف على الأقل.");
-      return;
-    }
+  if (!newQuestion.text.trim() && !newQuestion.image) {
+  setValidationError("يجب إدخال نص السؤال أو رفع صورة.");
+  return;
+}
+
+// الشرط الثاني: لو فيه نص يبقى على الأقل 5 أحرف
+if (newQuestion.text.trim() && newQuestion.text.trim().length < 5) {
+  setValidationError("نص السؤال يجب أن يكون 5 أحرف على الأقل.");
+  return;
+}
     
     // Validate question type
     if (!newQuestion?.type?.value) {

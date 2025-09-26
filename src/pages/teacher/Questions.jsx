@@ -327,7 +327,7 @@ const Questions = () => {
     // }
     
     // Validate question text length
-  if (!newQuestion.text.trim() && !newQuestion.image) {
+  if (!newQuestion.text.trim() && !newQuestion.imageFile && !newQuestion.imageUrl) {
   setValidationError("يجب إدخال نص السؤال أو رفع صورة.");
   return;
 }

@@ -58,7 +58,7 @@ export default function AddStudent() {
 
     } catch (error) {
       console.error(error);
-      toast.error(error?.response?.data?.message || "حدث خطأ ما، يرجى المحاولة مرة أخرى.");
+      toast.error(error?.response?.data || "حدث خطأ ما، يرجى المحاولة مرة أخرى.");
     } finally {
       setLoading(false);
     }

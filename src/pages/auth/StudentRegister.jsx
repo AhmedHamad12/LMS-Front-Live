@@ -56,7 +56,7 @@ export default function StudentRegister() {
             toast.success("تم إنشاء الحساب بنجاح!");
 
         } catch (error) {
-            const errorMessage = error?.response?.data?.message || "حدث خطأ ما، يرجى المحاولة مرة أخرى.";
+            const errorMessage = error?.response?.data || "حدث خطأ ما، يرجى المحاولة مرة أخرى.";
             toast.error(errorMessage);
         } finally {
             setLoading(false);

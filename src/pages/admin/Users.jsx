@@ -1,4 +1,5 @@
 import axios from "axios";
+import api from "../../api/axios.js"
 import React, { useState, useMemo, useEffect } from "react";
 import { toast } from "react-hot-toast";
 
@@ -17,7 +18,7 @@ const Users = () => {
   });
 
   const filteredUsers = useMemo(() => {
-    return users.filter(
+    return Array.isArray(users)&& users.filter(
       (user) =>
         (filter === "all" || user.role === filter || user.status === filter) &&
         (search === "" ||
@@ -33,7 +34,7 @@ const Users = () => {
 
       try {
         const response = await toast.promise(
-          axios.get("http://lms278.runasp.net/api/Account/GetAllUser", {
+          api.get("/api/Account/GetAllUser", {
             withCredentials:true,
           }),
           {

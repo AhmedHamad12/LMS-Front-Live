@@ -25,18 +25,22 @@ const sectionVariants = {
 const Header = () => {
   const cookies = new Cookies();
   const token = cookies.get("token");
+  const role = cookies.get("role")
   const navigate = useNavigate();
 
   const handleDashboardRedirect = () => {
     if (token) {
       try {
-        const decodedToken = jwtDecode(token);
-        const role = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+        // const decodedToken = jwtDecode(token);
+        // const role = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
 
         if (role === 'Teacher') {
           window.location.href = "/teacher/dashboard";
+        } else if (role === 'Admin') {
+          window.location.href = "/admin/dashboard"; 
         } else {
           window.location.href = "/student/dashboard"; 
+
         }
       } catch (error) {
         console.error("Failed to decode token, redirecting to default dashboard:", error);

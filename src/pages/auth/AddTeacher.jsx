@@ -146,7 +146,7 @@ export default function AddTeacher() {
             toast.success("تم إرسال بياناتك بنجاح، سيتم مراجعتها.");
             navigate("/waiting");
         } catch (error) {
-            toast.error(error?.response?.data?.message || "حدث خطأ أثناء إرسال البيانات.");
+            toast.error(error?.response?.data || "حدث خطأ أثناء إرسال البيانات.");
         } finally {
             setLoading(false);
         }

@@ -56,8 +56,11 @@ export default function TeacherSignup() {
             navigate("/add-teacher");
 
         } catch (error) {
-            const errorMessage = error?.response?.data?.message || "حدث خطأ ما، يرجى المحاولة مرة أخرى.";
+            console.log("an error occurred ",error);
+            
+            const errorMessage = error?.response?.data || "حدث خطأ ما، يرجى المحاولة مرة أخرى.";
             toast.error(errorMessage);
+            
         } finally {
             setLoading(false);
         }

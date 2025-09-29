@@ -1,46 +1,65 @@
 import React, { useEffect, useState } from 'react';
+import api from "../../api/axios.js"
+import toast from 'react-hot-toast';
 
 const ApprovalCenter = () => {
   const [requests, setRequests] = useState([]);
 
+  const fetchRequests = async () => {
+    // TODO: Replace with actual API call 
+
+
+    try {
+      const response = await api.get("/api/Teacher/GetPendingTeachers")
+      setRequests(response.data);
+
+    } catch (error) {
+      toast.error(error.response.data.slice(0,-1))
+      
+    }
+
+  };
+
   
   useEffect(() => {
     
-    const fetchRequests = async () => {
-      // TODO: Replace with actual API call 
-
-
-      const fakeData = [
-        {
-          id: 1,
-          type: 'teacher',
-          name: 'أ. مروان علي',
-          subject: 'كيمياء',
-          avatar: 'https://placehold.co/40x40/ffffff/000000?text=م',
-        },
-        {
-          id: 2,
-          type: 'course',
-          name: 'مبادئ الجيولوجيا',
-          teacher: 'أ. هاني رمزي',
-          avatar: 'https://placehold.co/40x40/ffffff/000000?text=ج',
-        },
-      ];
-
-      setRequests(fakeData);
-    };
+ 
 
     fetchRequests();
   }, []);
 
-  const handleApprove = (id) => {
-    // TODO: Call approve API
-    setRequests((prev) => prev.filter((req) => req.id !== id));
+  const handleApprove = async (teacherId,fname,lname) => {
+    console.log(teacherId);
+    
+    
+    try {
+       const response = await api.put(`/api/Teacher/ApprovedTeacherByAdmin?teacherId=${teacherId}`)
+       setRequests((prev) => prev.filter((r) => r.id !== teacherId));
+//optimistic update
+      
+
+       toast.success(`successfully APPROVED ${fname}`)
+    } catch (error) {
+      toast.error("an error occurred")
+    }
+    
+    
+
   };
 
-  const handleReject = (id) => {
-    // TODO: Call reject API
-    setRequests((prev) => prev.filter((req) => req.id !== id));
+  const handleReject = async (teacherId,fname,lname) => {
+    try {
+      const response = await api.put(`/api/Teacher/RejectTeacherByAdmin?teacherId=${teacherId}`)
+      setRequests((prev) => prev.filter((r) => r.id !== teacherId));
+//optimistic update 
+     
+
+      toast.success(`successfully REJECTED ${fname}`)
+
+   } catch (error) {
+     toast.error("an error occurred")
+   }
+   
   };
 
   return (
@@ -60,29 +79,28 @@ const ApprovalCenter = () => {
             >
               <div className="flex items-center">
                 <img
-                  src={req.avatar}
+                  src={req.path}
                   alt="avatar"
                   className="w-10 h-10 rounded-full ml-3"
                 />
                 <div>
-                  <p className="font-bold text-white">{req.name}</p>
+                  <p className="font-bold text-white">{req.firstName} {req.lastName}</p>
                   <p
-                    className={`text-xs ${
-                      req.type === 'teacher'
-                        ? 'text-cyan-400'
-                        : 'text-purple-400'
+                    className={`text-xs 
+                     text-purple-400
                     }`}
                   >
-                    {req.type === 'teacher'
+                    {/* {req.type === 'teacher'
                       ? `طلب انضمام مدرس ${req.subject}`
-                      : `كورس جديد من ${req.teacher}`}
+                      : `كورس جديد من ${req.teacher}`} */}
+                      طلب انضمام مدرس {req.subject}
                   </p>
                 </div>
               </div>
 
               <div className="flex gap-2">
                 <button
-                  onClick={() => handleReject(req.id)}
+                  onClick={() => handleReject(req.id,req.firstName,req.lastName)}
                   className="p-2 rounded-full bg-red-500/20 hover:bg-red-500/40"
                   title="رفض"
                 >
@@ -101,7 +119,7 @@ const ApprovalCenter = () => {
                   </svg>
                 </button>
                 <button
-                  onClick={() => handleApprove(req.id)}
+                  onClick={() => handleApprove(req.id,req.firstName,req.lastName)}
                   className="p-2 rounded-full bg-green-500/20 hover:bg-green-500/40"
                   title="قبول"
                 >

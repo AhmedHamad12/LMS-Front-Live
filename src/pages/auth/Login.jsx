@@ -40,6 +40,8 @@ export default function Login() {
       });
 
       cookies.set("token", response.data.token, { path: "/" });
+      cookies.set("role", response.data.role, { path: "/" });
+
 
       if (response.data.role === "Teacher") {
         const { teacherId, status } = response.data;
@@ -53,13 +55,17 @@ export default function Login() {
         } else {
           window.location.href = `/teacher/dashboard`;
         }
-      } else {
+      } else if (response.data.role === "Admin") {
+        window.location.href = "/admin/dashboard";
+      }
+      else {
         window.location.href = "/student/dashboard";
+
       }
     } catch (error) {
       console.error(error);
       toast.error(
-        error?.response?.data?.message || "بريد إلكتروني أو كلمة مرور خاطئة"
+        error?.response?.data || "بريد إلكتروني أو كلمة مرور خاطئة"
       );
       setLoading(false);
     }

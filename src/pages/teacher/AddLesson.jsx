@@ -518,7 +518,7 @@ export default function AddLesson() {
                     </div>
                   </div>
                 </div>
-                <div className="mt-6">
+                {/* <div className="mt-6">
                   <button
                     onClick={togglePause}
                     className="p-3 rounded-full bg-white hover:bg-gray-100 border text-gray-700 transition"
@@ -529,7 +529,7 @@ export default function AddLesson() {
                       <PauseCircle size={24} />
                     )}
                   </button>
-                </div>
+                </div> */}
               </div>
             )}
             <div className="flex justify-between pt-4">

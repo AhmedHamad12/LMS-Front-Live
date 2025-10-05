@@ -8,15 +8,14 @@ import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import {
   UploadCloud,
-  X,
-  Check,
   Paperclip,
   ImageIcon,
   PlayCircle,
   PauseCircle,
+  Check,
 } from "lucide-react";
 
-// --- مكونات واجهة المستخدم المساعدة ---
+// --- UI Helper Components ---
 
 const FormInput = ({ ...props }) => (
   <input
@@ -44,12 +43,12 @@ const FileInput = ({ file, setFile, label, acceptedTypes, icon }) => (
         <div className="text-center">
           {icon}
           <p className="mt-2 text-sm text-slate-400">
-            اسحب وأفلت أو انقر للاختيار
+            Drag & drop or click to select
           </p>
         </div>
       ) : (
         <div className="text-center font-semibold text-green-400">
-          <p>تم اختيار الملف:</p>
+          <p>File selected:</p>
           <p className="text-sm mt-1">{file.name}</p>
           <button
             type="button"
@@ -59,7 +58,7 @@ const FileInput = ({ file, setFile, label, acceptedTypes, icon }) => (
             }}
             className="mt-2 text-xs text-red-400 hover:underline"
           >
-            إزالة
+            Remove
           </button>
         </div>
       )}
@@ -87,11 +86,11 @@ const Stepper = ({ currentStep }) => (
         1
       </div>
       <span
-        className={`mr-3 font-semibold transition-colors duration-300 ${
+        className={`ml-3 font-semibold transition-colors duration-300 ${
           currentStep >= 1 ? "text-white" : "text-slate-500"
         }`}
       >
-        تفاصيل الدرس
+        Lesson Details
       </span>
     </div>
     <div
@@ -110,28 +109,28 @@ const Stepper = ({ currentStep }) => (
         2
       </div>
       <span
-        className={`mr-3 font-semibold transition-colors duration-300 ${
+        className={`ml-3 font-semibold transition-colors duration-300 ${
           currentStep >= 2 ? "text-white" : "text-slate-500"
         }`}
       >
-        رفع الفيديو
+        Video Upload
       </span>
     </div>
   </div>
 );
 
-// --- المكون الرئيسي ---
+// --- Main Component ---
 export default function AddLesson() {
   const location = useLocation();
   const { courseId, chapterId: unitId } = location.state || {};
   const navigate = useNavigate();
 
-  // إدارة الحالة
+  // State Management
   const [step, setStep] = useState(1);
   const [lessonId, setLessonId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // حالة النموذج
+  // Form State
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [lessonImage, setLessonImage] = useState(null);
@@ -139,41 +138,42 @@ export default function AddLesson() {
   const [pdfFile, setPdfFile] = useState(null);
   const [isFreePreview, setIsFreePreview] = useState(false);
 
-  // حالة رفع TUS
+  // TUS Upload State
   const [uploadDetails, setUploadDetails] = useState({
     progress: 0,
     speed: 0,
     eta: 0,
     uploadedBytes: 0,
     totalBytes: 0,
-    stateText: "جاهز",
+    stateText: "Ready",
     isUploading: false,
     isPaused: false,
   });
   const currentUpload = useRef(null);
   const startedAt = useRef(null);
+  const isPausedByUser = useRef(false); // Flag to handle intentional pauses
 
   const cookies = new Cookies();
   const jwt = cookies.get("token");
 
-  // دوال مساعدة لتنسيق الأرقام
+  // Formatting helpers
   const fmtBytes = (n) => {
     if (n === 0) return "0 Bytes";
-    const u = ["بايت", "ك.ب", "م.ب", "ج.ب"];
+    const u = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(n) / Math.log(1024));
     return `${parseFloat((n / Math.pow(1024, i)).toFixed(2))} ${u[i]}`;
   };
   const fmtEta = (s) => {
-    if (s < 60) return `${Math.floor(s)} ث`;
+    if (s < 60) return `${Math.floor(s)}s`;
     const m = Math.floor(s / 60);
     const rs = Math.floor(s % 60);
-    return `${m} د ${rs} ث`;
+    return `${m}m ${rs}s`;
   };
 
-  // معالجة الخطوة الأولى: إنشاء تفاصيل الدرس
+  // Step 1: Create Lesson Details
   const handleCreateLesson = async () => {
     setIsSubmitting(true);
-    const toastId = toast.loading("جاري حفظ تفاصيل الدرس...");
+    const toastId = toast.loading("Saving lesson details...");
     try {
       const formData = new FormData();
       formData.append("Title", title);
@@ -193,12 +193,11 @@ export default function AddLesson() {
 
       const newLessonId = response.data.id;
       setLessonId(newLessonId);
-      // حفظ بيانات الرفع غير المكتمل في حالة إغلاق الصفحة
       localStorage.setItem('unfinishedUpload', JSON.stringify({ lessonId: newLessonId, courseId, unitId }));
-      toast.success("تم حفظ التفاصيل بنجاح!", { id: toastId });
+      toast.success("Details saved successfully!", { id: toastId });
       setStep(2);
     } catch (error) {
-      toast.error(error.response?.data?.title || "فشل حفظ تفاصيل الدرس.", {
+      toast.error(error.response?.data?.title || "Failed to save lesson details.", {
         id: toastId,
       });
     } finally {
@@ -206,17 +205,13 @@ export default function AddLesson() {
     }
   };
 
-  // معالجة الخطوة الثانية: بدء عملية الرفع
+  // Step 2: Initiate Upload
   const handleInitiateUpload = async () => {
     if (!videoFile) {
-      toast.error("الرجاء اختيار ملف فيديو أولاً.");
+      toast.error("Please select a video file first.");
       return;
     }
-    setUploadDetails((prev) => ({
-      ...prev,
-      isUploading: true,
-      stateText: "جاري التحضير للرفع...",
-    }));
+    setUploadDetails((prev) => ({ ...prev, isUploading: true, stateText: "Preparing upload..." }));
 
     try {
       const response = await axios.post(
@@ -226,33 +221,23 @@ export default function AddLesson() {
       );
       const uploadInfo = response.data;
       
-      // تحديث بيانات الرفع غير المكتمل لتشمل videoId
       localStorage.setItem('unfinishedUpload', JSON.stringify({ lessonId, courseId, unitId, videoId: uploadInfo.videoId }));
       
       startTus(videoFile, uploadInfo);
     } catch (error) {
-      setUploadDetails((prev) => ({
-        ...prev,
-        isUploading: false,
-        stateText: "فشل التحضير",
-      }));
-      toast.error(
-        error.response?.data?.message || "فشل الحصول على توقيع الرفع."
-      );
+      setUploadDetails((prev) => ({ ...prev, isUploading: false, stateText: "Preparation Failed" }));
+      toast.error(error.response?.data?.message || "Failed to get upload signature.");
     }
   };
 
-  // دالة TUS الرئيسية
+  // Main TUS function
   const startTus = (file, info) => {
     startedAt.current = Date.now();
     const upload = new tus.Upload(file, {
       endpoint: "https://video.bunnycdn.com/tusupload",
       chunkSize: 5 * 1024 * 1024,
       retryDelays: [0, 3000, 5000, 10000, 20000],
-      metadata: {
-        filename: file.name,
-        filetype: file.type || "application/octet-stream",
-      },
+      metadata: { filename: file.name, filetype: file.type || "application/octet-stream" },
       headers: {
         AuthorizationSignature: info.authorizationSignature,
         AuthorizationExpire: String(info.authorizationExpire),
@@ -260,23 +245,19 @@ export default function AddLesson() {
         LibraryId: info.libraryId,
       },
       onError(err) {
+        if (isPausedByUser.current) return;
+
         const status = err.originalRequest ? err.originalRequest.getStatus() : 0;
-        // معالجة خطأ انتهاء صلاحية التوقيع
         if (status === 401) {
-          setUploadDetails(prev => ({ ...prev, stateText: "انتهت صلاحية الجلسة، جاري التجديد..." }));
+          setUploadDetails(prev => ({ ...prev, stateText: "Session expired, renewing..." }));
           resignAndResume(info.videoId, upload);
           return;
         }
-        setUploadDetails((prev) => ({
-          ...prev, isUploading: false, isPaused: false, stateText: `فشل الرفع: ${err.message}`
-        }));
-        toast.error("حدث خطأ أثناء رفع الفيديو.");
+        setUploadDetails((prev) => ({ ...prev, isUploading: false, isPaused: false, stateText: `Upload Failed: ${err.message}` }));
+        toast.error("An error occurred during the upload.");
       },
       onSuccess() {
-        setUploadDetails((prev) => ({
-          ...prev, progress: 100, stateText: "اكتمل الرفع ✔ — جاري تأكيد الدرس..."
-        }));
-        // إزالة بيانات الرفع عند النجاح
+        setUploadDetails((prev) => ({ ...prev, progress: 100, stateText: "Upload Complete ✔ — Finalizing..." }));
         localStorage.removeItem('unfinishedUpload');
         finalizeUpload(info.videoId);
       },
@@ -288,7 +269,7 @@ export default function AddLesson() {
 
         setUploadDetails((prev) => ({
           ...prev, progress: percentage, uploadedBytes: uploaded, totalBytes: total,
-          speed: speed, eta: eta, stateText: "جاري الرفع...", isPaused: false,
+          speed: speed, eta: eta, stateText: "Uploading...", isPaused: false,
         }));
       },
     });
@@ -297,19 +278,17 @@ export default function AddLesson() {
     upload.findPreviousUploads().then((previousUploads) => {
       if (previousUploads.length) {
         upload.resumeFromPreviousUpload(previousUploads[0]);
-        toast.success("تم العثور على تقدم سابق، سيتم استكمال الرفع.");
+        toast.success("Previous progress found. Resuming upload.");
       }
       upload.start();
-      setUploadDetails(prev => ({ ...prev, isUploading: true, stateText: "بدء الرفع..." }));
+      setUploadDetails(prev => ({ ...prev, isUploading: true, stateText: "Starting upload..." }));
     });
   };
   
-  // تجديد التوقيع والمتابعة
+  // Resign and Resume
   const resignAndResume = async (videoId, uploadInstance) => {
     try {
-      const { data } = await axios.post(`/api/Lesson/video/resign`, { videoId }, {
-        headers: { Authorization: `Bearer ${jwt}` }
-      });
+      const { data } = await axios.post(`/api/Lesson/video/resign`, { videoId }, { headers: { Authorization: `Bearer ${jwt}` } });
       uploadInstance.setOptions({
         headers: {
           ...uploadInstance.options.headers,
@@ -317,83 +296,81 @@ export default function AddLesson() {
           AuthorizationExpire: String(data.authorizationExpire),
         }
       });
-      toast.success("تم تجديد جلسة الرفع بنجاح.");
-      uploadInstance.start(); // استئناف الرفع
+      toast.success("Upload session renewed successfully.");
+      uploadInstance.start();
     } catch (error) {
-      toast.error("فشل تجديد جلسة الرفع. يرجى المحاولة مرة أخرى.");
-      setUploadDetails(prev => ({ ...prev, isUploading: false, stateText: "فشل التجديد" }));
+      toast.error("Could not renew upload session. Please try again.");
+      setUploadDetails(prev => ({ ...prev, isUploading: false, stateText: "Renewal Failed" }));
     }
   };
 
-
-  // إنهاء الرفع وتأكيد الدرس
+  // Finalize Upload
   const finalizeUpload = async (videoId) => {
     try {
-      await axios.post(`/api/Lesson/${lessonId}/finalize-upload`, { videoId }, {
-        headers: { Authorization: `Bearer ${jwt}` }
-      });
-      setUploadDetails((prev) => ({ ...prev, stateText: "تم إنشاء الدرس بنجاح ✅" }));
-      toast.success("تم إنشاء الدرس ورفع الفيديو بنجاح!");
-      navigate(-1); // العودة للصفحة السابقة
+      await axios.post(`/api/Lesson/${lessonId}/finalize-upload`, { videoId }, { headers: { Authorization: `Bearer ${jwt}` } });
+      setUploadDetails((prev) => ({ ...prev, stateText: "Lesson created successfully ✅" }));
+      toast.success("Lesson and video uploaded successfully!");
+      navigate(-1);
     } catch (error) {
-      setUploadDetails((prev) => ({ ...prev, isUploading: false, stateText: "فشل تأكيد الدرس" }));
-      toast.error(error.response?.data?.message || "فشل تأكيد الدرس بعد رفع الفيديو.");
+      setUploadDetails((prev) => ({ ...prev, isUploading: false, stateText: "Finalizing failed" }));
+      toast.error(error.response?.data?.message || "Failed to finalize lesson after upload.");
     }
   };
   
-  // التحكم في الإيقاف المؤقت والاستئناف
+  // Toggle Pause/Resume
   const togglePause = () => {
     if (!currentUpload.current) return;
     if (uploadDetails.isPaused) {
+      isPausedByUser.current = false;
       currentUpload.current.start();
-      setUploadDetails((prev) => ({ ...prev, isPaused: false, stateText: "جاري الرفع..." }));
+      setUploadDetails((prev) => ({ ...prev, isPaused: false, stateText: "Uploading..." }));
     } else {
-      currentUpload.current.abort(true); // true to allow resume
-      setUploadDetails((prev) => ({ ...prev, isPaused: true, stateText: "متوقف مؤقتاً" }));
+      isPausedByUser.current = true;
+      currentUpload.current.abort(true);
+      setUploadDetails((prev) => ({ ...prev, isPaused: true, stateText: "Paused" }));
     }
   };
 
-  // التأكد من وجود بيانات الكورس عند تحميل الصفحة
+  // Check for course data on load
   useEffect(() => {
     if (!courseId || !unitId) {
       const unfinished = JSON.parse(localStorage.getItem('unfinishedUpload'));
       if (unfinished) {
-        if (window.confirm('تم العثور على رفع غير مكتمل. هل تريد استكماله؟')) {
+        if (window.confirm('Incomplete upload found. Would you like to resume?')) {
           navigate(location.pathname, { state: { courseId: unfinished.courseId, chapterId: unfinished.unitId }, replace: true });
           setLessonId(unfinished.lessonId);
           setStep(2);
         } else {
           localStorage.removeItem('unfinishedUpload');
-          toast.error("بيانات الكورس أو الوحدة غير مكتملة!");
+          toast.error("Course or Unit data is missing!");
           navigate(-1);
         }
       } else {
-        toast.error("بيانات الكورس أو الوحدة غير مكتملة!");
+        toast.error("Course or Unit data is missing!");
         navigate(-1);
       }
     }
   }, [courseId, unitId, navigate, location.pathname]);
 
-
-  // عرض الخطوات
+  // Render Steps
   const renderStep = () => {
     switch (step) {
       case 1:
         return (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-            <FormInput id="lesson-title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="عنوان الدرس" />
-            <FormTextarea id="lesson-content" value={content} onChange={(e) => setContent(e.target.value)} placeholder="اكتب وصفًا تفصيليًا للدرس..." />
+            <FormInput id="lesson-title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Lesson Title" />
+            <FormTextarea id="lesson-content" value={content} onChange={(e) => setContent(e.target.value)} placeholder="Write a detailed description for the lesson..." />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FileInput file={lessonImage} setFile={setLessonImage} label="صورة الدرس (اختياري)" acceptedTypes="image/*" icon={<ImageIcon className="mx-auto h-8 w-8 text-slate-400" />} />
-              <FileInput file={pdfFile} setFile={setPdfFile} label="ملف PDF مرفق (اختياري)" acceptedTypes="application/pdf" icon={<Paperclip className="mx-auto h-8 w-8 text-slate-400" />} />
+              <FileInput file={lessonImage} setFile={setLessonImage} label="Lesson Image (Optional)" acceptedTypes="image/*" icon={<ImageIcon className="mx-auto h-8 w-8 text-slate-400" />} />
+              <FileInput file={pdfFile} setFile={setPdfFile} label="PDF Attachment (Optional)" acceptedTypes="application/pdf" icon={<Paperclip className="mx-auto h-8 w-8 text-slate-400" />} />
             </div>
             <div className="flex items-center pt-4">
               <input type="checkbox" id="freePreview" checked={isFreePreview} onChange={(e) => setIsFreePreview(e.target.checked)} className="w-5 h-5 text-cyan-500 bg-slate-700 border-slate-600 rounded focus:ring-cyan-500" />
-              <label htmlFor="freePreview" className="text-lg font-bold text-white cursor-pointer mr-3">اجعل هذا الدرس معاينة مجانية</label>
+              <label htmlFor="freePreview" className="text-lg font-bold text-white cursor-pointer ml-3">Make this a free preview lesson</label>
             </div>
             <div className="flex justify-end pt-4 mt-4 border-t border-slate-700">
               <button onClick={handleCreateLesson} disabled={!title || isSubmitting} className="px-8 py-3 rounded-lg bg-cyan-600 text-white font-bold transition-all transform hover:bg-cyan-500 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
-                {isSubmitting ? "جاري الحفظ..." : "حفظ ومتابعة"}
+                {isSubmitting ? "Saving..." : "Save & Continue"}
               </button>
             </div>
           </motion.div>
@@ -407,15 +384,15 @@ export default function AddLesson() {
                 {videoFile ? (
                   <div className="text-center">
                     <Check size={48} className="mx-auto text-green-500 mb-2" />
-                    <p className="text-lg font-semibold text-white">تم اختيار الفيديو:</p>
+                    <p className="text-lg font-semibold text-white">Video Selected:</p>
                     <p className="text-md text-slate-300 truncate max-w-xs">{videoFile.name}</p>
-                    <span className="mt-4 text-sm text-cyan-400 group-hover:underline">اضغط لتغيير الفيديو</span>
+                    <span className="mt-4 text-sm text-cyan-400 group-hover:underline">Click to change video</span>
                   </div>
                 ) : (
                   <div className="text-center">
                     <UploadCloud size={48} className="mx-auto text-slate-400 group-hover:text-cyan-400 mb-2 transition-colors" />
-                    <h4 className="mt-4 text-lg font-semibold text-white">اسحب وأفلت الفيديو هنا</h4>
-                    <p className="text-sm text-slate-400">أو اضغط للتصفح من جهازك</p>
+                    <h4 className="mt-4 text-lg font-semibold text-white">Drag & drop video here</h4>
+                    <p className="text-sm text-slate-400">or click to browse your device</p>
                   </div>
                 )}
                 <input id="video-upload" type="file" accept="video/*" onChange={(e) => setVideoFile(e.target.files[0])} className="sr-only" />
@@ -428,9 +405,9 @@ export default function AddLesson() {
                   <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white mix-blend-screen">{Math.round(progress)}%</span>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6 text-sm">
-                  <div className="p-3 bg-slate-900/50 rounded-md border border-slate-700"><div className="font-bold text-slate-300">السرعة</div><div className="text-white">{fmtBytes(speed)}/ث</div></div>
-                  <div className="p-3 bg-slate-900/50 rounded-md border border-slate-700"><div className="font-bold text-slate-300">الوقت المتبقي</div><div className="text-white">{eta > 0 ? fmtEta(eta) : "..."}</div></div>
-                  <div className="p-3 bg-slate-900/50 rounded-md border border-slate-700 col-span-2 md:col-span-1"><div className="font-bold text-slate-300">الحجم</div><div className="text-white">{fmtBytes(uploadedBytes)} / {fmtBytes(totalBytes)}</div></div>
+                  <div className="p-3 bg-slate-900/50 rounded-md border border-slate-700"><div className="font-bold text-slate-300">Speed</div><div className="text-white">{fmtBytes(speed)}/s</div></div>
+                  <div className="p-3 bg-slate-900/50 rounded-md border border-slate-700"><div className="font-bold text-slate-300">ETA</div><div className="text-white">{eta > 0 ? fmtEta(eta) : "..."}</div></div>
+                  <div className="p-3 bg-slate-900/50 rounded-md border border-slate-700 col-span-2 md:col-span-1"><div className="font-bold text-slate-300">Size</div><div className="text-white">{fmtBytes(uploadedBytes)} / {fmtBytes(totalBytes)}</div></div>
                 </div>
                 <div className="mt-6">
                   <button onClick={togglePause} className="p-3 rounded-full bg-slate-700 hover:bg-slate-600 border border-slate-600 text-white transition">
@@ -440,9 +417,9 @@ export default function AddLesson() {
               </div>
             )}
             <div className="flex justify-between pt-4 mt-4 border-t border-slate-700">
-              <button onClick={() => setStep(1)} disabled={isUploading} className="px-8 py-3 rounded-lg bg-slate-600 text-white font-bold hover:bg-slate-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed">السابق</button>
+              <button onClick={() => setStep(1)} disabled={isUploading} className="px-8 py-3 rounded-lg bg-slate-600 text-white font-bold hover:bg-slate-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed">Back</button>
               <button onClick={handleInitiateUpload} disabled={!videoFile || isUploading} className="px-8 py-3 rounded-lg bg-green-600 text-white font-bold text-lg transition-all transform hover:bg-green-500 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
-                {isUploading ? stateText : "ابدأ الرفع والنشر"}
+                {isUploading ? stateText : "Start Upload & Publish"}
               </button>
             </div>
           </motion.div>
@@ -453,12 +430,12 @@ export default function AddLesson() {
   };
 
   return (
-    <div className="min-h-screen text-gray-100 font-[Cairo] bg-slate-900" dir="rtl">
-      <Helmet><title>إضافة درس جديد</title></Helmet>
+    <div className="min-h-screen text-gray-100 font-sans bg-slate-900">
+      <Helmet><title>Add New Lesson</title></Helmet>
       <main className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
         <header className="text-center mb-8">
-          <h1 className="text-4xl font-black text-white mb-2" style={{ textShadow: "0 0 15px rgba(34, 211, 238, 0.5)" }}>إضافة درس جديد</h1>
-          <p className="text-slate-400 text-lg">اتبع الخطوات التالية لإنشاء درس متكامل لكورسك.</p>
+          <h1 className="text-4xl font-black text-white mb-2" style={{ textShadow: "0 0 15px rgba(34, 211, 238, 0.5)" }}>Add New Lesson</h1>
+          <p className="text-slate-400 text-lg">Follow the steps below to create a lesson for your course.</p>
         </header>
         <div className="bg-slate-800/50 backdrop-blur-lg border border-cyan-400/20 rounded-2xl p-8 shadow-2xl shadow-cyan-500/10">
           <Stepper currentStep={step} />
